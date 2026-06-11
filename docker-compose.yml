@@ -1,0 +1,46 @@
+name: class-pulse
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: class_pulse_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: class_pulse
+    ports:
+      - "5432:5432"
+    volumes:
+      - class_pulse_postgres_data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: class_pulse_api
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "4000:4000"
+    env_file:
+      - apps/api/.env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/class_pulse
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: class_pulse_web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+    env_file:
+      - apps/web/.env
+
+volumes:
+  class_pulse_postgres_data:

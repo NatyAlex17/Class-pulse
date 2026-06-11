@@ -1,0 +1,37 @@
+{
+  "name": "class-pulse",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
+    "dev:web": "pnpm --filter web dev",
+    "dev:api": "pnpm --filter api start:dev",
+    "build:web": "pnpm --filter web build",
+    "build:api": "pnpm --filter api build",
+    "db:migrate": "pnpm --filter api prisma:migrate",
+    "db:generate": "pnpm --filter api prisma:generate",
+    "db:seed": "pnpm --filter api prisma:seed",
+    "prepare": "husky install",
+    "lint-staged": "lint-staged",
+    "commitlint": "commitlint --edit"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js}": "prettier --write",
+    "*.{json,md}": "prettier --write"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.0.2",
+    "@commitlint/config-conventional": "^21.0.2",
+    "husky": "^9.1.7",
+    "prettier": "^3.3.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.5.0"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "dependencies": {
+    "lint-staged": "^17.0.7"
+  }
+}
