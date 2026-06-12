@@ -5,5 +5,5 @@ export interface ComplianceRecord {
   status: string; // e.g., valid, expired, pending
   issuedAt?: string;
   expiresAt?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }

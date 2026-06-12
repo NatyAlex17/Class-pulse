@@ -4,5 +4,5 @@ export interface Student {
   studentNumber?: string;
   enrollmentDate?: string;
   status?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }

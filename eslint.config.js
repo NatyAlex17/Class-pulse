@@ -5,15 +5,13 @@ export default [
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    ignores: ['node_modules', 'dist', 'build', '.next', 'coverage', '.turbo'],
+    ignores: ['node_modules', 'dist', '.next', 'coverage', 'turbo', 'build'],
   },
   {
     files: ['**/*.{ts,tsx,js,jsx}'],
     languageOptions: {
-      parserOptions: {
-        ecmaVersion: 'latest',
-        sourceType: 'module',
-      },
+      ecmaVersion: 'latest',
+      sourceType: 'module',
     },
     rules: {
       'no-console': ['warn', { allow: ['warn', 'error'] }],

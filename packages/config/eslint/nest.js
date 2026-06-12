@@ -1,7 +1,12 @@
-const base = require("./base");
+import baseConfig from './base.js';
 
-module.exports = Object.assign({}, base, {
-  env: Object.assign({}, base.env, { node: true }),
-  extends: (base.extends || []).concat([]),
-  rules: Object.assign({}, base.rules, {}),
-});
+export default [
+  ...baseConfig,
+  {
+    files: ['src/**/*.ts'],
+    rules: {
+      'no-console': 'error',
+      '@typescript-eslint/explicit-function-return-types': 'warn',
+    },
+  },
+];

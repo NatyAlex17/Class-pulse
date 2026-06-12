@@ -4,5 +4,5 @@ export interface AttendanceRecord {
   studentId: string;
   status: string;
   timestamp?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }

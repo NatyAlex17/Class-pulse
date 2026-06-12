@@ -4,5 +4,5 @@ export interface Enrollment {
   courseId: string;
   status: string;
   enrolledAt?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }

@@ -1,11 +1,18 @@
-const base = require("./base");
+import baseConfig from './base.js';
+import react from 'eslint-plugin-react';
+import reactHooks from 'eslint-plugin-react-hooks';
 
-module.exports = Object.assign({}, base, {
-  env: Object.assign({}, base.env, { browser: true }),
-  extends: (base.extends || []).concat([
-    "plugin:react/recommended",
-    "plugin:react-hooks/recommended",
-  ]),
-  settings: Object.assign({}, base.settings, { react: { version: "detect" } }),
-  rules: Object.assign({}, base.rules, {}),
-});
+export default [
+  ...baseConfig,
+  {
+    files: ['**/*.{ts,tsx}'],
+    plugins: {
+      react,
+      'react-hooks': reactHooks,
+    },
+    rules: {
+      'react/react-in-jsx-scope': 'off',
+      'react-hooks/rules-of-hooks': 'error',
+    },
+  },
+];
