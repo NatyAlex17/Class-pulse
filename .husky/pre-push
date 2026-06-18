@@ -1,1 +1,4 @@
+#!/bin/sh
+sh "$(dirname "$0")/validate-branch-name"
+sh "$(dirname "$0")/validate-branch"
 pnpm test
