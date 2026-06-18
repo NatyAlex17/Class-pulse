@@ -18,12 +18,11 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
 
-    // Paths (root-relative)
-    "baseUrl": ".",
+    // Paths are relative to this config file.
     "paths": {
-      "@api/*": ["api/src/*"],
-      "@web/*": ["web/src/*"],
-      "@shared/*": ["packages/shared/src/*"]
+      "@api/*": ["./apps/api/src/*"],
+      "@web/*": ["./apps/web/src/*"],
+      "@shared/*": ["./packages/shared/src/*"]
     }
   },
   "exclude": ["node_modules", "dist", ".next"]
