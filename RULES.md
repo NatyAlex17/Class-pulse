@@ -1,8 +1,8 @@
-# RULES.md — Class Pulse Development Rules
+# RULES.md — Class Verse Development Rules
 
 ## 1. Purpose
 
-This file defines mandatory development rules for the Class Pulse project. It is intended for developers, reviewers, and AI coding agents.
+This file defines mandatory development rules for the Class Verse project. It is intended for developers, reviewers, and AI coding agents.
 
 These rules exist to protect implementation quality, regulatory readiness, data integrity, security, delivery governance, and scope control.
 

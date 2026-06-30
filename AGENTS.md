@@ -1,10 +1,10 @@
-# AGENTS.md — Class Pulse Implementation Agent Guide
+# AGENTS.md — Class Verse Implementation Agent Guide
 
 ## 1. Purpose
 
-This document defines how AI coding agents, engineering assistants, and automation tools should operate when contributing to the Class Pulse project.
+This document defines how AI coding agents, engineering assistants, and automation tools should operate when contributing to the Class Verse project.
 
-Class Pulse is a compliance-first training operations platform. The implementation must prioritize operational reliability, audit defensibility, controlled access, data integrity, and regulator-ready workflows over rapid feature accumulation.
+Class Verse is a compliance-first training operations platform. The implementation must prioritize operational reliability, audit defensibility, controlled access, data integrity, and regulator-ready workflows over rapid feature accumulation.
 
 Any coding agent working on this project must follow this guide before making architectural, code, database, workflow, or UI changes.
 
@@ -12,7 +12,7 @@ Any coding agent working on this project must follow this guide before making ar
 
 ## 2. Product Context
 
-Class Pulse supports day-to-day training and education operations, including student enrollment, course and class management, attendance tracking, instructor compliance, assessment management, certificate generation, reporting, and audit trails.
+Class Verse supports day-to-day training and education operations, including student enrollment, course and class management, attendance tracking, instructor compliance, assessment management, certificate generation, reporting, and audit trails.
 
 The system should be built as an operational platform, not only as a collection of screens. Every major action should be traceable, permission-controlled, and connected to the compliance model.
 

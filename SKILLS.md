@@ -1,10 +1,10 @@
-# SKILLS.md — Required Engineering Skills for Class Pulse
+# SKILLS.md — Required Engineering Skills for Class Verse
 
 ## 1. Purpose
 
-This file defines the technical and product skills required to implement, review, and maintain the Class Pulse platform. It should be used by human developers, AI coding agents, and delivery reviewers to understand the expected engineering capability for the project.
+This file defines the technical and product skills required to implement, review, and maintain the Class Verse platform. It should be used by human developers, AI coding agents, and delivery reviewers to understand the expected engineering capability for the project.
 
-Class Pulse is a compliance-first operational platform. The required skill set goes beyond basic CRUD development. Contributors must understand secure workflows, role-based permissions, audit logging, compliance data, reporting, and phased delivery.
+Class Verse is a compliance-first operational platform. The required skill set goes beyond basic CRUD development. Contributors must understand secure workflows, role-based permissions, audit logging, compliance data, reporting, and phased delivery.
 
 ---
 

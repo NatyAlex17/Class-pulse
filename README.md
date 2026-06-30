@@ -1,6 +1,6 @@
-# Class Pulse
+# Class Verse
 
-Class Pulse is a compliance-first training operations platform designed to support student enrollment, course and class management, attendance tracking, instructor compliance, assessments, certificate generation, operational reporting, and audit-ready governance.
+Class Verse is a compliance-first training operations platform designed to support student enrollment, course and class management, attendance tracking, instructor compliance, assessments, certificate generation, operational reporting, and audit-ready governance.
 
 The project must be implemented as a reliable operational system, not simply as a collection of screens. Every major workflow should support permissions, data integrity, audit trails, and regulator-ready reporting.
 
@@ -8,7 +8,7 @@ The project must be implemented as a reliable operational system, not simply as 
 
 ## 1. Project Objectives
 
-The primary objective of Class Pulse is to centralize and streamline the organization’s training operations while maintaining strong compliance controls.
+The primary objective of Class Verse is to centralize and streamline the organization’s training operations while maintaining strong compliance controls.
 
 The platform should support:
 
