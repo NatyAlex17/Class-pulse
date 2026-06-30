@@ -13,10 +13,12 @@ import {
   IconFileDescription,
   IconHelpCircle,
   IconHistory,
+  IconLogout,
   IconMail,
   IconReportAnalytics,
   IconSettings,
   IconStethoscope,
+  IconUser,
   IconUsers,
 } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
@@ -85,6 +87,24 @@ export function InstructorShell({
   patternedCanvas = false,
 }: InstructorShellProps) {
   const pathname = usePathname();
+  const [profileMenuOpen, setProfileMenuOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-profile-menu]')) {
+        setProfileMenuOpen(false);
+      }
+    };
+
+    if (profileMenuOpen) {
+      document.addEventListener('click', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [profileMenuOpen]);
 
   return (
     <div className="min-h-screen bg-background text-on-surface">
@@ -168,16 +188,71 @@ export function InstructorShell({
             <button className="hidden text-on-surface-variant transition hover:text-primary sm:block">
               <IconHelpCircle className="size-5" />
             </button>
-            <div className="flex items-center gap-3 border-l border-border-subtle pl-4">
-              <div className="hidden text-right sm:block">
-                <p className="text-sm font-semibold text-on-surface">{profileName}</p>
-                <p className="text-[12px] text-on-surface-variant">{profileMeta}</p>
-              </div>
-              <img
-                className="h-10 w-10 rounded-full border-2 border-primary-fixed object-cover"
-                src={profileImageUrl}
-                alt={profileName}
-              />
+            <div className="relative" data-profile-menu>
+              <button
+                onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                className="flex items-center gap-3 border-l border-border-subtle pl-4 transition hover:opacity-80"
+              >
+                <div className="hidden text-right sm:block">
+                  <p className="text-sm font-semibold text-on-surface">{profileName}</p>
+                  <p className="text-[12px] text-on-surface-variant">{profileMeta}</p>
+                </div>
+                <img
+                  className="h-10 w-10 rounded-full border-2 border-primary-fixed object-cover cursor-pointer"
+                  src={profileImageUrl}
+                  alt={profileName}
+                />
+              </button>
+
+              {profileMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-56 rounded-[16px] border border-border-subtle bg-white shadow-lg z-50">
+                  <div className="border-b border-border-subtle p-4">
+                    <div className="flex items-center gap-3">
+                      <img
+                        className="h-12 w-12 rounded-full border-2 border-primary-fixed object-cover"
+                        src={profileImageUrl}
+                        alt={profileName}
+                      />
+                      <div>
+                        <p className="font-semibold text-on-surface">{profileName}</p>
+                        <p className="text-[12px] text-on-surface-variant">{profileMeta}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-2 space-y-1">
+                    <Link
+                      href="/instructor/profile"
+                      onClick={() => setProfileMenuOpen(false)}
+                      className="flex items-center gap-3 rounded-[12px] px-4 py-2.5 text-sm text-on-surface transition hover:bg-surface-muted"
+                    >
+                      <IconUser className="size-4" />
+                      <span>My Profile</span>
+                    </Link>
+                    <Link
+                      href="/instructor/profile"
+                      onClick={() => setProfileMenuOpen(false)}
+                      className="flex items-center gap-3 rounded-[12px] px-4 py-2.5 text-sm text-on-surface transition hover:bg-surface-muted"
+                    >
+                      <IconSettings className="size-4" />
+                      <span>Settings</span>
+                    </Link>
+                  </div>
+
+                  <div className="border-t border-border-subtle p-2">
+                    <button
+                      onClick={() => {
+                        setProfileMenuOpen(false);
+                        window.location.href = '/';
+                      }}
+                      className="w-full flex items-center gap-3 rounded-[12px] px-4 py-2.5 text-sm text-error transition hover:bg-error/10"
+                    >
+                      <IconLogout className="size-4" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

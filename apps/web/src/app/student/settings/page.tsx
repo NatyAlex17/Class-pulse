@@ -1,6 +1,7 @@
 'use client';
 
 import { IconAdjustments, IconBell, IconShieldCheck } from '@tabler/icons-react';
+import { useStudentDemo } from '@/components/student/student-demo-store';
 import { FormDesigner, type FormSchema } from '@/components/ui/form-designer';
 import { StudentShell } from '@/components/student/student-shell';
 
@@ -44,6 +45,8 @@ const settingsSchema: FormSchema = {
 };
 
 export default function StudentSettingsPage() {
+  const { settings, updateSetting, lastAction } = useStudentDemo();
+
   return (
     <StudentShell
       title="Settings"
@@ -65,14 +68,11 @@ export default function StudentSettingsPage() {
       </div>
       <FormDesigner
         schema={settingsSchema}
-        values={{
-          email_updates: true,
-          sms_alerts: false,
-          remember_device: true,
-        }}
-        onChange={() => {}}
+        values={settings}
+        onChange={(name, value) => updateSetting(name as keyof typeof settings, Boolean(value))}
         submitLabel="Save settings"
         onSubmit={(event) => event.preventDefault()}
+        footer={lastAction}
       />
     </StudentShell>
   );

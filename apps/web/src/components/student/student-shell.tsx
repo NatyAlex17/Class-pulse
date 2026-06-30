@@ -11,14 +11,20 @@ import {
   IconDashboard,
   IconDots,
   IconFileDescription,
+  IconFileText,
   IconHelpCircle,
   IconMail,
   IconPlayerPlayFilled,
   IconSettings,
   IconStethoscope,
+  IconUserCheck,
+  IconLogout,
+  IconUser,
 } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useStudentDemo } from '@/components/student/student-demo-store';
+import { StudentIntakeModal } from '@/components/student/student-intake-modal';
 
 type StudentNavItem = {
   label: string;
@@ -35,6 +41,8 @@ const navItems: StudentNavItem[] = [
   { label: 'Clinical Hours', href: '/student/clinical-hours', icon: IconStethoscope, mobileLabel: 'Hours' },
   { label: 'Financials', href: '/student/financials', icon: IconCreditCard, mobileLabel: 'Money' },
   { label: 'Documents', href: '/student/documents', icon: IconFileDescription, mobileLabel: 'Docs' },
+  { label: 'Onboarding', href: '/student/onboarding', icon: IconUserCheck, mobileLabel: 'Start' },
+  { label: 'Forms', href: '/student/forms', icon: IconFileText, mobileLabel: 'Forms' },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -76,6 +84,32 @@ export function StudentShell({
   patternedCanvas = false,
 }: StudentShellProps) {
   const pathname = usePathname();
+  const { workflowStage, portalUnlocked } = useStudentDemo();
+  const [workflowOpen, setWorkflowOpen] = React.useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!portalUnlocked) {
+      setWorkflowOpen(true);
+    }
+  }, [portalUnlocked]);
+
+  React.useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-profile-menu]')) {
+        setProfileMenuOpen(false);
+      }
+    };
+
+    if (profileMenuOpen) {
+      document.addEventListener('click', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [profileMenuOpen]);
 
   return (
     <div className="min-h-screen bg-background text-on-surface">
@@ -161,16 +195,71 @@ export function StudentShell({
             <button className="text-on-surface-variant transition hover:text-primary">
               <IconBell className="size-5" />
             </button>
-            <div className="flex items-center gap-3 border-l border-border-subtle pl-4">
-              <div className="hidden text-right sm:block">
-                <p className="text-sm font-semibold text-on-surface">{profileName}</p>
-                <p className="text-[12px] text-on-surface-variant">{profileMeta}</p>
-              </div>
-              <img
-                className="h-10 w-10 rounded-full border-2 border-primary-fixed object-cover"
-                src={profileImageUrl}
-                alt={profileName}
-              />
+            <div className="relative" data-profile-menu>
+              <button
+                onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                className="flex items-center gap-3 border-l border-border-subtle pl-4 transition hover:opacity-80"
+              >
+                <div className="hidden text-right sm:block">
+                  <p className="text-sm font-semibold text-on-surface">{profileName}</p>
+                  <p className="text-[12px] text-on-surface-variant">{profileMeta}</p>
+                </div>
+                <img
+                  className="h-10 w-10 rounded-full border-2 border-primary-fixed object-cover cursor-pointer"
+                  src={profileImageUrl}
+                  alt={profileName}
+                />
+              </button>
+
+              {profileMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-56 rounded-[16px] border border-border-subtle bg-white shadow-lg z-50">
+                  <div className="border-b border-border-subtle p-4">
+                    <div className="flex items-center gap-3">
+                      <img
+                        className="h-12 w-12 rounded-full border-2 border-primary-fixed object-cover"
+                        src={profileImageUrl}
+                        alt={profileName}
+                      />
+                      <div>
+                        <p className="font-semibold text-on-surface">{profileName}</p>
+                        <p className="text-[12px] text-on-surface-variant">{profileMeta}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-2 space-y-1">
+                    <Link
+                      href="/student/profile"
+                      onClick={() => setProfileMenuOpen(false)}
+                      className="flex items-center gap-3 rounded-[12px] px-4 py-2.5 text-sm text-on-surface transition hover:bg-surface-muted"
+                    >
+                      <IconUser className="size-4" />
+                      <span>My Profile</span>
+                    </Link>
+                    <Link
+                      href="/student/settings"
+                      onClick={() => setProfileMenuOpen(false)}
+                      className="flex items-center gap-3 rounded-[12px] px-4 py-2.5 text-sm text-on-surface transition hover:bg-surface-muted"
+                    >
+                      <IconSettings className="size-4" />
+                      <span>Settings</span>
+                    </Link>
+                  </div>
+
+                  <div className="border-t border-border-subtle p-2">
+                    <button
+                      onClick={() => {
+                        setProfileMenuOpen(false);
+                        window.location.href = '/';
+                      }}
+                      className="w-full flex items-center gap-3 rounded-[12px] px-4 py-2.5 text-sm text-error transition hover:bg-error/10"
+                    >
+                      <IconLogout className="size-4" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -184,6 +273,32 @@ export function StudentShell({
           )}
         >
           <div className="mx-auto w-full max-w-[1200px]">
+            <div
+              className={cn(
+                'mb-6 flex flex-col gap-3 rounded-[18px] border px-5 py-4 sm:flex-row sm:items-center sm:justify-between',
+                portalUnlocked
+                  ? 'border-success/20 bg-success/5'
+                  : 'border-warning/20 bg-warning/5',
+              )}
+            >
+              <div>
+                <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+                  Student Flow Status
+                </p>
+                <p className="mt-1 text-sm text-on-surface">
+                  {portalUnlocked
+                    ? 'Portal is active. You can still reopen the walkthrough anytime.'
+                    : `Student flow is paused at ${workflowStage.replaceAll('_', ' ')}.`}
+                </p>
+              </div>
+              <Button
+                variant={portalUnlocked ? 'secondary' : 'default'}
+                className="rounded-full"
+                onClick={() => setWorkflowOpen(true)}
+              >
+                {portalUnlocked ? 'Reopen Walkthrough' : 'Continue Intake Flow'}
+              </Button>
+            </div>
             <div className="mb-8">
               <h2 className="font-display text-[30px] font-bold tracking-[-0.02em] text-on-surface">
                 {title}
@@ -224,6 +339,8 @@ export function StudentShell({
           );
         })}
       </nav>
+
+      <StudentIntakeModal open={workflowOpen} onClose={() => setWorkflowOpen(false)} />
     </div>
   );
 }

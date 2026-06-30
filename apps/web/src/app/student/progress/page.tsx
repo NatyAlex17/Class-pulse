@@ -1,3 +1,6 @@
+ 'use client';
+
+import * as React from 'react';
 import {
   IconArrowRight,
   IconBook2,
@@ -6,13 +9,17 @@ import {
   IconMedicalCross,
   IconRosetteDiscountCheck,
   IconSparkles,
+  IconCertificate2,
+  IconX,
 } from '@tabler/icons-react';
+import { useStudentDemo } from '@/components/student/student-demo-store';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
 import { StudentShell } from '@/components/student/student-shell';
 
 type ModuleRow = {
+  id: string;
   module: string;
   summary: string;
   number: string;
@@ -22,115 +29,181 @@ type ModuleRow = {
   action: string;
 };
 
-const progressRows: ModuleRow[] = [
-  {
-    module: 'Foundation of Patient Care',
-    summary: 'Core Methodology & Ethics',
-    number: '01',
-    status: 'Complete',
-    examScore: '98/100',
-    clinicalHours: '12/12',
-    action: 'View Certificate',
-  },
-  {
-    module: 'Anatomy & Physiology',
-    summary: 'Systemic Review',
-    number: '02',
-    status: 'Complete',
-    examScore: '94/100',
-    clinicalHours: '10/10',
-    action: 'View Certificate',
-  },
-  {
-    module: 'Clinical Pharmacology',
-    summary: 'Drug Administration & Safety',
-    number: '03',
-    status: 'In Progress',
-    examScore: '--',
-    clinicalHours: '16/18',
-    action: 'Resume',
-  },
-  {
-    module: 'Advanced Diagnostics',
-    summary: 'Radiology & Lab Reports',
-    number: '04',
-    status: 'Locked',
-    examScore: '--',
-    clinicalHours: '0/20',
-    action: 'Prerequisite Needed',
-  },
-];
-
-const columns: DataTableColumn<ModuleRow>[] = [
-  {
-    id: 'module',
-    header: 'Module Name',
-    cell: (row) => (
-      <div className="flex items-center gap-3">
-        <div
-          className={`flex h-10 w-10 items-center justify-center rounded-[12px] ${
-            row.status === 'In Progress'
-              ? 'bg-primary text-white'
-              : row.status === 'Locked'
-                ? 'bg-surface-container text-on-surface-variant'
-                : 'bg-primary/5 text-primary'
-          }`}
-        >
-          <span className="font-bold">{row.number}</span>
-        </div>
-        <div>
-          <p className="font-semibold text-on-surface">{row.module}</p>
-          <p className="text-[12px] text-on-surface-variant">{row.summary}</p>
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: 'status',
-    header: 'Status',
-    cell: (row) =>
-      row.status === 'Complete' ? (
-        <Badge variant="success">Complete</Badge>
-      ) : row.status === 'In Progress' ? (
-        <Badge variant="info">In Progress</Badge>
-      ) : (
-        <Badge variant="neutral">Locked</Badge>
-      ),
-  },
-  { id: 'score', header: 'Exam Score', accessorKey: 'examScore' },
-  { id: 'hours', header: 'Clinical Hours', accessorKey: 'clinicalHours' },
-  {
-    id: 'action',
-    header: 'Action',
-    cell: (row) =>
-      row.action === 'Resume' ? (
-        <Button size="sm">Resume</Button>
-      ) : (
-        <button className="text-sm font-semibold text-primary hover:underline">{row.action}</button>
-      ),
-  },
-];
-
 export default function StudentProgressPage() {
+  const {
+    modules,
+    overallProgressPercent,
+    theoryHoursCompleted,
+    theoryHoursRequired,
+    clinicalHoursCompleted,
+    clinicalHoursRequired,
+    currentModule,
+    learningMinutes,
+    advanceLearning,
+    examUnlocked,
+    selectModule,
+    submitModuleExam,
+  } = useStudentDemo();
+
+  const [filterView, setFilterView] = React.useState<'all' | 'completed' | 'inprogress'>('all');
+  const [showCertificate, setShowCertificate] = React.useState<string | null>(null);
+
+  const allRows: ModuleRow[] = modules.map((module, index) => ({
+    id: module.id,
+    module: module.title,
+    summary: module.summary,
+    number: String(index + 1).padStart(2, '0'),
+    status: module.status,
+    examScore: module.examScore ?? '--',
+    clinicalHours: `${Math.min(module.completedHours, module.requiredHours)}/${module.requiredHours}`,
+    action:
+      module.status === 'In Progress'
+        ? 'Resume'
+        : module.status === 'Complete'
+          ? 'View Certificate'
+          : examUnlocked
+            ? 'Open Module'
+            : 'Prerequisite Needed',
+  }));
+
+  const progressRows = allRows.filter(row => {
+    if (filterView === 'completed') return row.status === 'Complete';
+    if (filterView === 'inprogress') return row.status === 'In Progress';
+    return true;
+  });
+
+  const columns: DataTableColumn<ModuleRow>[] = [
+    {
+      id: 'module',
+      header: 'Module Name',
+      cell: (row) => (
+        <div className="flex items-center gap-3">
+          <div
+            className={`flex h-10 w-10 items-center justify-center rounded-[12px] ${
+              row.status === 'In Progress'
+                ? 'bg-primary text-white'
+                : row.status === 'Locked'
+                  ? 'bg-surface-container text-on-surface-variant'
+                  : 'bg-primary/5 text-primary'
+            }`}
+          >
+            <span className="font-bold">{row.number}</span>
+          </div>
+          <div>
+            <p className="font-semibold text-on-surface">{row.module}</p>
+            <p className="text-[12px] text-on-surface-variant">{row.summary}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      cell: (row) =>
+        row.status === 'Complete' ? (
+          <Badge variant="success">Complete</Badge>
+        ) : row.status === 'In Progress' ? (
+          <Badge variant="info">In Progress</Badge>
+        ) : (
+          <Badge variant="neutral">Locked</Badge>
+        ),
+    },
+    { id: 'score', header: 'Exam Score', accessorKey: 'examScore' },
+    { id: 'hours', header: 'Clinical Hours', accessorKey: 'clinicalHours' },
+    {
+      id: 'action',
+      header: 'Action',
+      cell: (row) => {
+        if (row.action === 'Resume' || row.action === 'Open Module') {
+          return (
+            <Button
+              size="sm"
+              onClick={() => {
+                selectModule(row.id);
+                window.location.href = '/student/learning';
+              }}
+              className={row.action === 'Resume' ? 'bg-info hover:bg-info/90' : ''}
+            >
+              {row.action}
+            </Button>
+          );
+        } else if (row.action === 'View Certificate') {
+          return (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setShowCertificate(row.id)}
+              className="bg-success/10 text-success hover:bg-success/20"
+            >
+              View Certificate
+            </Button>
+          );
+        } else {
+          return (
+            <button className="text-sm font-semibold text-outline cursor-not-allowed opacity-60">
+              {row.action}
+            </button>
+          );
+        }
+      },
+    },
+  ];
+
+  const selectedModuleData = modules.find(m => m.id === showCertificate);
+
   return (
-    <StudentShell
-      title="My Progress"
-      subtitle="Track your compliance, academic milestones, and clinical training requirements."
-      topActions={
-        <>
-          <Button variant="secondary" className="hidden rounded-full md:inline-flex">
-            Switch Program
-          </Button>
-          <Button className="hidden rounded-full md:inline-flex">Check Status</Button>
-        </>
-      }
-    >
+    <>
+      <StudentShell
+        title="My Progress"
+        subtitle="Track your compliance, academic milestones, and clinical training requirements."
+        topActions={
+          <div className="flex gap-2">
+            <button
+              onClick={() => setFilterView('all')}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                filterView === 'all'
+                  ? 'bg-primary text-white'
+                  : 'border border-border-subtle bg-white text-on-surface hover:border-primary'
+              }`}
+            >
+              All Modules
+            </button>
+            <button
+              onClick={() => setFilterView('completed')}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                filterView === 'completed'
+                  ? 'bg-success text-white'
+                  : 'border border-border-subtle bg-white text-on-surface hover:border-success'
+              }`}
+            >
+              Completed
+            </button>
+            <button
+              onClick={() => setFilterView('inprogress')}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                filterView === 'inprogress'
+                  ? 'bg-info text-white'
+                  : 'border border-border-subtle bg-white text-on-surface hover:border-info'
+              }`}
+            >
+              In Progress
+            </button>
+          </div>
+        }
+      >
       <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <section className="rounded-[18px] border border-border-subtle bg-white p-8 lg:col-span-2">
           <div className="flex flex-col items-center gap-10 md:flex-row">
-            <div className="relative flex h-48 w-48 items-center justify-center rounded-full bg-[conic-gradient(var(--color-primary)_96%,var(--color-surface-highest)_0)]">
+            <div
+              className="relative flex h-48 w-48 items-center justify-center rounded-full"
+              style={{
+                background: `conic-gradient(var(--color-primary) ${overallProgressPercent}%, var(--color-surface-highest) 0)`,
+              }}
+            >
               <div className="flex h-[79%] w-[79%] flex-col items-center justify-center rounded-full bg-white">
-                <span className="font-display text-[48px] font-bold text-primary">96%</span>
+                <span className="font-display text-[48px] font-bold text-primary">
+                  {overallProgressPercent}%
+                </span>
                 <span className="font-mono text-[12px] uppercase tracking-[0.1em] text-on-surface-variant">
                   Overall
                 </span>
@@ -144,10 +217,10 @@ export default function StudentProgressPage() {
                 Excellent Completion Pace
               </h3>
               <p className="mb-6 mt-3 text-on-surface-variant">
-                You are currently 4% away from fulfilling all academic requirements for the current
-                semester. Your clinical hours are trending ahead of the peer average.
+                You are currently focused on {currentModule.title}. This page now reflects live demo
+                state from the dashboard, learning flow, and onboarding steps.
               </p>
-              <Button className="h-12 rounded-[16px] px-6">
+              <Button className="h-12 rounded-[16px] px-6" onClick={() => advanceLearning(30)}>
                 Resume Current Module
                 <IconArrowRight className="size-4" />
               </Button>
@@ -157,8 +230,18 @@ export default function StudentProgressPage() {
 
         <section className="space-y-6">
           {[
-            { label: 'Theory Hours', value: '156 / 160', width: '97.5%', icon: IconBook2 },
-            { label: 'Clinical Hours', value: '38 / 40', width: '95%', icon: IconMedicalCross },
+            {
+              label: 'Theory Hours',
+              value: `${theoryHoursCompleted} / ${theoryHoursRequired}`,
+              width: `${Math.round((theoryHoursCompleted / theoryHoursRequired) * 100)}%`,
+              icon: IconBook2,
+            },
+            {
+              label: 'Clinical Hours',
+              value: `${clinicalHoursCompleted} / ${clinicalHoursRequired}`,
+              width: `${Math.round((clinicalHoursCompleted / clinicalHoursRequired) * 100)}%`,
+              icon: IconMedicalCross,
+            },
           ].map((item) => {
             const Icon = item.icon;
             return (
@@ -183,7 +266,9 @@ export default function StudentProgressPage() {
               Total Engagement
             </p>
             <div className="flex items-baseline gap-2">
-              <h5 className="font-mono text-[32px] font-semibold">128</h5>
+              <h5 className="font-mono text-[32px] font-semibold">
+                {(learningMinutes / 60).toFixed(1)}
+              </h5>
               <span className="text-sm opacity-80">hours active</span>
             </div>
           </div>
@@ -192,12 +277,23 @@ export default function StudentProgressPage() {
 
       <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-border-subtle bg-surface-muted/50 px-6 py-5">
-          <h4 className="font-display text-[18px] font-semibold">Curriculum Breakdown</h4>
+          <div>
+            <h4 className="font-display text-[18px] font-semibold">Curriculum Breakdown</h4>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              {filterView === 'all' && 'All modules in your program'}
+              {filterView === 'completed' && `${progressRows.length} module${progressRows.length !== 1 ? 's' : ''} completed`}
+              {filterView === 'inprogress' && `${progressRows.length} module${progressRows.length !== 1 ? 's' : ''} in progress`}
+            </p>
+          </div>
           <div className="flex gap-2">
-            <button className="rounded-[10px] border border-border-subtle p-2 hover:bg-white">
+            <button className="rounded-[10px] border border-border-subtle p-2 hover:bg-white transition" title="Filter options">
               <IconFilter className="size-5" />
             </button>
-            <button className="rounded-[10px] border border-border-subtle p-2 hover:bg-white">
+            <button
+              className="rounded-[10px] border border-border-subtle p-2 hover:bg-white transition"
+              title="Download progress report"
+              onClick={() => alert('Progress report downloaded to your device')}
+            >
               <IconDownload className="size-5" />
             </button>
           </div>
@@ -243,5 +339,117 @@ export default function StudentProgressPage() {
         </div>
       </div>
     </StudentShell>
+
+    {/* Certificate Modal */}
+    {showCertificate && selectedModuleData && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="rounded-[20px] bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 flex items-center justify-between border-b border-border-subtle bg-white px-6 py-4">
+            <div className="flex items-center gap-3">
+              <IconCertificate2 className="size-6 text-success" />
+              <h3 className="font-display text-[20px] font-bold text-on-surface">
+                {selectedModuleData.title} Certificate
+              </h3>
+            </div>
+            <button
+              onClick={() => setShowCertificate(null)}
+              className="rounded-full p-2 hover:bg-surface-low transition"
+            >
+              <IconX className="size-5 text-on-surface-variant" />
+            </button>
+          </div>
+
+          <div className="space-y-6 p-8">
+            {/* Certificate Design */}
+            <div className="rounded-[20px] border-4 border-primary bg-gradient-to-br from-primary/5 to-primary/10 p-12 text-center space-y-6">
+              <div className="flex justify-center">
+                <IconCertificate2 className="size-16 text-primary" />
+              </div>
+
+              <div className="space-y-2">
+                <p className="font-mono text-[12px] uppercase tracking-widest text-on-surface-variant">
+                  Certificate of Completion
+                </p>
+                <h2 className="font-display text-[36px] font-bold text-primary">
+                  {selectedModuleData.title}
+                </h2>
+              </div>
+
+              <div className="space-y-3 text-center">
+                <p className="text-lg text-on-surface">
+                  This certifies that
+                </p>
+                <p className="font-display text-[24px] font-semibold text-primary">
+                  Amara Singh
+                </p>
+                <p className="text-base text-on-surface">
+                  has successfully completed all learning objectives and assessments for
+                </p>
+                <p className="font-semibold text-on-surface">
+                  {selectedModuleData.summary}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-8 pt-6 text-sm">
+                <div className="text-left">
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant">
+                    Exam Score
+                  </p>
+                  <p className="font-mono text-[24px] font-bold text-primary mt-1">
+                    {selectedModuleData.examScore || '--'}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant">
+                    Completion Date
+                  </p>
+                  <p className="font-mono text-[20px] font-bold text-primary mt-1">
+                    {new Date().toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-6 border-t-2 border-primary/30">
+                <p className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant">
+                  Certificate ID
+                </p>
+                <p className="font-mono text-sm text-on-surface-variant mt-2">
+                  CERT-{selectedModuleData.id.toUpperCase()}-2026
+                </p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <Button className="flex-1 rounded-[14px] h-11" onClick={() => window.print()}>
+                <IconDownload className="size-4 mr-2" />
+                Download PDF
+              </Button>
+              <Button
+                variant="secondary"
+                className="flex-1 rounded-[14px] h-11"
+                onClick={() => setShowCertificate(null)}
+              >
+                Close
+              </Button>
+            </div>
+
+            {/* Certificate Info */}
+            <div className="rounded-[14px] bg-info/5 border border-info/20 p-4 text-sm text-on-surface-variant">
+              <p className="font-semibold text-info mb-2">About Your Certificate</p>
+              <p>
+                This certificate verifies your successful completion of the {selectedModuleData.title} module.
+                It is recognized across our network of partner institutions and employers in the healthcare sector.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

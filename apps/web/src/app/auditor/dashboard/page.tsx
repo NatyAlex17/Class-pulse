@@ -48,28 +48,17 @@ export default function AuditorDashboardPage() {
     <AuditorShell
       title="Compliance Dashboard"
       subtitle="Real-time regulatory oversight for NATP Cohort #2024-B."
-      activeItem="Compliance Dashboard"
     >
       <div className="grid gap-6">
-        <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h3 className="font-display text-[32px] font-bold tracking-[-0.03em] text-on-surface">
-              Compliance Dashboard
-            </h3>
-            <p className="mt-2 text-base text-on-surface-variant">
-              Real-time regulatory oversight for NATP Cohort #2024-B
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Button variant="secondary" className="rounded-[16px] px-5">
-              <IconShare3 className="size-4" />
-              Export Report
-            </Button>
-            <Button className="rounded-[16px] px-5">
-              <IconRosetteDiscountCheck className="size-4" />
-              Final Certification
-            </Button>
-          </div>
+        <section className="flex flex-wrap gap-3 justify-end">
+          <Button variant="secondary" className="rounded-[16px] px-5">
+            <IconShare3 className="size-4" />
+            Export Report
+          </Button>
+          <Button className="rounded-[16px] px-5">
+            <IconRosetteDiscountCheck className="size-4" />
+            Final Certification
+          </Button>
         </section>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

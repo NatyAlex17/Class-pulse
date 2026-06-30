@@ -11,8 +11,11 @@ import {
   IconFileAnalytics,
   IconHelpCircle,
   IconLayoutDashboard,
+  IconLogout,
   IconSearch,
   IconSettings,
+  IconUser,
+  IconX,
 } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -62,6 +65,24 @@ export function AdminShell({
   profileRole = 'Operations Lead',
 }: AdminShellProps) {
   const pathname = usePathname();
+  const [profileMenuOpen, setProfileMenuOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-profile-menu]')) {
+        setProfileMenuOpen(false);
+      }
+    };
+
+    if (profileMenuOpen) {
+      document.addEventListener('click', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [profileMenuOpen]);
 
   return (
     <div className="min-h-screen bg-background text-on-surface">
@@ -144,14 +165,67 @@ export function AdminShell({
             <button className="text-on-surface-variant transition hover:text-primary">
               <IconBell className="size-5" />
             </button>
-            <div className="flex items-center gap-3 border-l border-border-subtle pl-4">
-              <div className="hidden text-right sm:block">
-                <p className="text-sm font-semibold text-on-surface">{profileName}</p>
-                <p className="text-[12px] text-on-surface-variant">{profileRole}</p>
-              </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                CA
-              </div>
+            <div className="relative" data-profile-menu>
+              <button
+                onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                className="flex items-center gap-3 border-l border-border-subtle pl-4 transition hover:opacity-80"
+              >
+                <div className="hidden text-right sm:block">
+                  <p className="text-sm font-semibold text-on-surface">{profileName}</p>
+                  <p className="text-[12px] text-on-surface-variant">{profileRole}</p>
+                </div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary cursor-pointer">
+                  CA
+                </div>
+              </button>
+
+              {profileMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-56 rounded-[16px] border border-border-subtle bg-white shadow-lg z-50">
+                  <div className="border-b border-border-subtle p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                        CA
+                      </div>
+                      <div>
+                        <p className="font-semibold text-on-surface">{profileName}</p>
+                        <p className="text-[12px] text-on-surface-variant">{profileRole}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-2 space-y-1">
+                    <Link
+                      href="/admin/profile"
+                      onClick={() => setProfileMenuOpen(false)}
+                      className="flex items-center gap-3 rounded-[12px] px-4 py-2.5 text-sm text-on-surface transition hover:bg-surface-muted"
+                    >
+                      <IconUser className="size-4" />
+                      <span>My Profile</span>
+                    </Link>
+                    <Link
+                      href="/admin/settings"
+                      onClick={() => setProfileMenuOpen(false)}
+                      className="flex items-center gap-3 rounded-[12px] px-4 py-2.5 text-sm text-on-surface transition hover:bg-surface-muted"
+                    >
+                      <IconSettings className="size-4" />
+                      <span>Settings</span>
+                    </Link>
+                  </div>
+
+                  <div className="border-t border-border-subtle p-2">
+                    <button
+                      onClick={() => {
+                        setProfileMenuOpen(false);
+                        window.location.href = '/';
+                      }}
+                      className="w-full flex items-center gap-3 rounded-[12px] px-4 py-2.5 text-sm text-error transition hover:bg-error/10"
+                    >
+                      <IconLogout className="size-4" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
