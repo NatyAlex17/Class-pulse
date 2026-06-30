@@ -12,6 +12,7 @@ import {
   IconHelpCircle,
   IconLayoutDashboard,
   IconLogout,
+  IconMenu2,
   IconSearch,
   IconSettings,
   IconUser,
@@ -67,6 +68,7 @@ export function AdminShell({
 }: AdminShellProps) {
   const pathname = usePathname();
   const [profileMenuOpen, setProfileMenuOpen] = React.useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   React.useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -84,6 +86,10 @@ export function AdminShell({
       document.removeEventListener('click', handleClickOutside);
     };
   }, [profileMenuOpen]);
+
+  React.useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   return (
     <div className="min-h-screen bg-background text-on-surface">
@@ -133,9 +139,78 @@ export function AdminShell({
         </div>
       </aside>
 
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-[70] lg:hidden">
+          <button
+            aria-label="Close navigation menu"
+            className="absolute inset-0 bg-black/45"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <aside className="absolute left-0 top-0 flex h-full w-[290px] max-w-[86vw] flex-col border-r border-border-subtle bg-surface-low px-4 py-6 shadow-2xl">
+            <div className="mb-8 flex items-start justify-between gap-4 px-2">
+              <div>
+                <h1 className="font-display text-[28px] font-bold tracking-[-0.02em] text-primary">
+                  Admin Console
+                </h1>
+                <p className="mt-1 text-sm text-on-surface-variant">Healthcare Education</p>
+              </div>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="rounded-full border border-border-subtle p-2 text-on-surface-variant transition hover:bg-surface-high hover:text-primary"
+              >
+                <IconX className="size-5" />
+              </button>
+            </div>
+
+            <nav className="flex-1 space-y-2 overflow-y-auto">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(pathname, item.href);
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      'flex items-center gap-3 rounded-[16px] px-3 py-3 text-sm transition-colors',
+                      active
+                        ? 'bg-primary/5 font-semibold text-primary'
+                        : 'text-on-surface-variant hover:bg-surface-high hover:text-primary',
+                    )}
+                  >
+                    <Icon className="size-5" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <div className="mt-6 border-t border-border-subtle pt-4">
+              <Button className="mb-4 h-11 w-full rounded-[16px]">Generate Report</Button>
+              <div className="space-y-1">
+                <button className="flex w-full items-center gap-3 rounded-[14px] px-3 py-2.5 text-sm text-on-surface-variant transition hover:bg-surface-high hover:text-primary">
+                  <IconSettings className="size-5" />
+                  <span>Settings</span>
+                </button>
+                <button className="flex w-full items-center gap-3 rounded-[14px] px-3 py-2.5 text-sm text-on-surface-variant transition hover:bg-surface-high hover:text-primary">
+                  <IconHelpCircle className="size-5" />
+                  <span>Support</span>
+                </button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      )}
+
       <header className="fixed left-0 right-0 top-0 z-40 h-16 border-b border-border-subtle bg-surface px-4 lg:left-[240px] lg:px-8">
         <div className="flex h-full items-center justify-between gap-4">
-          <div className="flex min-w-0 flex-1 items-center gap-4">
+          <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-subtle text-on-surface-variant transition hover:bg-surface-high hover:text-primary lg:hidden"
+            >
+              <IconMenu2 className="size-5" />
+            </button>
             <div className="relative hidden max-w-md flex-1 md:block">
               <IconSearch className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-variant" />
               <Input className="h-11 rounded-full pl-10" placeholder={searchPlaceholder} />
@@ -161,7 +236,7 @@ export function AdminShell({
             </nav>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {topActions}
             <ThemeToggle />
             <button className="text-on-surface-variant transition hover:text-primary">
@@ -170,7 +245,7 @@ export function AdminShell({
             <div className="relative" data-profile-menu>
               <button
                 onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-                className="flex items-center gap-3 border-l border-border-subtle pl-4 transition hover:opacity-80"
+                className="flex items-center gap-3 border-l border-border-subtle pl-2 transition hover:opacity-80 sm:pl-4"
               >
                 <div className="hidden text-right sm:block">
                   <p className="text-sm font-semibold text-on-surface">{profileName}</p>
@@ -233,7 +308,7 @@ export function AdminShell({
         </div>
       </header>
 
-      <main className="pb-12 pt-16 lg:ml-[240px]">
+      <main className="pb-24 pt-16 lg:ml-[240px]">
         <div className="min-h-[calc(100vh-4rem)] px-4 py-6 sm:px-6 lg:px-8">
           <div className="mx-auto w-full max-w-[1240px]">
             <div className="mb-8">
@@ -248,6 +323,33 @@ export function AdminShell({
           </div>
         </div>
       </main>
+
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center justify-around border-t border-border-subtle bg-surface px-2 lg:hidden">
+        {[
+          navItems[0],
+          navItems[1],
+          navItems[2],
+          navItems[4],
+          { label: 'Settings', href: '/admin/settings', icon: IconSettings },
+        ].map((item) => {
+          const Icon = item.icon;
+          const active = isActive(pathname, item.href);
+
+          return (
+            <Link
+              key={`${item.href}-${item.label}`}
+              href={item.href}
+              className={cn(
+                'flex flex-col items-center gap-1 text-[10px] font-medium',
+                active ? 'text-primary' : 'text-on-surface-variant',
+              )}
+            >
+              <Icon className="size-5" />
+              <span>{item.label.split(' ')[0]}</span>
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }
