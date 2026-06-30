@@ -287,7 +287,8 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
           </div>
         </div>
 
-        <div className="max-h-[calc(92vh-176px)] overflow-y-auto px-6 py-6 sm:px-8">
+        <div className="flex flex-col max-h-[calc(92vh-176px)]">
+        <div className="flex-1 overflow-y-auto px-6 py-6 sm:px-8">
           {workflowStage === 'entrance_exam' ? (
             <section className="space-y-6">
               <div className="rounded-[22px] border border-warning/20 bg-warning/5 p-5">
@@ -343,10 +344,10 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                               key={option}
                               onClick={() => answerEntranceExamQuestion(question.id, option)}
                               className={cn(
-                                'rounded-[16px] border p-4 text-left text-sm transition',
+                                'rounded-[16px] border p-4 text-left text-sm font-medium transition',
                                 entranceExam.answers[question.id] === option
-                                  ? 'border-primary bg-primary/5 text-primary'
-                                  : 'border-border-subtle bg-surface-muted hover:border-primary/30',
+                                  ? 'border-primary bg-primary text-white shadow-md'
+                                  : 'border-border-subtle bg-white hover:border-primary hover:bg-primary/5',
                               )}
                             >
                               {option}
@@ -356,13 +357,26 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                       )}
                     </div>
                   ))}
-                  <Button disabled={!examComplete} onClick={submitEntranceExam}>
-                    Submit Entrance Exam
-                  </Button>
                 </div>
               )}
             </section>
           ) : null}
+
+          {workflowStage === 'entrance_exam' && !examComplete && (
+            <div className="sticky bottom-0 border-t border-border-subtle bg-white px-6 py-4 sm:px-8">
+              <Button disabled={!examComplete} onClick={submitEntranceExam} className="w-full">
+                Submit Entrance Exam
+              </Button>
+            </div>
+          )}
+
+          {workflowStage === 'entrance_exam' && examComplete && (
+            <div className="sticky bottom-0 border-t border-border-subtle bg-white px-6 py-4 sm:px-8">
+              <Button onClick={submitEntranceExam} className="w-full">
+                Submit Entrance Exam
+              </Button>
+            </div>
+          )}
 
           {workflowStage === 'enrollment_wizard' ? (
             <section className="space-y-6">
@@ -612,29 +626,6 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                 </div>
               ) : null}
 
-              <div className="flex items-center justify-between">
-                <Button
-                  variant="secondary"
-                  onClick={() => setEnrollmentWizardStep(wizardStep - 1)}
-                  disabled={wizardStep === 1}
-                >
-                  <IconArrowLeft className="size-4" />
-                  Back
-                </Button>
-                {wizardStep < 5 ? (
-                  <Button
-                    onClick={() => setEnrollmentWizardStep(wizardStep + 1)}
-                    disabled={!wizardStepValid}
-                  >
-                    Next
-                    <IconArrowRight className="size-4" />
-                  </Button>
-                ) : (
-                  <Button onClick={submitEnrollmentWizard} disabled={!wizardStepValid}>
-                    Submit Enrollment
-                  </Button>
-                )}
-              </div>
             </section>
           ) : null}
 
@@ -727,29 +718,6 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                 </div>
               ) : null}
 
-              <div className="flex items-center justify-between">
-                <Button
-                  variant="secondary"
-                  onClick={() => setEntranceSurveyStep(entranceSurvey.step - 1)}
-                  disabled={entranceSurvey.step === 1}
-                >
-                  <IconArrowLeft className="size-4" />
-                  Back
-                </Button>
-                {entranceSurvey.step < 5 ? (
-                  <Button
-                    onClick={() => setEntranceSurveyStep(entranceSurvey.step + 1)}
-                    disabled={!surveyStepValid}
-                  >
-                    Next Section
-                    <IconArrowRight className="size-4" />
-                  </Button>
-                ) : (
-                  <Button onClick={submitEntranceSurvey} disabled={!surveyStepValid}>
-                    Submit & Unlock Portal
-                  </Button>
-                )}
-              </div>
             </section>
           ) : null}
 
@@ -793,6 +761,67 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
               </div>
             </section>
           ) : null}
+        </div>
+
+        {/* Sticky button footer for enrollment wizard */}
+        {workflowStage === 'enrollment_wizard' && (
+          <div className="shrink-0 border-t border-border-subtle bg-white px-6 py-4 sm:px-8">
+            <div className="flex items-center justify-between gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => setEnrollmentWizardStep(wizardStep - 1)}
+                disabled={wizardStep === 1}
+              >
+                <IconArrowLeft className="size-4" />
+                Back
+              </Button>
+              {wizardStep < 5 ? (
+                <Button
+                  onClick={() => setEnrollmentWizardStep(wizardStep + 1)}
+                  disabled={!wizardStepValid}
+                  className="flex-1"
+                >
+                  Next
+                  <IconArrowRight className="size-4" />
+                </Button>
+              ) : (
+                <Button onClick={submitEnrollmentWizard} disabled={!wizardStepValid} className="flex-1">
+                  Submit Enrollment
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Sticky button footer for survey */}
+        {workflowStage === 'orientation_survey' && (
+          <div className="shrink-0 border-t border-border-subtle bg-white px-6 py-4 sm:px-8">
+            <div className="flex items-center justify-between gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => setEntranceSurveyStep(entranceSurvey.step - 1)}
+                disabled={entranceSurvey.step === 1}
+              >
+                <IconArrowLeft className="size-4" />
+                Back
+              </Button>
+              {entranceSurvey.step < 5 ? (
+                <Button
+                  onClick={() => setEntranceSurveyStep(entranceSurvey.step + 1)}
+                  disabled={!surveyStepValid}
+                  className="flex-1"
+                >
+                  Next Section
+                  <IconArrowRight className="size-4" />
+                </Button>
+              ) : (
+                <Button onClick={submitEntranceSurvey} disabled={!surveyStepValid} className="flex-1">
+                  Submit & Unlock Portal
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
         </div>
       </div>
     </div>
