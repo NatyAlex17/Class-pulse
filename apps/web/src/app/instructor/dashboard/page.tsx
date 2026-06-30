@@ -123,7 +123,7 @@ export default function InstructorDashboardPage() {
       >
       <div className="grid grid-cols-12 gap-6">
         {/* Header Section */}
-        <section className="col-span-12 overflow-hidden rounded-[22px] border border-border-subtle bg-white p-8 shadow-soft lg:col-span-8">
+        <section className="col-span-12 overflow-hidden rounded-[22px] border border-border-subtle bg-surface p-8 shadow-soft lg:col-span-8">
           <Badge variant="primary" className="mb-4">
             Certified Lead Instructor
           </Badge>
@@ -149,7 +149,7 @@ export default function InstructorDashboardPage() {
         {/* Metrics */}
         <section className="col-span-12 grid grid-cols-2 gap-4 lg:col-span-4">
           {metrics.map((metric) => (
-            <div key={metric.label} className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-soft">
+            <div key={metric.label} className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft">
               <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
                 {metric.label}
               </p>
@@ -166,7 +166,7 @@ export default function InstructorDashboardPage() {
 
           {viewMode === 'table' ? (
             // Table View
-            <div className="rounded-[20px] border border-border-subtle bg-white shadow-soft overflow-hidden">
+            <div className="rounded-[20px] border border-border-subtle bg-surface shadow-soft overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -231,7 +231,7 @@ export default function InstructorDashboardPage() {
             </div>
           ) : (
             // Graph View
-            <div className="rounded-[20px] border border-border-subtle bg-white shadow-soft p-6">
+            <div className="rounded-[20px] border border-border-subtle bg-surface shadow-soft p-6">
               <div className="space-y-6">
                 {studentsStats.map((student) => (
                   <div
@@ -312,7 +312,7 @@ export default function InstructorDashboardPage() {
                 <Link
                   key={action.title}
                   href={action.href}
-                  className="group rounded-[20px] border border-border-subtle bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-primary/30"
+                  className="group rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-primary/30"
                 >
                   <div className="flex items-start gap-4">
                     <div className="flex size-12 items-center justify-center rounded-[16px] bg-primary/10 text-primary">
@@ -331,7 +331,7 @@ export default function InstructorDashboardPage() {
         </section>
 
         <section className="col-span-12 lg:col-span-5">
-          <div className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
             <div className="mb-5 flex items-center justify-between">
               <h4 className="font-display text-[22px] font-semibold">Today&apos;s Schedule</h4>
               <IconCalendarEvent className="size-5 text-primary" />
@@ -347,7 +347,7 @@ export default function InstructorDashboardPage() {
                       <h5 className="mt-1 text-[15px] font-semibold text-on-surface">{session.title}</h5>
                       <p className="mt-1 text-sm text-on-surface-variant">{session.site}</p>
                     </div>
-                    <div className="rounded-full bg-white px-3 py-2 font-mono text-[12px] font-semibold text-on-surface">
+                    <div className="rounded-full bg-surface px-3 py-2 font-mono text-[12px] font-semibold text-on-surface">
                       {session.time}
                     </div>
                   </div>
@@ -358,7 +358,7 @@ export default function InstructorDashboardPage() {
         </section>
 
         <section className="col-span-12 lg:col-span-8">
-          <div className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
             <div className="mb-5 flex items-center justify-between">
               <h4 className="font-display text-[22px] font-semibold">Students Requiring Review</h4>
               <Link href="/instructor/students" className="text-sm font-semibold text-primary hover:underline">
@@ -414,7 +414,7 @@ export default function InstructorDashboardPage() {
       {/* Student Detail Modal */}
       {selectedStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl rounded-[24px] bg-white p-8 shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-2xl rounded-[24px] bg-surface p-8 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-on-surface">{selectedStudent.name}</h2>

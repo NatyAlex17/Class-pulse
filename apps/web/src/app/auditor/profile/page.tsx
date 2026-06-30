@@ -12,7 +12,7 @@ export default function AuditorProfilePage() {
       subtitle="View and manage your auditor profile and credentials."
     >
       <div className="max-w-2xl space-y-6">
-        <section className="rounded-[20px] border border-border-subtle bg-white p-8 shadow-soft">
+        <section className="rounded-[20px] border border-border-subtle bg-surface p-8 shadow-soft">
           <div className="mb-8 flex items-center gap-6">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-3xl font-semibold text-primary">
               AA
@@ -61,7 +61,7 @@ export default function AuditorProfilePage() {
           </div>
         </section>
 
-        <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+        <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
           <h3 className="mb-6 font-display text-[22px] font-semibold text-on-surface">Credentials & Certifications</h3>
           <div className="space-y-3">
             {[
@@ -78,7 +78,7 @@ export default function AuditorProfilePage() {
           </div>
         </section>
 
-        <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+        <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
           <h3 className="mb-6 font-display text-[22px] font-semibold text-on-surface">Programs Assigned</h3>
           <div className="space-y-3">
             {[
@@ -93,7 +93,7 @@ export default function AuditorProfilePage() {
           </div>
         </section>
 
-        <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+        <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
           <h3 className="mb-6 font-display text-[22px] font-semibold text-on-surface">Account Actions</h3>
           <div className="space-y-3">
             <Button variant="secondary" className="w-full rounded-[12px]">

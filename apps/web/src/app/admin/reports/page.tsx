@@ -140,7 +140,7 @@ export default function AdminReportsPage() {
       <div className="grid gap-6">
         <div className="grid gap-4 md:grid-cols-3">
           {cards.map((card) => (
-            <div key={card.title} className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-primary/20">
+            <div key={card.title} className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-primary/20">
               <div className="flex items-center justify-between">
                 <h3 className="font-display text-[20px] font-semibold text-on-surface">{card.title}</h3>
                 <Badge variant="primary">{card.badge}</Badge>
@@ -155,7 +155,7 @@ export default function AdminReportsPage() {
         </div>
 
         {/* Enrollment Trend Chart */}
-        <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+        <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
           <h3 className="mb-4 font-display text-[22px] font-semibold text-on-surface">Enrollment Velocity (30 Days)</h3>
           <ResponsiveContainer width="100%" height={350}>
             <LineChart data={enrollmentTrendData}>
@@ -177,7 +177,7 @@ export default function AdminReportsPage() {
         {/* Two Column Grid for Charts */}
         <div className="grid gap-6 md:grid-cols-2">
           {/* Application Status Pie Chart */}
-          <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+          <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
             <h3 className="mb-4 font-display text-[22px] font-semibold text-on-surface">Application Status Distribution</h3>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -205,7 +205,7 @@ export default function AdminReportsPage() {
           </section>
 
           {/* Daily Applications by Time */}
-          <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+          <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
             <h3 className="mb-4 font-display text-[22px] font-semibold text-on-surface">Applications by Time of Day</h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={dailyApplicationsData}>
@@ -226,7 +226,7 @@ export default function AdminReportsPage() {
         </div>
 
         {/* Program Enrollment Comparison */}
-        <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+        <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
           <h3 className="mb-4 font-display text-[22px] font-semibold text-on-surface">Program Enrollment Status</h3>
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={programEnrollmentData}>
@@ -247,7 +247,7 @@ export default function AdminReportsPage() {
         </section>
 
         {/* Compliance Metrics Area Chart */}
-        <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+        <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
           <h3 className="mb-4 font-display text-[22px] font-semibold text-on-surface">Compliance Metrics by Program</h3>
           <ResponsiveContainer width="100%" height={350}>
             <AreaChart data={complianceData}>
@@ -268,7 +268,7 @@ export default function AdminReportsPage() {
         </section>
 
         {/* Processing Time Analysis */}
-        <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+        <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
           <h3 className="mb-4 font-display text-[22px] font-semibold text-on-surface">Average Processing Time by Stage</h3>
           <ResponsiveContainer width="100%" height={350}>
             <ScatterChart

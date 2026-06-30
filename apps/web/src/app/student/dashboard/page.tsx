@@ -110,7 +110,7 @@ export default function StudentDashboardPage() {
     >
       <div className="grid grid-cols-12 gap-6">
         <section className="col-span-12 lg:col-span-8">
-          <div className="overflow-hidden rounded-[20px] border border-border-subtle bg-white p-6 shadow-sm sm:p-8">
+          <div className="overflow-hidden rounded-[20px] border border-border-subtle bg-surface p-6 shadow-sm sm:p-8">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div className="max-w-2xl">
                 <Badge variant="primary" className="mb-4">
@@ -158,7 +158,7 @@ export default function StudentDashboardPage() {
                     'flex items-center justify-between rounded-[14px] border px-4 py-3 text-left text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60',
                     todayTheoryCheckedIn
                       ? 'border-success/20 bg-success/10 text-success'
-                      : 'border-border-subtle bg-white hover:border-primary/30',
+                      : 'border-border-subtle bg-surface hover:border-primary/30',
                   )}
                 >
                   <span className="flex items-center gap-2">
@@ -174,7 +174,7 @@ export default function StudentDashboardPage() {
                     'flex items-center justify-between rounded-[14px] border px-4 py-3 text-left text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60',
                     todayClinicalCheckedIn
                       ? 'border-success/20 bg-success/10 text-success'
-                      : 'border-border-subtle bg-white hover:border-primary/30',
+                      : 'border-border-subtle bg-surface hover:border-primary/30',
                   )}
                 >
                   <span className="flex items-center gap-2">
@@ -186,7 +186,7 @@ export default function StudentDashboardPage() {
                 <button
                   onClick={() => reportAbsence('future')}
                   disabled={!portalUnlocked}
-                  className="rounded-[14px] border border-border-subtle bg-white px-4 py-3 text-left text-sm font-semibold text-on-surface transition hover:border-primary/30 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-[14px] border border-border-subtle bg-surface px-4 py-3 text-left text-sm font-semibold text-on-surface transition hover:border-primary/30 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Submit planned absence for next session
                 </button>
@@ -197,7 +197,7 @@ export default function StudentDashboardPage() {
 
         <section className="col-span-12 grid grid-cols-2 gap-4 lg:col-span-4">
           {metrics.map((metric) => (
-            <div key={metric.label} className="rounded-[18px] border border-border-subtle bg-white p-4">
+            <div key={metric.label} className="rounded-[18px] border border-border-subtle bg-surface p-4">
               <p className="font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant">
                 {metric.label}
               </p>
@@ -212,7 +212,7 @@ export default function StudentDashboardPage() {
         </section>
 
         <section className="col-span-12 space-y-6 lg:col-span-8">
-          <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+          <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
             <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h4 className="font-display text-[22px] font-semibold text-on-surface">
@@ -256,7 +256,7 @@ export default function StudentDashboardPage() {
           </div>
 
           <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-            <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+            <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h4 className="font-display text-[22px] font-semibold text-on-surface">
                   Curriculum Progress
@@ -297,7 +297,7 @@ export default function StudentDashboardPage() {
               </div>
             </div>
 
-            <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+            <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h4 className="font-display text-[22px] font-semibold text-on-surface">
                   Upcoming Sessions
@@ -333,7 +333,7 @@ export default function StudentDashboardPage() {
           </div>
 
           <div className="grid gap-6 lg:grid-cols-2">
-            <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+            <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
               <div className="mb-4 flex items-center gap-2">
                 <IconNotebook className="size-5 text-primary" />
                 <h4 className="font-display text-[20px] font-semibold text-on-surface">
@@ -367,7 +367,7 @@ export default function StudentDashboardPage() {
               )}
             </div>
 
-            <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+            <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
               <div className="mb-4 flex items-center gap-2">
                 <IconQuestionMark className="size-5 text-primary" />
                 <h4 className="font-display text-[20px] font-semibold text-on-surface">
@@ -405,7 +405,7 @@ export default function StudentDashboardPage() {
         </section>
 
         <section className="col-span-12 space-y-6 lg:col-span-4">
-          <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-white">
+          <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-surface">
             <div className="flex items-center justify-between border-b border-border-subtle p-5">
               <h4 className="font-display text-[18px] font-semibold">To-Do List</h4>
               <span className="rounded bg-error-container px-2 py-0.5 text-[11px] font-bold text-error">
@@ -437,7 +437,7 @@ export default function StudentDashboardPage() {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-white">
+          <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-surface">
             <div className="flex items-center justify-between border-b border-border-subtle p-5">
               <h4 className="font-display text-[18px] font-semibold">Assignments</h4>
               <Badge variant="warning">
@@ -464,7 +464,7 @@ export default function StudentDashboardPage() {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-white">
+          <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-surface">
             <div className="border-b border-border-subtle p-5">
               <div className="flex items-center justify-between gap-3">
                 <h4 className="font-display text-[18px] font-semibold">Instructor Messages</h4>
@@ -508,7 +508,7 @@ export default function StudentDashboardPage() {
             </div>
             <p className="text-sm text-white/80">{lastAction}</p>
             <Link href="/student/documents">
-              <Button variant="secondary" className="mt-4 rounded-[12px] bg-white text-primary hover:bg-primary-fixed">
+              <Button variant="secondary" className="mt-4 rounded-[12px] bg-surface text-primary hover:bg-primary-fixed">
                 View Student Record
                 <IconArrowRight className="size-4" />
               </Button>

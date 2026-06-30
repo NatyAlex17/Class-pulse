@@ -163,7 +163,7 @@ export default function StudentProgressPage() {
               className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                 filterView === 'all'
                   ? 'bg-primary text-white'
-                  : 'border border-border-subtle bg-white text-on-surface hover:border-primary'
+                  : 'border border-border-subtle bg-surface text-on-surface hover:border-primary'
               }`}
             >
               All Modules
@@ -173,7 +173,7 @@ export default function StudentProgressPage() {
               className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                 filterView === 'completed'
                   ? 'bg-success text-white'
-                  : 'border border-border-subtle bg-white text-on-surface hover:border-success'
+                  : 'border border-border-subtle bg-surface text-on-surface hover:border-success'
               }`}
             >
               Completed
@@ -183,7 +183,7 @@ export default function StudentProgressPage() {
               className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                 filterView === 'inprogress'
                   ? 'bg-info text-white'
-                  : 'border border-border-subtle bg-white text-on-surface hover:border-info'
+                  : 'border border-border-subtle bg-surface text-on-surface hover:border-info'
               }`}
             >
               In Progress
@@ -192,7 +192,7 @@ export default function StudentProgressPage() {
         }
       >
       <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <section className="rounded-[18px] border border-border-subtle bg-white p-8 lg:col-span-2">
+        <section className="rounded-[18px] border border-border-subtle bg-surface p-8 lg:col-span-2">
           <div className="flex flex-col items-center gap-10 md:flex-row">
             <div
               className="relative flex h-48 w-48 items-center justify-center rounded-full"
@@ -200,7 +200,7 @@ export default function StudentProgressPage() {
                 background: `conic-gradient(var(--color-primary) ${overallProgressPercent}%, var(--color-surface-highest) 0)`,
               }}
             >
-              <div className="flex h-[79%] w-[79%] flex-col items-center justify-center rounded-full bg-white">
+              <div className="flex h-[79%] w-[79%] flex-col items-center justify-center rounded-full bg-surface">
                 <span className="font-display text-[48px] font-bold text-primary">
                   {overallProgressPercent}%
                 </span>
@@ -245,7 +245,7 @@ export default function StudentProgressPage() {
           ].map((item) => {
             const Icon = item.icon;
             return (
-              <div key={item.label} className="overflow-hidden rounded-[18px] border border-border-subtle bg-white p-6">
+              <div key={item.label} className="overflow-hidden rounded-[18px] border border-border-subtle bg-surface p-6">
                 <div className="mb-4 flex items-start justify-between">
                   <div>
                     <p className="font-mono text-[12px] uppercase tracking-[0.1em] text-on-surface-variant">
@@ -275,7 +275,7 @@ export default function StudentProgressPage() {
         </section>
       </div>
 
-      <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-white shadow-sm">
+      <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-surface shadow-sm">
         <div className="flex items-center justify-between border-b border-border-subtle bg-surface-muted/50 px-6 py-5">
           <div>
             <h4 className="font-display text-[18px] font-semibold">Curriculum Breakdown</h4>
@@ -286,11 +286,11 @@ export default function StudentProgressPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <button className="rounded-[10px] border border-border-subtle p-2 hover:bg-white transition" title="Filter options">
+            <button className="rounded-[10px] border border-border-subtle p-2 hover:bg-surface transition" title="Filter options">
               <IconFilter className="size-5" />
             </button>
             <button
-              className="rounded-[10px] border border-border-subtle p-2 hover:bg-white transition"
+              className="rounded-[10px] border border-border-subtle p-2 hover:bg-surface transition"
               title="Download progress report"
               onClick={() => alert('Progress report downloaded to your device')}
             >
@@ -311,7 +311,7 @@ export default function StudentProgressPage() {
       </div>
 
       <div className="mt-8 flex flex-col gap-6 md:flex-row">
-        <div className="flex-1 rounded-[18px] border border-primary/10 bg-[rgb(238,242,255)] p-6">
+        <div className="flex-1 rounded-[18px] border border-primary/10 bg-surface-low p-6">
           <div className="flex items-start gap-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white">
               <IconSparkles className="size-5" />
@@ -330,7 +330,7 @@ export default function StudentProgressPage() {
             </div>
           </div>
         </div>
-        <div className="flex w-full flex-col items-center justify-center rounded-[18px] border border-border-subtle bg-white p-6 text-center md:w-72">
+        <div className="flex w-full flex-col items-center justify-center rounded-[18px] border border-border-subtle bg-surface p-6 text-center md:w-72">
           <IconRosetteDiscountCheck className="mb-3 size-10 text-success" />
           <h5 className="font-semibold text-on-surface">Compliance Verified</h5>
           <p className="mt-1 text-xs text-on-surface-variant">
@@ -343,8 +343,8 @@ export default function StudentProgressPage() {
     {/* Certificate Modal */}
     {showCertificate && selectedModuleData && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div className="rounded-[20px] bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-          <div className="sticky top-0 flex items-center justify-between border-b border-border-subtle bg-white px-6 py-4">
+        <div className="rounded-[20px] bg-surface w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 flex items-center justify-between border-b border-border-subtle bg-surface px-6 py-4">
             <div className="flex items-center gap-3">
               <IconCertificate2 className="size-6 text-success" />
               <h3 className="font-display text-[20px] font-bold text-on-surface">

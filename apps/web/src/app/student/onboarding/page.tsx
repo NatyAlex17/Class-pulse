@@ -60,13 +60,13 @@ export default function StudentOnboardingPage() {
                   : `Workflow stage: ${workflowStage.replaceAll('_', ' ')}`}
               </Badge>
             </div>
-            <div className="mt-6 h-2 overflow-hidden rounded-full bg-white/15">
-              <div className="h-full rounded-full bg-white" style={{ width: `${onboardingProgressPercent}%` }} />
+            <div className="mt-6 h-2 overflow-hidden rounded-full bg-surface/15">
+              <div className="h-full rounded-full bg-surface" style={{ width: `${onboardingProgressPercent}%` }} />
             </div>
             <p className="mt-3 text-sm text-white/80">{onboardingProgressPercent}% complete</p>
           </div>
 
-          <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+          <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
             <div className="mb-4 flex items-center gap-2">
               <IconShieldCheck className="size-5 text-primary" />
               <h3 className="font-display text-[18px] font-semibold text-on-surface">Acknowledgements</h3>
@@ -101,7 +101,7 @@ export default function StudentOnboardingPage() {
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+          <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
             <div className="mb-4 flex items-center gap-2">
               <IconFileUpload className="size-5 text-primary" />
               <h3 className="font-display text-[18px] font-semibold text-on-surface">Demo Upload Checkpoints</h3>
@@ -133,7 +133,7 @@ export default function StudentOnboardingPage() {
           </div>
         </section>
 
-        <section className="rounded-[20px] border border-border-subtle bg-white p-6 sm:p-8">
+        <section className="rounded-[20px] border border-border-subtle bg-surface p-6 sm:p-8">
           <div className="mb-6 flex items-center justify-between gap-3">
             <div>
               <h2 className="font-display text-[28px] font-bold tracking-[-0.02em] text-on-surface">
@@ -173,13 +173,13 @@ export default function StudentOnboardingPage() {
               <h3 className="font-display text-[18px] font-semibold text-on-surface">Submission Summary</h3>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-[16px] bg-white p-4">
+              <div className="rounded-[16px] bg-surface p-4">
                 <p className="font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant">Questions</p>
                 <p className="mt-2 font-mono text-[28px] font-semibold text-primary">
                   {onboardingQuestions.filter((question) => question.answer.trim()).length}/{onboardingQuestions.length}
                 </p>
               </div>
-              <div className="rounded-[16px] bg-white p-4">
+              <div className="rounded-[16px] bg-surface p-4">
                 <p className="font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant">Readiness checks</p>
                 <p className="mt-2 font-mono text-[28px] font-semibold text-primary">
                   {Object.values(acknowledgements).filter(Boolean).length + Object.values(readinessUploads).filter(Boolean).length}/6

@@ -24,6 +24,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 type AuditorNavItem = {
   label: string;
@@ -159,6 +160,7 @@ export function AuditorShell({
                 placeholder={searchPlaceholder}
               />
             </div>
+            <ThemeToggle />
             <button className="text-on-surface-variant transition hover:text-primary">
               <IconBell className="size-5" />
             </button>
@@ -187,7 +189,7 @@ export function AuditorShell({
               </button>
 
               {profileMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 rounded-[16px] border border-border-subtle bg-white shadow-lg z-50">
+                <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-[16px] border border-border-subtle bg-surface shadow-lg">
                   <div className="border-b border-border-subtle p-4">
                     <div className="flex items-center gap-3">
                       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
@@ -257,7 +259,7 @@ export function AuditorShell({
         </div>
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center justify-around border-t border-border-subtle bg-white px-2 lg:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center justify-around border-t border-border-subtle bg-surface px-2 lg:hidden">
         {[
           navItems[0],
           navItems[1],

@@ -120,7 +120,7 @@ export default function InstructorInboxPage() {
     >
       <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_280px] h-[calc(100vh-200px)]">
         {/* Conversations List - Fixed */}
-        <section className="rounded-[20px] border border-border-subtle bg-white shadow-soft flex flex-col overflow-hidden">
+        <section className="rounded-[20px] border border-border-subtle bg-surface shadow-soft flex flex-col overflow-hidden">
           <div className="border-b border-border-subtle p-5 shrink-0">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-display text-[22px] font-semibold">Messages</h3>
@@ -160,7 +160,7 @@ export default function InstructorInboxPage() {
         </section>
 
         {/* Chat View */}
-        <section className="flex min-h-[620px] flex-col rounded-[20px] border border-border-subtle bg-white shadow-soft overflow-hidden">
+        <section className="flex min-h-[620px] flex-col rounded-[20px] border border-border-subtle bg-surface shadow-soft overflow-hidden">
           {/* Chat Header */}
           <div className="flex items-center justify-between border-b border-border-subtle p-5 shrink-0">
             <div>
@@ -187,7 +187,7 @@ export default function InstructorInboxPage() {
                 className={`max-w-[78%] rounded-[18px] px-4 py-3 text-sm leading-6 shadow-sm ${
                   message.from === 'instructor'
                     ? 'ml-auto rounded-br-md bg-primary text-white'
-                    : 'rounded-bl-md bg-white text-on-surface'
+                    : 'rounded-bl-md bg-surface text-on-surface'
                 }`}
               >
                 <p>{message.body}</p>
@@ -200,7 +200,7 @@ export default function InstructorInboxPage() {
           </div>
 
           {/* Message Input - Sticky */}
-          <div className="shrink-0 border-t border-border-subtle bg-white p-4 sticky bottom-0">
+          <div className="shrink-0 border-t border-border-subtle bg-surface p-4 sticky bottom-0">
             <div className="flex items-center gap-3 rounded-[18px] border border-border-subtle bg-surface-muted px-4 py-3">
               <button className="text-on-surface-variant transition hover:text-primary">
                 <IconPaperclip className="size-4" />
@@ -229,7 +229,7 @@ export default function InstructorInboxPage() {
         </section>
 
         {/* Conversation Context - Fixed */}
-        <aside className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-soft overflow-y-auto">
+        <aside className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft overflow-y-auto">
           <h3 className="font-display text-[20px] font-semibold">Details</h3>
           <div className="mt-5 space-y-4">
             <div className="rounded-[18px] border border-border-subtle bg-surface-muted p-4">

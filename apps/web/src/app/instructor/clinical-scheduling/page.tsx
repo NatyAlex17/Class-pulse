@@ -128,7 +128,7 @@ export default function InstructorClinicalSchedulingPage() {
     >
       <div className="space-y-6">
         {/* Gantt Chart */}
-        <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft overflow-x-auto">
+        <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft overflow-x-auto">
           <div className="mb-5">
             <h3 className="font-display text-[22px] font-semibold">Week Schedule (June 30 - July 4)</h3>
           </div>
@@ -157,7 +157,7 @@ export default function InstructorClinicalSchedulingPage() {
                       className={`relative min-h-24 rounded-[8px] border-2 p-2 transition ${
                         slotContent
                           ? 'border-primary bg-primary/10'
-                          : 'border-dashed border-border-subtle bg-white hover:border-primary hover:bg-primary/5'
+                          : 'border-dashed border-border-subtle bg-surface hover:border-primary hover:bg-primary/5'
                       }`}
                     >
                       {slotContent ? (
@@ -204,7 +204,7 @@ export default function InstructorClinicalSchedulingPage() {
         </section>
 
         {/* Summary */}
-        <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+        <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
           <h3 className="mb-4 font-display text-[22px] font-semibold">Summary</h3>
           <div className="grid gap-4 md:grid-cols-4">
             <div className="rounded-[14px] bg-surface-muted p-4">
@@ -232,7 +232,7 @@ export default function InstructorClinicalSchedulingPage() {
       {/* Add Student Modal */}
       {showAddModal && selectedSlot && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-[24px] bg-white p-8 shadow-xl">
+          <div className="w-full max-w-md rounded-[24px] bg-surface p-8 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-2xl font-bold text-on-surface">
                 Add to {days[selectedSlot.day]} at {selectedSlot.time}

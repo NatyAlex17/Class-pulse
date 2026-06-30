@@ -239,8 +239,8 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm">
-      <div className="max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-[28px] bg-white shadow-2xl">
-        <div className="flex items-start justify-between gap-6 border-b border-border-subtle bg-primary px-6 py-5 text-white sm:px-8">
+      <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] bg-surface shadow-2xl">
+        <div className="shrink-0 flex items-start justify-between gap-6 border-b border-border-subtle bg-primary px-6 py-5 text-white sm:px-8">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-white/75">
               Student Journey
@@ -255,13 +255,13 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
           </div>
           <button
             onClick={onClose}
-            className="rounded-full border border-white/20 p-2 text-white/80 transition hover:bg-white/10 hover:text-white"
+            className="rounded-full border border-white/20 p-2 text-white/80 transition hover:bg-surface/10 hover:text-white"
           >
             <IconX className="size-5" />
           </button>
         </div>
 
-        <div className="border-b border-border-subtle bg-surface-low px-6 py-4 sm:px-8">
+        <div className="shrink-0 border-b border-border-subtle bg-surface-low px-6 py-4 sm:px-8">
           <div className="flex flex-wrap items-center gap-3">
             {[
               'Entrance Exam',
@@ -276,7 +276,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                     'flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold',
                     index + 1 <= stageIndex
                       ? 'bg-primary text-white'
-                      : 'bg-white text-on-surface-variant',
+                      : 'bg-surface text-on-surface-variant',
                   )}
                 >
                   {index + 1 < stageIndex ? <IconCheck className="size-4" /> : index + 1}
@@ -287,10 +287,10 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
           </div>
         </div>
 
-        <div className="flex flex-col max-h-[calc(92vh-176px)]">
-        <div className="flex-1 overflow-y-auto px-6 py-6 sm:px-8">
-          {workflowStage === 'entrance_exam' ? (
-            <section className="space-y-6">
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8">
+            {workflowStage === 'entrance_exam' ? (
+              <section className="space-y-6">
               <div className="rounded-[22px] border border-warning/20 bg-warning/5 p-5">
                 <p className="text-sm leading-6 text-on-surface-variant">
                   Passing score for the demo is 5 out of 6. Just like the reference app, this gates
@@ -325,7 +325,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
               ) : (
                 <div className="space-y-5">
                   {examQuestions.map((question, index) => (
-                    <div key={question.id} className="rounded-[20px] border border-border-subtle bg-white p-5">
+                    <div key={question.id} className="rounded-[20px] border border-border-subtle bg-surface p-5">
                       <p className="mb-3 text-sm font-semibold text-on-surface">
                         {index + 1}. {question.prompt}
                       </p>
@@ -347,7 +347,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                                 'rounded-[16px] border p-4 text-left text-sm font-medium transition',
                                 entranceExam.answers[question.id] === option
                                   ? 'border-primary bg-primary text-white shadow-md'
-                                  : 'border-border-subtle bg-white hover:border-primary hover:bg-primary/5',
+                                  : 'border-border-subtle bg-surface hover:border-primary hover:bg-primary/5',
                               )}
                             >
                               {option}
@@ -359,27 +359,11 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                   ))}
                 </div>
               )}
-            </section>
-          ) : null}
+              </section>
+            ) : null}
 
-          {workflowStage === 'entrance_exam' && !examComplete && (
-            <div className="sticky bottom-0 border-t border-border-subtle bg-white px-6 py-4 sm:px-8">
-              <Button disabled={!examComplete} onClick={submitEntranceExam} className="w-full">
-                Submit Entrance Exam
-              </Button>
-            </div>
-          )}
-
-          {workflowStage === 'entrance_exam' && examComplete && (
-            <div className="sticky bottom-0 border-t border-border-subtle bg-white px-6 py-4 sm:px-8">
-              <Button onClick={submitEntranceExam} className="w-full">
-                Submit Entrance Exam
-              </Button>
-            </div>
-          )}
-
-          {workflowStage === 'enrollment_wizard' ? (
-            <section className="space-y-6">
+            {workflowStage === 'enrollment_wizard' ? (
+              <section className="space-y-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <Badge variant="info">Step {wizardStep} of 5</Badge>
@@ -408,7 +392,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                       'mt-4 w-full rounded-[18px] border p-5 text-left transition',
                       enrollmentWizard.hhaAddon
                         ? 'border-primary bg-primary/5'
-                        : 'border-border-subtle bg-white hover:border-primary/30',
+                        : 'border-border-subtle bg-surface hover:border-primary/30',
                     )}
                   >
                     <div className="flex items-center justify-between">
@@ -470,7 +454,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                             'w-full rounded-[16px] border p-4 text-left transition',
                             enrollmentWizard.shipping === value
                               ? 'border-primary bg-primary/5'
-                              : 'border-border-subtle bg-white hover:border-primary/30',
+                              : 'border-border-subtle bg-surface hover:border-primary/30',
                           )}
                         >
                           {label}
@@ -500,7 +484,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                             'w-full rounded-[16px] border p-4 text-left transition',
                             enrollmentWizard.wantsToTestAtDaisy === value
                               ? 'border-primary bg-primary/5'
-                              : 'border-border-subtle bg-white hover:border-primary/30',
+                              : 'border-border-subtle bg-surface hover:border-primary/30',
                           )}
                         >
                           {label}
@@ -560,7 +544,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                             'flex w-full items-start gap-3 rounded-[16px] border p-4 text-left transition',
                             checked
                               ? 'border-success/20 bg-success/5'
-                              : 'border-border-subtle bg-white hover:border-primary/30',
+                              : 'border-border-subtle bg-surface hover:border-primary/30',
                           )}
                         >
                           <div
@@ -583,7 +567,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                     <h4 className="font-display text-[22px] font-semibold text-on-surface">
                       Step 5: Review & Sign
                     </h4>
-                    <div className="mt-5 rounded-[18px] bg-white p-5">
+                    <div className="mt-5 rounded-[18px] bg-surface p-5">
                       <p className="text-sm text-on-surface-variant">
                         Registration, tuition, optional HHA add-on, and delivery preference are now
                         staged in local state exactly like a submitted enrollment packet.
@@ -626,11 +610,11 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                 </div>
               ) : null}
 
-            </section>
-          ) : null}
+              </section>
+            ) : null}
 
-          {workflowStage === 'admin_review' ? (
-            <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+            {workflowStage === 'admin_review' ? (
+              <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
               <div className="rounded-[22px] bg-[linear-gradient(135deg,#11244a,#1a2d58,#1f4da1)] p-6 text-white">
                 <Badge variant="warning">Pending Review</Badge>
                 <h3 className="mt-4 font-display text-[28px] font-semibold">
@@ -663,11 +647,11 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                   </Button>
                 </div>
               </div>
-            </section>
-          ) : null}
+              </section>
+            ) : null}
 
-          {workflowStage === 'orientation_survey' ? (
-            <section className="space-y-6">
+            {workflowStage === 'orientation_survey' ? (
+              <section className="space-y-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <Badge variant="primary">Section {entranceSurvey.step} of 5</Badge>
@@ -718,11 +702,11 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                 </div>
               ) : null}
 
-            </section>
-          ) : null}
+              </section>
+            ) : null}
 
-          {workflowStage === 'active' ? (
-            <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+            {workflowStage === 'active' ? (
+              <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
               <div className="rounded-[22px] bg-[linear-gradient(135deg,#0b7a53,#159a6d,#1db581)] p-6 text-white">
                 <Badge variant="success">Portal Active</Badge>
                 <h3 className="mt-4 font-display text-[30px] font-semibold">
@@ -746,7 +730,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                   ].map((item) => (
                     <div
                       key={item.label}
-                      className="flex items-center gap-3 rounded-[16px] border border-border-subtle bg-white p-4"
+                      className="flex items-center gap-3 rounded-[16px] border border-border-subtle bg-surface p-4"
                     >
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success/10 text-success">
                         <item.icon className="size-5" />
@@ -759,69 +743,85 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                   Continue To Portal
                 </Button>
               </div>
-            </section>
-          ) : null}
-        </div>
-
-        {/* Sticky button footer for enrollment wizard */}
-        {workflowStage === 'enrollment_wizard' && (
-          <div className="shrink-0 border-t border-border-subtle bg-white px-6 py-4 sm:px-8">
-            <div className="flex items-center justify-between gap-3">
-              <Button
-                variant="secondary"
-                onClick={() => setEnrollmentWizardStep(wizardStep - 1)}
-                disabled={wizardStep === 1}
-              >
-                <IconArrowLeft className="size-4" />
-                Back
-              </Button>
-              {wizardStep < 5 ? (
-                <Button
-                  onClick={() => setEnrollmentWizardStep(wizardStep + 1)}
-                  disabled={!wizardStepValid}
-                  className="flex-1"
-                >
-                  Next
-                  <IconArrowRight className="size-4" />
-                </Button>
-              ) : (
-                <Button onClick={submitEnrollmentWizard} disabled={!wizardStepValid} className="flex-1">
-                  Submit Enrollment
-                </Button>
-              )}
-            </div>
+              </section>
+            ) : null}
           </div>
-        )}
 
-        {/* Sticky button footer for survey */}
-        {workflowStage === 'orientation_survey' && (
-          <div className="shrink-0 border-t border-border-subtle bg-white px-6 py-4 sm:px-8">
-            <div className="flex items-center justify-between gap-3">
-              <Button
-                variant="secondary"
-                onClick={() => setEntranceSurveyStep(entranceSurvey.step - 1)}
-                disabled={entranceSurvey.step === 1}
-              >
-                <IconArrowLeft className="size-4" />
-                Back
+          {workflowStage === 'entrance_exam' && (
+            <div className="shrink-0 border-t border-border-subtle bg-surface px-6 py-4 sm:px-8">
+              <Button disabled={!examComplete} onClick={submitEntranceExam} className="w-full">
+                Submit Entrance Exam
               </Button>
-              {entranceSurvey.step < 5 ? (
-                <Button
-                  onClick={() => setEntranceSurveyStep(entranceSurvey.step + 1)}
-                  disabled={!surveyStepValid}
-                  className="flex-1"
-                >
-                  Next Section
-                  <IconArrowRight className="size-4" />
-                </Button>
-              ) : (
-                <Button onClick={submitEntranceSurvey} disabled={!surveyStepValid} className="flex-1">
-                  Submit & Unlock Portal
-                </Button>
-              )}
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Sticky button footer for enrollment wizard */}
+          {workflowStage === 'enrollment_wizard' && (
+            <div className="shrink-0 border-t border-border-subtle bg-surface px-6 py-4 sm:px-8">
+              <div className="flex items-center justify-between gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={() => setEnrollmentWizardStep(wizardStep - 1)}
+                  disabled={wizardStep === 1}
+                >
+                  <IconArrowLeft className="size-4" />
+                  Back
+                </Button>
+                {wizardStep < 5 ? (
+                  <Button
+                    onClick={() => setEnrollmentWizardStep(wizardStep + 1)}
+                    disabled={!wizardStepValid}
+                    className="flex-1"
+                  >
+                    Next
+                    <IconArrowRight className="size-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={submitEnrollmentWizard}
+                    disabled={!wizardStepValid}
+                    className="flex-1"
+                  >
+                    Submit Enrollment
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Sticky button footer for survey */}
+          {workflowStage === 'orientation_survey' && (
+            <div className="shrink-0 border-t border-border-subtle bg-surface px-6 py-4 sm:px-8">
+              <div className="flex items-center justify-between gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={() => setEntranceSurveyStep(entranceSurvey.step - 1)}
+                  disabled={entranceSurvey.step === 1}
+                >
+                  <IconArrowLeft className="size-4" />
+                  Back
+                </Button>
+                {entranceSurvey.step < 5 ? (
+                  <Button
+                    onClick={() => setEntranceSurveyStep(entranceSurvey.step + 1)}
+                    disabled={!surveyStepValid}
+                    className="flex-1"
+                  >
+                    Next Section
+                    <IconArrowRight className="size-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={submitEntranceSurvey}
+                    disabled={!surveyStepValid}
+                    className="flex-1"
+                  >
+                    Submit & Unlock Portal
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

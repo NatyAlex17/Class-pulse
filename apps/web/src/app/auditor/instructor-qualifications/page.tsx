@@ -44,17 +44,17 @@ export default function AuditorInstructorQualificationsPage() {
     >
       <div className="grid gap-6">
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
             <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Total Instructors</p>
             <p className="mt-2 font-mono text-[32px] font-semibold text-primary">{instructors.length}</p>
             <p className="mt-3 text-sm text-on-surface-variant">Active instructors</p>
           </div>
-          <div className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
             <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Compliant</p>
             <p className="mt-2 font-mono text-[32px] font-semibold text-success">3</p>
             <p className="mt-3 text-sm text-on-surface-variant">All credentials valid</p>
           </div>
-          <div className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
             <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Review Required</p>
             <p className="mt-2 font-mono text-[32px] font-semibold text-warning">1</p>
             <p className="mt-3 text-sm text-on-surface-variant">Pending verification</p>
@@ -63,7 +63,7 @@ export default function AuditorInstructorQualificationsPage() {
 
         <section className="space-y-4">
           {instructors.map((instructor) => (
-            <div key={instructor.name} className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+            <div key={instructor.name} className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
               <div className="mb-4 flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-on-surface">{instructor.name}</h3>

@@ -40,7 +40,7 @@ export default function AdminOperationsPage() {
             ['Schedule pressure', '6 alerts', 'text-warning'],
             ['Compliance exceptions', '3 open', 'text-error'],
           ].map(([label, value, tone]) => (
-            <div key={label} className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-soft">
+            <div key={label} className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft">
               <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">{label}</p>
               <p className={`mt-2 font-mono text-[28px] font-semibold ${tone}`}>{value}</p>
             </div>
@@ -48,7 +48,7 @@ export default function AdminOperationsPage() {
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-          <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+          <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
             <div className="mb-5 flex items-center justify-between">
               <h3 className="font-display text-[22px] font-semibold">Cohort View</h3>
               <Badge variant="primary">Live</Badge>
@@ -71,7 +71,7 @@ export default function AdminOperationsPage() {
             </div>
           </section>
 
-          <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+          <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
             <div className="mb-5 flex items-center justify-between">
               <h3 className="font-display text-[22px] font-semibold">Escalation Feed</h3>
               <IconActivityHeartbeat className="size-5 text-primary" />

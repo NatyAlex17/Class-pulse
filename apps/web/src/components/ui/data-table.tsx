@@ -79,7 +79,7 @@ export function DataTable<TData>({
     return (
       <div
         className={cn(
-          'rounded-[20px] border border-dashed border-outline-variant bg-white/70 p-10 text-center text-sm text-on-surface-variant',
+          'rounded-[20px] border border-dashed border-outline-variant bg-surface/70 p-10 text-center text-sm text-on-surface-variant',
           classNames?.emptyState,
         )}
       >
@@ -93,7 +93,7 @@ export function DataTable<TData>({
       {renderToolbar ? (
         <div
           className={cn(
-            'flex flex-col gap-3 rounded-[18px] border border-white/70 bg-white/75 p-4 md:flex-row md:items-center md:justify-between',
+            'flex flex-col gap-3 rounded-[18px] border border-outline-variant/70 bg-surface/75 p-4 md:flex-row md:items-center md:justify-between',
             classNames?.toolbar,
           )}
         >
@@ -111,7 +111,7 @@ export function DataTable<TData>({
 
       <div
         className={cn(
-          'hidden overflow-hidden rounded-[20px] border border-white/70 bg-white/80 shadow-soft md:block',
+          'hidden overflow-hidden rounded-[20px] border border-outline-variant/70 bg-surface/80 shadow-soft md:block',
           classNames?.desktopWrapper,
         )}
       >
@@ -182,7 +182,7 @@ export function DataTable<TData>({
             <div
               key={rowId}
               className={cn(
-                'rounded-[20px] border border-white/70 bg-white/85 p-4 shadow-soft',
+                'rounded-[20px] border border-outline-variant/70 bg-surface/85 p-4 shadow-soft',
                 interactiveRows && 'cursor-pointer transition hover:-translate-y-0.5',
                 classNames?.mobileCard,
                 resolvedRowClassName,

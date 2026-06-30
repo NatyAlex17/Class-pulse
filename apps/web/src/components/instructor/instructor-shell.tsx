@@ -22,6 +22,7 @@ import {
   IconUsers,
 } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { cn } from '@/lib/utils';
 
 type InstructorNavItem = {
@@ -182,6 +183,7 @@ export function InstructorShell({
 
           <div className="flex items-center gap-4">
             {topActions}
+            <ThemeToggle />
             <button className="text-on-surface-variant transition hover:text-primary">
               <IconBell className="size-5" />
             </button>
@@ -205,7 +207,7 @@ export function InstructorShell({
               </button>
 
               {profileMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 rounded-[16px] border border-border-subtle bg-white shadow-lg z-50">
+                <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-[16px] border border-border-subtle bg-surface shadow-lg">
                   <div className="border-b border-border-subtle p-4">
                     <div className="flex items-center gap-3">
                       <img
@@ -279,7 +281,7 @@ export function InstructorShell({
         </div>
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center justify-around border-t border-border-subtle bg-white px-2 lg:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center justify-around border-t border-border-subtle bg-surface px-2 lg:hidden">
         {[
           navItems[0],
           navItems[1],

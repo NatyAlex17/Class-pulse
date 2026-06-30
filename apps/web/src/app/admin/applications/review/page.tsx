@@ -38,7 +38,7 @@ export default function AdminApplicationsReviewPage() {
               <div
                 key={entry.name}
                 className={`rounded-[18px] border p-4 shadow-soft ${
-                  index === 0 ? 'border-primary bg-white' : 'border-border-subtle bg-white/80'
+                  index === 0 ? 'border-primary bg-surface' : 'border-border-subtle bg-surface/80'
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -63,7 +63,7 @@ export default function AdminApplicationsReviewPage() {
           </div>
         </section>
 
-        <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+        <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <Badge variant="warning">Pending Review</Badge>
@@ -92,7 +92,7 @@ export default function AdminApplicationsReviewPage() {
           </div>
 
           <div className="mt-8 grid gap-6 xl:grid-cols-[1fr_320px]">
-            <div className="rounded-[20px] border border-border-subtle bg-white p-5">
+            <div className="rounded-[20px] border border-border-subtle bg-surface p-5">
               <h4 className="font-display text-[20px] font-semibold">Reviewer Notes</h4>
               <div className="mt-4 space-y-4">
                 {[
@@ -116,7 +116,7 @@ export default function AdminApplicationsReviewPage() {
                   ['Background Check', 'Received'],
                   ['Immunization Record', 'Missing'],
                 ].map(([label, status]) => (
-                  <div key={label} className="flex items-center justify-between rounded-[16px] border border-border-subtle bg-white p-3">
+                  <div key={label} className="flex items-center justify-between rounded-[16px] border border-border-subtle bg-surface p-3">
                     <span className="text-sm font-medium text-on-surface">{label}</span>
                     <Badge variant={status === 'Missing' ? 'warning' : 'success'}>{status}</Badge>
                   </div>

@@ -176,7 +176,7 @@ export default function StudentFinancialsPage() {
             tone: 'bg-primary-container',
           },
         ].map((card) => (
-          <div key={card.label} className="rounded-[18px] border border-border-subtle bg-white p-6 transition hover:border-primary/30">
+          <div key={card.label} className="rounded-[18px] border border-border-subtle bg-surface p-6 transition hover:border-primary/30">
             <div className="mb-4 flex items-start justify-between">
               <span className="font-mono text-[12px] uppercase tracking-[0.1em] text-outline">{card.label}</span>
               <IconCreditCard className="size-6 text-outline/50" />
@@ -197,7 +197,7 @@ export default function StudentFinancialsPage() {
       </div>
 
       <div className="grid grid-cols-12 gap-6">
-        <section className="col-span-12 rounded-[18px] border border-border-subtle bg-white p-6 lg:col-span-4">
+        <section className="col-span-12 rounded-[18px] border border-border-subtle bg-surface p-6 lg:col-span-4">
           <h3 className="mb-6 font-display text-[18px] font-semibold">Installment Plan</h3>
           <div className="relative space-y-0">
             <div className="absolute bottom-10 left-[19px] top-4 w-0.5 bg-border-subtle" />
@@ -229,7 +229,7 @@ export default function StudentFinancialsPage() {
         <section className="col-span-12 flex flex-col gap-6 lg:col-span-8">
           <div className="flex flex-col items-center justify-between gap-6 rounded-[18px] bg-primary p-6 text-white shadow-xl shadow-primary/20 md:flex-row">
             <div className="flex items-center gap-5">
-              <div className="flex h-9 w-14 items-center justify-center rounded-md border border-white/20 bg-white/10">
+              <div className="flex h-9 w-14 items-center justify-center rounded-md border border-white/20 bg-surface/10">
                 <span className="text-[14px] font-bold italic">VISA</span>
               </div>
               <div>
@@ -237,12 +237,12 @@ export default function StudentFinancialsPage() {
                 <p className="font-mono text-sm text-white/70">.... .... .... 4242 / Exp 09/27</p>
               </div>
             </div>
-            <Button variant="secondary" className="w-full rounded-[16px] bg-white text-primary hover:bg-surface-low md:w-auto" onClick={handlePaymentClick}>
+            <Button variant="secondary" className="w-full rounded-[16px] bg-surface text-primary hover:bg-surface-low md:w-auto" onClick={handlePaymentClick}>
               {paymentBalance > 0 ? 'Pay Next Installment' : 'All Payments Complete'}
             </Button>
           </div>
 
-          <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-white">
+          <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-surface">
             <div className="flex items-center justify-between border-b border-border-subtle px-6 py-5">
               <h3 className="font-display text-[18px] font-semibold">Payment History</h3>
               <button className="text-sm font-semibold text-primary hover:underline">View All</button>
@@ -292,7 +292,7 @@ export default function StudentFinancialsPage() {
         <div className="flex justify-center md:w-1/3">
           <div className="relative flex h-48 w-48 items-center justify-center rounded-full border border-primary/10 bg-primary/5">
             <IconCreditCard className="size-16 text-primary/40" />
-            <div className="absolute -right-2 -top-2 rounded-[14px] border border-border-subtle bg-white p-3 shadow-sm">
+            <div className="absolute -right-2 -top-2 rounded-[14px] border border-border-subtle bg-surface p-3 shadow-sm">
               <span className="flex items-center gap-1 text-xs font-bold text-success">
                 <IconTrendingDown className="size-4" />
                 -2% Rate
@@ -304,9 +304,9 @@ export default function StudentFinancialsPage() {
 
       {showReceiptModal && selectedReceipt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md bg-white shadow-xl max-h-[90vh] overflow-y-auto" style={{ fontFamily: 'system-ui, -apple-system, monospace' }}>
+          <div className="w-full max-w-md bg-surface shadow-xl max-h-[90vh] overflow-y-auto" style={{ fontFamily: 'system-ui, -apple-system, monospace' }}>
             {/* Close Button */}
-            <div className="sticky top-0 flex justify-end bg-white p-4 border-b border-border-subtle">
+            <div className="sticky top-0 flex justify-end bg-surface p-4 border-b border-border-subtle">
               <button
                 onClick={() => {
                   setShowReceiptModal(false);
@@ -598,7 +598,7 @@ Please keep this receipt for your records
 
       {showPaymentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-[24px] bg-white p-8 shadow-xl">
+          <div className="w-full max-w-md rounded-[24px] bg-surface p-8 shadow-xl">
             {paymentStep === 'select' && (
               <>
                 <div className="mb-6 flex items-center justify-between">

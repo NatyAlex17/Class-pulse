@@ -20,6 +20,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 type AdminNavItem = {
   label: string;
@@ -162,6 +163,7 @@ export function AdminShell({
 
           <div className="flex items-center gap-4">
             {topActions}
+            <ThemeToggle />
             <button className="text-on-surface-variant transition hover:text-primary">
               <IconBell className="size-5" />
             </button>
@@ -180,7 +182,7 @@ export function AdminShell({
               </button>
 
               {profileMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 rounded-[16px] border border-border-subtle bg-white shadow-lg z-50">
+                <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-[16px] border border-border-subtle bg-surface shadow-lg">
                   <div className="border-b border-border-subtle p-4">
                     <div className="flex items-center gap-3">
                       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">

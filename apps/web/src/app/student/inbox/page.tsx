@@ -20,7 +20,7 @@ export default function StudentInboxPage() {
       topActions={<Badge variant="info">{unreadCount} unread</Badge>}
     >
       <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
-        <section className="overflow-hidden rounded-[18px] border border-border-subtle bg-white">
+        <section className="overflow-hidden rounded-[18px] border border-border-subtle bg-surface">
           <div className="border-b border-border-subtle p-5">
             <div className="relative">
               <Input placeholder="Search messages..." className="h-11 rounded-[14px]" />
@@ -51,7 +51,7 @@ export default function StudentInboxPage() {
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-[18px] border border-border-subtle bg-white">
+        <section className="overflow-hidden rounded-[18px] border border-border-subtle bg-surface">
           <div className="border-b border-border-subtle p-6">
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">

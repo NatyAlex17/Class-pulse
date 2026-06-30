@@ -69,17 +69,17 @@ export default function StudentFormsPage() {
       >
         {/* Forms Overview */}
         <div className="mb-8 grid gap-4 md:grid-cols-3">
-          <div className="rounded-[16px] border border-border-subtle bg-white p-4">
+          <div className="rounded-[16px] border border-border-subtle bg-surface p-4">
             <p className="text-[12px] font-semibold text-on-surface-variant uppercase">Forms Required</p>
             <p className="mt-2 font-mono text-2xl font-bold text-on-surface">2</p>
             <p className="mt-1 text-[11px] text-on-surface-variant">Live Scan & CDPH Application</p>
           </div>
-          <div className="rounded-[16px] border border-border-subtle bg-white p-4">
+          <div className="rounded-[16px] border border-border-subtle bg-surface p-4">
             <p className="text-[12px] font-semibold text-on-surface-variant uppercase">Completed</p>
             <p className="mt-2 font-mono text-2xl font-bold text-success">{liveScanGenerated && cdphSigned ? '2' : liveScanGenerated || cdphSigned ? '1' : '0'}</p>
             <p className="mt-1 text-[11px] text-on-surface-variant">Of 2 forms</p>
           </div>
-          <div className="rounded-[16px] border border-border-subtle bg-white p-4">
+          <div className="rounded-[16px] border border-border-subtle bg-surface p-4">
             <p className="text-[12px] font-semibold text-on-surface-variant uppercase">Status</p>
             <p className="mt-2 text-sm font-bold text-primary">{liveScanGenerated && cdphSigned ? '✓ Complete' : 'In Progress'}</p>
             <p className="mt-1 text-[11px] text-on-surface-variant">All required forms</p>
@@ -88,7 +88,7 @@ export default function StudentFormsPage() {
 
         <div className="grid gap-6 xl:grid-cols-2">
         {/* Live Scan Form */}
-        <section className="rounded-[20px] border border-border-subtle bg-white p-6">
+        <section className="rounded-[20px] border border-border-subtle bg-surface p-6">
           <div className="mb-6 flex items-start justify-between">
             <div className="flex items-start gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-primary/10 text-primary">
@@ -144,11 +144,11 @@ export default function StudentFormsPage() {
           )}
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-[14px] border border-border-subtle bg-white p-4">
+            <div className="rounded-[14px] border border-border-subtle bg-surface p-4">
               <p className="text-[11px] font-bold text-on-surface-variant uppercase">Form Type</p>
               <p className="mt-2 text-sm font-semibold text-on-surface">BCIA 8016</p>
             </div>
-            <div className="rounded-[14px] border border-border-subtle bg-white p-4">
+            <div className="rounded-[14px] border border-border-subtle bg-surface p-4">
               <p className="text-[11px] font-bold text-on-surface-variant uppercase">Status</p>
               <p className="mt-2 text-sm font-semibold text-on-surface">{liveScanGenerated && liveScanUploaded ? '✓ Submitted' : liveScanGenerated ? 'Generated' : 'Pending'}</p>
             </div>
@@ -156,7 +156,7 @@ export default function StudentFormsPage() {
         </section>
 
         {/* CDPH Form */}
-        <section className="rounded-[20px] border border-border-subtle bg-white p-6">
+        <section className="rounded-[20px] border border-border-subtle bg-surface p-6">
           <div className="mb-6 flex items-start justify-between">
             <div className="flex items-start gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-primary/10 text-primary">
@@ -296,7 +296,7 @@ export default function StudentFormsPage() {
                   <p className="text-sm text-on-surface-variant mt-1">Your CDPH 283B application has been successfully signed and submitted.</p>
                 </div>
               </div>
-              <div className="bg-white rounded-[12px] p-3 text-[12px] space-y-2">
+              <div className="bg-surface rounded-[12px] p-3 text-[12px] space-y-2">
                 <div className="flex justify-between">
                   <span className="text-on-surface-variant">Submitted Date</span>
                   <span className="font-mono font-semibold text-on-surface">{new Date().toLocaleDateString()}</span>
@@ -315,7 +315,7 @@ export default function StudentFormsPage() {
       {/* Live Scan Modal */}
       {showLiveScanModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-[24px] bg-white p-8 shadow-xl">
+          <div className="w-full max-w-md rounded-[24px] bg-surface p-8 shadow-xl">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-on-surface">BCIA 8016 Form</h2>
               <button
@@ -412,7 +412,7 @@ This form is valid for 6 months from generation date.
       {/* CDPH Preview Modal */}
       {showCdphPreview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-[24px] bg-white p-8 shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-md rounded-[24px] bg-surface p-8 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-on-surface">Application Summary</h2>
               <button

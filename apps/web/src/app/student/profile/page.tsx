@@ -41,7 +41,7 @@ export default function StudentProfilePage() {
       subtitle="Profile, onboarding readiness, and student record visibility in one place."
       patternedCanvas
     >
-      <div className="rounded-[24px] border border-border-subtle bg-white p-8 shadow-sm">
+      <div className="rounded-[24px] border border-border-subtle bg-surface p-8 shadow-sm">
         <div className="mb-8 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex items-center gap-6">
             <div className="relative">
@@ -100,7 +100,7 @@ export default function StudentProfilePage() {
           </div>
         </div>
 
-        <div className="sticky top-16 z-10 -mx-8 border-y border-border-subtle bg-white px-8">
+        <div className="sticky top-16 z-10 -mx-8 border-y border-border-subtle bg-surface px-8">
           <nav className="flex gap-8 overflow-x-auto">
             {tabItems.map((tab) => (
               <button
@@ -142,7 +142,7 @@ export default function StudentProfilePage() {
                   width: `${overallProgressPercent}%`,
                 },
               ].map((card) => (
-                <div key={card.label} className="rounded-[18px] border border-border-subtle bg-white p-5">
+                <div key={card.label} className="rounded-[18px] border border-border-subtle bg-surface p-5">
                   <p className="mb-3 font-mono text-[12px] text-on-surface-variant">{card.label}</p>
                   <p className="font-mono text-2xl font-semibold text-primary">{card.value}</p>
                   <div className="mt-4 h-2 overflow-hidden rounded-full bg-surface-highest">
@@ -152,7 +152,7 @@ export default function StudentProfilePage() {
               ))}
             </div>
 
-            <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+            <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
               <div className="mb-6 flex items-center justify-between">
                 <h3 className="font-display text-[18px] font-semibold">Onboarding Checklist</h3>
                 <Badge variant="info">{completedOnboardingCount} completed</Badge>
@@ -182,7 +182,7 @@ export default function StudentProfilePage() {
               </div>
             </div>
 
-            <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+            <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
               <div className="mb-6 flex items-center justify-between">
                 <h3 className="font-display text-[18px] font-semibold">Documents In Record</h3>
                 <button className="flex items-center gap-1 text-xs font-bold text-primary">
@@ -209,7 +209,7 @@ export default function StudentProfilePage() {
           </div>
 
           <div className="space-y-8">
-            <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-white">
+            <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-surface">
               <div className="flex items-center justify-between border-b border-border-subtle bg-surface-container p-4">
                 <h3 className="text-sm font-bold">Recent Activity</h3>
                 <IconHistory className="size-5 text-primary" />
@@ -228,7 +228,7 @@ export default function StudentProfilePage() {
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-white">
+            <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-surface">
               <div className="flex items-center justify-between border-b border-border-subtle bg-surface-container p-4">
                 <h3 className="text-sm font-bold">Advising Notes</h3>
                 <IconNotes className="size-5 text-primary" />

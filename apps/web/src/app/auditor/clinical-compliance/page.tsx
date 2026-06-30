@@ -22,17 +22,17 @@ export default function AuditorClinicalCompliancePage() {
     >
       <div className="grid gap-6">
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
             <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Compliance Rate</p>
             <p className="mt-2 font-mono text-[32px] font-semibold text-success">92%</p>
             <p className="mt-3 text-sm text-on-surface-variant">5 of 6 standards met</p>
           </div>
-          <div className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
             <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Issues Open</p>
             <p className="mt-2 font-mono text-[32px] font-semibold text-warning">1</p>
             <p className="mt-3 text-sm text-on-surface-variant">Requiring immediate attention</p>
           </div>
-          <div className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
             <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Last Audit</p>
             <p className="mt-2 font-mono text-[32px] font-semibold text-primary">Jun 28</p>
             <p className="mt-3 text-sm text-on-surface-variant">Today at 11:08 AM</p>
@@ -41,7 +41,7 @@ export default function AuditorClinicalCompliancePage() {
 
         <section className="space-y-3">
           {complianceItems.map((item) => (
-            <div key={item.category} className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+            <div key={item.category} className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-on-surface">{item.category}</h3>
@@ -64,7 +64,7 @@ export default function AuditorClinicalCompliancePage() {
             </div>
             <IconAlertTriangle className="h-8 w-8" />
           </div>
-          <Button variant="secondary" className="mt-4 rounded-[12px] bg-white text-primary hover:bg-white/90">
+          <Button variant="secondary" className="mt-4 rounded-[12px] bg-surface text-primary hover:bg-surface/90">
             Review Safety Training Status
           </Button>
         </section>

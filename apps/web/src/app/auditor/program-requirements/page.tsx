@@ -50,7 +50,7 @@ export default function AuditorProgramRequirementsPage() {
       <div className="grid gap-6">
         <section className="space-y-6">
           {programs.map((program) => (
-            <div key={program.name} className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+            <div key={program.name} className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <h3 className="text-xl font-semibold text-on-surface">{program.name}</h3>

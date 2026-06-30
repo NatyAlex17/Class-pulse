@@ -41,7 +41,7 @@ export default function LoginPage() {
     <main className="fixed inset-0 flex overflow-hidden bg-background">
       {/* Left Section */}
       <section className="relative hidden w-1/2 border-r border-border-subtle px-12 py-12 xl:flex flex-col justify-between">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(31,16,142,0.12),transparent_30%),radial-gradient(circle_at_70%_20%,rgba(14,165,233,0.10),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.65),rgba(248,250,252,0.8))]" />
+        <div className="cp-auth-hero absolute inset-0" />
 
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-12">

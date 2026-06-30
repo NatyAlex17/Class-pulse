@@ -72,24 +72,24 @@ export default function AuditorAuditLogPage() {
     >
       <div className="grid gap-6">
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
             <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Total Events</p>
             <p className="mt-2 font-mono text-[32px] font-semibold text-primary">{auditEntries.length}</p>
             <p className="mt-3 text-sm text-on-surface-variant">In last 30 days</p>
           </div>
-          <div className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
             <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Successful</p>
             <p className="mt-2 font-mono text-[32px] font-semibold text-success">6</p>
             <p className="mt-3 text-sm text-on-surface-variant">All audits passed</p>
           </div>
-          <div className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
             <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Alerts</p>
             <p className="mt-2 font-mono text-[32px] font-semibold text-warning">1</p>
             <p className="mt-3 text-sm text-on-surface-variant">Requires action</p>
           </div>
         </div>
 
-        <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+        <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
           <div className="mb-6 flex items-center justify-between">
             <h3 className="font-display text-[22px] font-semibold text-on-surface">Activity Timeline</h3>
             <Button variant="secondary" className="rounded-[12px]">

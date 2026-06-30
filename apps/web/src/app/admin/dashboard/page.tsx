@@ -53,7 +53,7 @@ export default function AdminDashboardPage() {
       }
     >
       <div className="grid grid-cols-12 gap-6">
-        <section className="col-span-12 rounded-[22px] border border-border-subtle bg-white p-8 shadow-soft lg:col-span-8">
+        <section className="col-span-12 rounded-[22px] border border-border-subtle bg-surface p-8 shadow-soft lg:col-span-8">
           <Badge variant="primary" className="mb-4">
             Admin Operations
           </Badge>
@@ -78,7 +78,7 @@ export default function AdminDashboardPage() {
 
         <section className="col-span-12 grid grid-cols-2 gap-4 lg:col-span-4">
           {kpis.map((kpi) => (
-            <div key={kpi.label} className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-soft">
+            <div key={kpi.label} className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft">
               <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
                 {kpi.label}
               </p>
@@ -102,7 +102,7 @@ export default function AdminDashboardPage() {
                 <Link
                   key={alert.title}
                   href={alert.href}
-                  className="group rounded-[20px] border border-border-subtle bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-primary/30"
+                  className="group rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-primary/30"
                 >
                   <div className="flex items-start gap-4">
                     <div className="flex size-12 items-center justify-center rounded-[16px] bg-primary/10 text-primary">
@@ -121,7 +121,7 @@ export default function AdminDashboardPage() {
         </section>
 
         <section className="col-span-12 lg:col-span-5">
-          <div className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
             <div className="mb-5 flex items-center justify-between">
               <h4 className="font-display text-[22px] font-semibold">Pipeline Snapshot</h4>
               <IconChartBar className="size-5 text-primary" />
@@ -148,7 +148,7 @@ export default function AdminDashboardPage() {
         </section>
 
         <section className="col-span-12 lg:col-span-8">
-          <div className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
             <div className="mb-5 flex items-center justify-between">
               <h4 className="font-display text-[22px] font-semibold">Program Health</h4>
               <Link href="/admin/reports" className="text-sm font-semibold text-primary hover:underline">

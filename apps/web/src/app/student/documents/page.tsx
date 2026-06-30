@@ -78,7 +78,7 @@ export default function StudentDocumentsPage() {
         }
       >
         <section className="mb-12 grid gap-6 xl:grid-cols-[0.72fr_0.28fr]">
-        <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+        <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h3 className="font-display text-[22px] font-semibold text-on-surface">Completion Credentials</h3>
@@ -134,7 +134,7 @@ export default function StudentDocumentsPage() {
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+          <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-[16px] bg-primary/10 text-primary">
                 <IconBook2 className="size-5" />
@@ -154,7 +154,7 @@ export default function StudentDocumentsPage() {
             </Button>
           </div>
 
-          <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+          <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
             <h4 className="font-display text-[18px] font-semibold text-on-surface">Program Certificate Gate</h4>
             <p className="mt-2 text-sm text-on-surface-variant">
               {programCertificateReady
@@ -196,7 +196,7 @@ export default function StudentDocumentsPage() {
             </p>
           </div>
 
-          <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+          <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
             <h4 className="font-display text-[18px] font-semibold text-on-surface">Preview Panel</h4>
             <div className="mt-4 rounded-[16px] border border-dashed border-outline-variant bg-surface-muted p-4 text-sm text-on-surface-variant">
               {preview}
@@ -212,7 +212,7 @@ export default function StudentDocumentsPage() {
             Essential policies and agreements for your current enrollment.
           </p>
         </div>
-        <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-white">
+        <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-surface">
           <div className="divide-y divide-border-subtle">
             {programDocuments.map((document) => (
               <button
@@ -258,7 +258,7 @@ export default function StudentDocumentsPage() {
                   ? IconSchool
                   : IconFingerprint;
             return (
-              <div key={upload.id} className="group rounded-[18px] border border-border-subtle bg-white p-5 transition hover:shadow-sm">
+              <div key={upload.id} className="group rounded-[18px] border border-border-subtle bg-surface p-5 transition hover:shadow-sm">
                 <div className="mb-6 flex items-start justify-between">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/5 transition group-hover:bg-primary group-hover:text-white">
                     <Icon className="size-5" />

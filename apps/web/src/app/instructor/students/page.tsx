@@ -192,18 +192,18 @@ export default function InstructorStudentsPage() {
     >
       <div className="grid gap-6">
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft">
             <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Assigned students</p>
             <p className="mt-2 font-mono text-[28px] font-semibold text-primary">42</p>
           </div>
-          <div className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft">
             <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Watchlist</p>
             <div className="mt-2 flex items-center gap-2 font-mono text-[28px] font-semibold text-warning">
               <IconClockHour4 className="size-6" />
               <span>8</span>
             </div>
           </div>
-          <div className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft">
             <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Audit ready</p>
             <div className="mt-2 flex items-center gap-2 font-mono text-[28px] font-semibold text-success">
               <IconShieldCheck className="size-6" />
@@ -240,7 +240,7 @@ export default function InstructorStudentsPage() {
                   className={`rounded-full px-4 py-2 text-sm font-medium transition ${
                     !filterRisk
                       ? 'bg-primary text-white'
-                      : 'border border-border-subtle bg-white text-on-surface hover:border-primary'
+                      : 'border border-border-subtle bg-surface text-on-surface hover:border-primary'
                   }`}
                 >
                   All Students
@@ -250,7 +250,7 @@ export default function InstructorStudentsPage() {
                   className={`rounded-full px-4 py-2 text-sm font-medium transition ${
                     filterRisk === 'Urgent'
                       ? 'bg-error text-white'
-                      : 'border border-border-subtle bg-white text-on-surface hover:border-error'
+                      : 'border border-border-subtle bg-surface text-on-surface hover:border-error'
                   }`}
                 >
                   Urgent
@@ -260,7 +260,7 @@ export default function InstructorStudentsPage() {
                   className={`rounded-full px-4 py-2 text-sm font-medium transition ${
                     filterRisk === 'Watch'
                       ? 'bg-warning text-white'
-                      : 'border border-border-subtle bg-white text-on-surface hover:border-warning'
+                      : 'border border-border-subtle bg-surface text-on-surface hover:border-warning'
                   }`}
                 >
                   Watch
@@ -270,7 +270,7 @@ export default function InstructorStudentsPage() {
                   className={`rounded-full px-4 py-2 text-sm font-medium transition ${
                     filterRisk === 'Stable'
                       ? 'bg-success text-white'
-                      : 'border border-border-subtle bg-white text-on-surface hover:border-success'
+                      : 'border border-border-subtle bg-surface text-on-surface hover:border-success'
                   }`}
                 >
                   Stable
@@ -284,9 +284,9 @@ export default function InstructorStudentsPage() {
       {/* Student Detail Modal */}
       {selectedStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl rounded-[24px] bg-white shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-2xl rounded-[24px] bg-surface shadow-xl max-h-[90vh] overflow-y-auto">
             {/* Header */}
-            <div className="sticky top-0 flex items-center justify-between border-b border-border-subtle bg-white p-6">
+            <div className="sticky top-0 flex items-center justify-between border-b border-border-subtle bg-surface p-6">
               <div className="flex items-center gap-4">
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-2xl">
                   {selectedStudent.name.charAt(0)}

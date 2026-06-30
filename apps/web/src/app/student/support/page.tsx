@@ -59,7 +59,7 @@ export default function StudentSupportPage() {
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+        <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
           <h3 className="font-display text-[20px] font-semibold text-on-surface">
             Create Support Request
           </h3>
@@ -97,7 +97,7 @@ export default function StudentSupportPage() {
           </div>
         </div>
 
-        <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+        <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
           <h3 className="font-display text-[20px] font-semibold text-on-surface">Recent Tickets</h3>
           <div className="mt-5 space-y-4">
             {supportTickets.map((ticket) => (

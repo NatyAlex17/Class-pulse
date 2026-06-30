@@ -331,7 +331,7 @@ export default function StudentLearningPage() {
                           'w-full text-left rounded-[14px] border p-3 text-sm transition',
                           isSelected
                             ? 'border-primary/30 bg-primary/10'
-                            : 'border-border-subtle bg-white hover:border-primary/20'
+                            : 'border-border-subtle bg-surface hover:border-primary/20'
                         )}
                       >
                         <div className="flex items-start gap-2">
@@ -362,7 +362,7 @@ export default function StudentLearningPage() {
                       'w-full text-left rounded-[14px] border p-3 text-sm transition',
                       currentModule.id === mod.id
                         ? 'border-primary/30 bg-primary/10'
-                        : 'border-border-subtle bg-white hover:border-primary/20'
+                        : 'border-border-subtle bg-surface hover:border-primary/20'
                     )}
                   >
                     <p className="font-semibold text-on-surface text-[12px]">{mod.title}</p>
@@ -377,7 +377,7 @@ export default function StudentLearningPage() {
         </aside>
 
         {/* Main Content */}
-        <section className="flex-1 h-[calc(100vh-72px)] overflow-y-auto bg-white">
+        <section className="flex-1 h-[calc(100vh-72px)] overflow-y-auto bg-surface">
           {!portalUnlocked ? (
             <div className="p-8">
               <div className="rounded-[18px] border border-warning/20 bg-warning/5 p-4">
@@ -408,7 +408,7 @@ export default function StudentLearningPage() {
                     </div>
                   </div>
                   <div className="flex gap-3">
-                    <div className="flex-1 rounded-[14px] bg-white border border-border-subtle p-4">
+                    <div className="flex-1 rounded-[14px] bg-surface border border-border-subtle p-4">
                       <p className="text-sm font-semibold text-on-surface">{selectedLesson.title}</p>
                       <p className="text-[12px] text-on-surface-variant mt-1">{selectedLesson.duration} • {selectedLesson.content}</p>
                     </div>
@@ -431,7 +431,7 @@ export default function StudentLearningPage() {
               {(selectedLesson.type === 'PDF' || selectedLesson.type === 'Reading') && (
                 <div className="rounded-[20px] overflow-hidden border border-border-subtle bg-surface-muted space-y-6">
                   {/* Document Viewer */}
-                  <div className="bg-white rounded-[20px] p-8 space-y-6">
+                  <div className="bg-surface rounded-[20px] p-8 space-y-6">
                     <div className="flex items-start gap-4">
                       <div className="flex h-16 w-16 items-center justify-center rounded-[14px] bg-primary/10 text-primary shrink-0">
                         <IconFile className="size-8" />
@@ -451,7 +451,7 @@ export default function StudentLearningPage() {
 
                         {selectedLesson.type === 'PDF' && (
                           <div className="space-y-4">
-                            <div className="bg-white p-4 rounded-[12px] border border-border-subtle space-y-3">
+                            <div className="bg-surface p-4 rounded-[12px] border border-border-subtle space-y-3">
                               <h5 className="font-semibold text-on-surface">Vital Signs Assessment Checklist</h5>
                               <div className="space-y-2 text-sm text-on-surface-variant">
                                 <label className="flex items-center gap-2"><input type="checkbox" /> Patient identification and consent</label>
@@ -479,7 +479,7 @@ export default function StudentLearningPage() {
 
                         {selectedLesson.type === 'Reading' && (
                           <div className="space-y-4">
-                            <div className="bg-white p-4 rounded-[12px] border border-border-subtle space-y-3">
+                            <div className="bg-surface p-4 rounded-[12px] border border-border-subtle space-y-3">
                               <h5 className="font-semibold text-on-surface">Core Concepts</h5>
                               <div className="space-y-2 text-sm text-on-surface-variant leading-relaxed">
                                 <p>
@@ -557,7 +557,7 @@ export default function StudentLearningPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-[16px] border border-border-subtle bg-white p-6 space-y-6">
+                  <div className="rounded-[16px] border border-border-subtle bg-surface p-6 space-y-6">
                     {!quizSubmitted ? (
                       <>
                         <div>
@@ -669,7 +669,7 @@ export default function StudentLearningPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-[16px] border border-border-subtle bg-white p-6">
+                  <div className="rounded-[16px] border border-border-subtle bg-surface p-6">
                     <div className="space-y-4">
                       <div>
                         <h4 className="font-semibold text-on-surface mb-2">Skill Demonstration Requirements</h4>
@@ -786,7 +786,7 @@ export default function StudentLearningPage() {
                     <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary-container text-on-primary-container">
                       <IconBolt className="size-3" />
                     </div>
-                    <div className="max-w-[80%] rounded-bl-lg rounded-br-lg rounded-tr-lg border border-border-subtle bg-white p-2 shadow-sm text-[12px]">
+                    <div className="max-w-[80%] rounded-bl-lg rounded-br-lg rounded-tr-lg border border-border-subtle bg-surface p-2 shadow-sm text-[12px]">
                       <p className="text-on-surface">Ready to help with your lesson!</p>
                     </div>
                   </div>
@@ -801,7 +801,7 @@ export default function StudentLearningPage() {
                           sendMessage(activeThread.id, question);
                         }}
                         key={question}
-                        className="group flex w-full items-center justify-between rounded-[10px] border border-border-subtle bg-white p-2 text-left text-[11px] transition hover:border-primary hover:bg-primary/5"
+                        className="group flex w-full items-center justify-between rounded-[10px] border border-border-subtle bg-surface p-2 text-left text-[11px] transition hover:border-primary hover:bg-primary/5"
                       >
                         {question.slice(0, 18)}...
                         <IconBrain className="size-3 text-primary opacity-0 group-hover:opacity-100" />
@@ -846,7 +846,7 @@ export default function StudentLearningPage() {
         </aside>
       </div>
 
-      <footer className="fixed bottom-0 left-0 right-0 z-[60] flex h-20 items-center justify-between border-t border-border-subtle bg-white/80 px-8 backdrop-blur-xl">
+      <footer className="fixed bottom-0 left-0 right-0 z-[60] flex h-20 items-center justify-between border-t border-border-subtle bg-surface/80 px-8 backdrop-blur-xl">
         <div className="flex items-center gap-8 text-sm">
           <div className="flex flex-col">
             <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant">Session Time</span>

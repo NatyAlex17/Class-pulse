@@ -107,7 +107,7 @@ export default function StudentClinicalHoursPage() {
       {activeTab === 'Overview' && (
         <div className="grid gap-8 lg:grid-cols-[1.25fr_0.75fr]">
           <div className="space-y-8">
-          <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+          <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
             <h4 className="mb-6 font-mono text-[12px] text-on-surface-variant">CLINICAL METRICS</h4>
             <div className="space-y-6">
               {[
@@ -137,7 +137,7 @@ export default function StudentClinicalHoursPage() {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-white">
+          <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-surface">
             <div className="flex items-center justify-between border-b border-border-subtle px-6 py-4">
               <h4 className="font-mono text-[12px] text-on-surface-variant">RECENT CLINICAL LOGS</h4>
               <button className="text-xs font-bold text-primary hover:underline">View All</button>
@@ -154,7 +154,7 @@ export default function StudentClinicalHoursPage() {
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+          <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
             <h4 className="mb-6 font-mono text-[12px] text-on-surface-variant">SUPPORTING DOCUMENTS</h4>
             <div className="grid gap-4 md:grid-cols-2">
               {uploads.slice(0, 2).map((upload) => (
@@ -176,7 +176,7 @@ export default function StudentClinicalHoursPage() {
         </div>
 
         <div className="space-y-8">
-          <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+          <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
             <h4 className="mb-6 font-mono text-[12px] text-on-surface-variant">AUDIT TIMELINE</h4>
             <div className="space-y-8 border-l-2 border-surface-container pl-6">
               {[
@@ -205,7 +205,7 @@ export default function StudentClinicalHoursPage() {
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+          <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
             <h4 className="mb-6 font-mono text-[12px] text-on-surface-variant">READINESS SUMMARY</h4>
             <div className="space-y-4">
               <div className="flex items-center justify-between rounded-[16px] border border-border-subtle bg-surface-muted p-4">
@@ -232,7 +232,7 @@ export default function StudentClinicalHoursPage() {
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+          <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-bold">Student Notes</h4>
               <IconNotes className="size-5 text-primary" />
@@ -252,7 +252,7 @@ export default function StudentClinicalHoursPage() {
 
       {activeTab === 'Clinical Logs' && (
         <div className="space-y-6">
-          <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-white">
+          <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-surface">
             <div className="border-b border-border-subtle px-6 py-4">
               <h4 className="font-mono text-[12px] text-on-surface-variant">ALL CLINICAL LOGS</h4>
             </div>
@@ -268,7 +268,7 @@ export default function StudentClinicalHoursPage() {
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+          <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
             <h3 className="mb-4 font-semibold text-on-surface">Log Statistics</h3>
             <div className="grid gap-4 md:grid-cols-3">
               <div className="rounded-[14px] bg-surface-muted p-4">
@@ -290,7 +290,7 @@ export default function StudentClinicalHoursPage() {
 
       {activeTab === 'Skills Checklist' && (
         <div className="space-y-6">
-          <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+          <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
             <h3 className="mb-6 font-semibold text-on-surface">Core Clinical Skills Competencies</h3>
             <div className="space-y-4">
               {[
@@ -327,7 +327,7 @@ export default function StudentClinicalHoursPage() {
 
       {activeTab === 'Audit Timeline' && (
         <div className="grid gap-8 lg:grid-cols-[1.25fr_0.75fr]">
-          <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+          <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
             <h4 className="mb-6 font-mono text-[12px] text-on-surface-variant">COMPLETE AUDIT TIMELINE</h4>
             <div className="space-y-8 border-l-2 border-surface-container pl-6">
               {[
@@ -359,7 +359,7 @@ export default function StudentClinicalHoursPage() {
             </div>
           </div>
           <div className="space-y-6">
-            <div className="rounded-[18px] border border-border-subtle bg-white p-6">
+            <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
               <h3 className="mb-4 font-semibold text-on-surface">Audit Summary</h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between rounded-[14px] bg-surface-muted p-3">
@@ -384,7 +384,7 @@ export default function StudentClinicalHoursPage() {
 
       {showLogModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-[20px] bg-white p-6 shadow-lg">
+          <div className="w-full max-w-md rounded-[20px] bg-surface p-6 shadow-lg">
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-xl font-bold text-on-surface">Log Clinical Hours</h2>
               <button

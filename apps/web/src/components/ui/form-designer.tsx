@@ -149,7 +149,7 @@ function renderField(
       );
     case 'checkbox':
       return (
-        <div className="rounded-[16px] border border-border-subtle bg-white px-4 py-3">
+        <div className="rounded-[16px] border border-border-subtle bg-surface px-4 py-3">
           <div className="flex items-center justify-between gap-4">
             <div>
               <div className="text-sm font-medium text-on-surface">{field.label}</div>
@@ -186,7 +186,7 @@ export function FormDesigner({
 }: FormDesignerProps) {
   return (
     <Card className={cn('overflow-hidden', classNames?.root)}>
-      <CardHeader className={cn('border-b border-border-subtle bg-white/80', classNames?.header)}>
+      <CardHeader className={cn('border-b border-border-subtle bg-surface/80', classNames?.header)}>
         <CardTitle>{schema.title}</CardTitle>
         {schema.description ? <CardDescription>{schema.description}</CardDescription> : null}
       </CardHeader>
@@ -198,7 +198,7 @@ export function FormDesigner({
               <section
                 key={section.id}
                 className={cn(
-                  'rounded-[20px] border border-border-subtle bg-white/80 p-5',
+                  'rounded-[20px] border border-border-subtle bg-surface/80 p-5',
                   classNames?.section,
                   section.className,
                 )}
@@ -272,7 +272,7 @@ export function FormDesigner({
 
           <div
             className={cn(
-              'flex flex-col gap-3 border-t border-border-subtle bg-white/90 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6',
+              'flex flex-col gap-3 border-t border-border-subtle bg-surface/90 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6',
               classNames?.actions,
             )}
           >

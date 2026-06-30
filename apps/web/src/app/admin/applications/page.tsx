@@ -277,7 +277,7 @@ export default function AdminApplicationsPage() {
       {/* Application Detail Modal */}
       {selectedApp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl rounded-[24px] bg-white p-8 shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-2xl rounded-[24px] bg-surface p-8 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-on-surface">{selectedApp.name}</h2>

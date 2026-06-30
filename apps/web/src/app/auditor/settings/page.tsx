@@ -11,7 +11,7 @@ export default function AuditorSettingsPage() {
       subtitle="Manage your auditor account and preferences."
     >
       <div className="max-w-2xl space-y-6">
-        <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+        <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
           <h3 className="mb-6 font-display text-[22px] font-semibold text-on-surface">Notification Preferences</h3>
           <div className="space-y-4">
             {[
@@ -33,7 +33,7 @@ export default function AuditorSettingsPage() {
           </div>
         </section>
 
-        <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+        <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
           <h3 className="mb-6 font-display text-[22px] font-semibold text-on-surface">Audit Export Settings</h3>
           <div className="space-y-4">
             {[
@@ -54,7 +54,7 @@ export default function AuditorSettingsPage() {
           </div>
         </section>
 
-        <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+        <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
           <h3 className="mb-4 font-display text-[22px] font-semibold text-on-surface">Account Management</h3>
           <div className="space-y-3">
             <Button variant="secondary" className="w-full rounded-[12px]">
