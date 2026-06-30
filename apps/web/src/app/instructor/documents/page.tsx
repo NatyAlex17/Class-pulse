@@ -51,15 +51,15 @@ export default function InstructorDocumentsPage() {
     >
       <div className="grid gap-6">
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft">
             <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Approved files</p>
             <p className="mt-2 font-mono text-[28px] font-semibold text-success">18</p>
           </div>
-          <div className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft">
             <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Needs review</p>
             <p className="mt-2 font-mono text-[28px] font-semibold text-warning">4</p>
           </div>
-          <div className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft">
             <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Expiring items</p>
             <p className="mt-2 font-mono text-[28px] font-semibold text-error">2</p>
           </div>

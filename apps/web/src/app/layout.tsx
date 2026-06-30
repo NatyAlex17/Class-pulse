@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { IBM_Plex_Mono, Inter, Plus_Jakarta_Sans } from 'next/font/google';
+import { ThemeProvider } from '@/components/ui/theme-provider';
 import './globals.css';
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -31,9 +32,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-theme="light"
+      suppressHydrationWarning
       className={`${plusJakarta.variable} ${inter.variable} ${ibmPlexMono.variable} antialiased`}
     >
-      <body>{children}</body>
+      <body>
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

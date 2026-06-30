@@ -8,8 +8,8 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: 'bg-primary text-on-primary shadow-soft hover:-translate-y-0.5 hover:shadow-lg',
-        secondary: 'bg-white text-on-surface border border-border-subtle hover:bg-surface-muted',
-        ghost: 'text-on-surface-variant hover:bg-white/70 hover:text-primary',
+        secondary: 'bg-surface text-on-surface border border-border-subtle hover:bg-surface-muted',
+        ghost: 'text-on-surface-variant hover:bg-surface-high hover:text-primary',
         outline: 'border border-primary/20 text-primary bg-primary/5 hover:bg-primary/10',
       },
       size: {
@@ -32,7 +32,7 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, ...props }, ref) => {
-    return <button className={cn(buttonVariants({ variant, size }), className)} ref={ref} {...props} />;
+    return <button suppressHydrationWarning className={cn(buttonVariants({ variant, size }), className)} ref={ref} {...props} />;
   },
 );
 

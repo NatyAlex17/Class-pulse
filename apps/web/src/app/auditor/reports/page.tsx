@@ -149,7 +149,7 @@ export default function AuditorReportsPage() {
           {cards.map((card) => (
             <div
               key={card.title}
-              className={`rounded-xl border border-border-subtle bg-white/80 p-6 shadow-sm backdrop-blur-sm transition-all hover:shadow-md ${card.accent} border-l-4`}
+              className={`rounded-xl border border-border-subtle bg-surface/80 p-6 shadow-sm backdrop-blur-sm transition-all hover:shadow-md ${card.accent} border-l-4`}
             >
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div className={`flex size-12 items-center justify-center rounded-lg ${card.iconTone}`}>
@@ -182,7 +182,7 @@ export default function AuditorReportsPage() {
           ))}
         </section>
 
-        <section className="rounded-xl border border-border-subtle bg-white/80 p-6 shadow-sm backdrop-blur-sm">
+        <section className="rounded-xl border border-border-subtle bg-surface/80 p-6 shadow-sm backdrop-blur-sm">
           <div className="mb-5 flex items-center justify-between">
             <div>
               <h3 className="font-display text-[22px] font-semibold text-on-surface">
@@ -211,12 +211,12 @@ export default function AuditorReportsPage() {
             )}
             classNames={{
               root: 'gap-0',
-              desktopWrapper: 'rounded-[16px] border-border-subtle bg-white shadow-none',
-              table: 'bg-white',
+              desktopWrapper: 'rounded-[16px] border-border-subtle bg-surface shadow-none',
+              table: 'bg-surface',
               headerRow: 'bg-surface-muted',
               row: 'hover:bg-surface-muted/70',
               toolbar: 'hidden',
-              mobileCard: 'rounded-[16px] border-border-subtle bg-white shadow-none',
+              mobileCard: 'rounded-[16px] border-border-subtle bg-surface shadow-none',
             }}
           />
         </section>

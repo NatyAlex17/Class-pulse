@@ -48,7 +48,7 @@ export default function InstructorReportsPage() {
       <div className="grid gap-6">
         <div className="grid gap-4 md:grid-cols-3">
           {reportCards.map((card) => (
-            <div key={card.title} className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-primary/20">
+            <div key={card.title} className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-primary/20">
               <div className="flex items-center justify-between">
                 <h3 className="font-display text-[20px] font-semibold text-on-surface">{card.title}</h3>
                 <Badge variant="primary">{card.badge}</Badge>

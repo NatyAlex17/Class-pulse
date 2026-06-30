@@ -55,18 +55,18 @@ export default function InstructorClinicalLogsPage() {
     >
       <div className="grid gap-6">
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft">
             <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Pending review</p>
             <p className="mt-2 font-mono text-[28px] font-semibold text-warning">5</p>
           </div>
-          <div className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft">
             <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Flagged entries</p>
             <div className="mt-2 flex items-center gap-2 font-mono text-[28px] font-semibold text-error">
               <IconAlertCircle className="size-6" />
               <span>2</span>
             </div>
           </div>
-          <div className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-soft">
+          <div className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft">
             <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Verified today</p>
             <p className="mt-2 font-mono text-[28px] font-semibold text-success">18</p>
           </div>

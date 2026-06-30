@@ -43,7 +43,7 @@ export default function InstructorSkillsPage() {
       }
     >
       <div className="grid gap-6">
-        <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+        <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <div className="flex items-center gap-3">
@@ -70,7 +70,7 @@ export default function InstructorSkillsPage() {
 
         <div className="space-y-4">
           {groups.map((group) => (
-            <section key={group.title} className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+            <section key={group.title} className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
               <div className="mb-5 flex items-center justify-between">
                 <div>
                   <h4 className="font-display text-[22px] font-semibold">{group.title}</h4>

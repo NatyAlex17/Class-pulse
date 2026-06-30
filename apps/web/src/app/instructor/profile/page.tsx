@@ -61,7 +61,7 @@ export default function InstructorProfilePage() {
       }
     >
       <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
-        <aside className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+        <aside className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
           <img
             src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXv4mwcZ_4UhLTVKSeBi3j9livM-k3VazMllatomAapg3tcCgAZou3wW9pgqEY37k53D0GESx7R1L_vElZ5sknI3VdGaPpn3W2jaGlcQOj9lapcoLAfbCBOTcOhNtWi_slBEdt54qIKBNbLOFqFEhV7MGuWn5PqmleDEuhENvtFUNlAbpTiptyDS5xD5JjplUUQpEF1yH2fysbEdY8DF4H7mLN-bM2MSIz84Y8KLOBn20JwhWsitZob3jqPU9aivHtONIdH0vlj0N5"
             alt="Instructor portrait"

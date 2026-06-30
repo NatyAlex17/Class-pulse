@@ -48,33 +48,22 @@ export default function AuditorDashboardPage() {
     <AuditorShell
       title="Compliance Dashboard"
       subtitle="Real-time regulatory oversight for NATP Cohort #2024-B."
-      activeItem="Compliance Dashboard"
     >
       <div className="grid gap-6">
-        <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h3 className="font-display text-[32px] font-bold tracking-[-0.03em] text-on-surface">
-              Compliance Dashboard
-            </h3>
-            <p className="mt-2 text-base text-on-surface-variant">
-              Real-time regulatory oversight for NATP Cohort #2024-B
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Button variant="secondary" className="rounded-[16px] px-5">
-              <IconShare3 className="size-4" />
-              Export Report
-            </Button>
-            <Button className="rounded-[16px] px-5">
-              <IconRosetteDiscountCheck className="size-4" />
-              Final Certification
-            </Button>
-          </div>
+        <section className="flex flex-wrap gap-3 justify-end">
+          <Button variant="secondary" className="rounded-[16px] px-5">
+            <IconShare3 className="size-4" />
+            Export Report
+          </Button>
+          <Button className="rounded-[16px] px-5">
+            <IconRosetteDiscountCheck className="size-4" />
+            Final Certification
+          </Button>
         </section>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {kpis.map((kpi) => (
-            <div key={kpi.label} className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+            <div key={kpi.label} className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
               <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
                 {kpi.label}
               </p>
@@ -85,7 +74,7 @@ export default function AuditorDashboardPage() {
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+          <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
             <div className="mb-5 flex items-center justify-between">
               <h3 className="font-display text-[22px] font-semibold">Audit Summary</h3>
               <Badge variant="primary">Live Oversight</Badge>
@@ -114,7 +103,7 @@ export default function AuditorDashboardPage() {
             </div>
           </section>
 
-          <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+          <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
             <div className="mb-5 flex items-center justify-between">
               <h3 className="font-display text-[22px] font-semibold">Evidence Readiness</h3>
               <IconShieldCheck className="size-5 text-primary" />
@@ -141,7 +130,7 @@ export default function AuditorDashboardPage() {
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <section className="rounded-[20px] border border-border-subtle bg-white p-6 shadow-soft">
+          <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
             <div className="mb-5 flex items-center justify-between">
               <h3 className="font-display text-[22px] font-semibold">Open Exceptions</h3>
               <Badge variant="warning">7 open</Badge>
@@ -175,7 +164,7 @@ export default function AuditorDashboardPage() {
                   <p className="mt-1 text-lg font-semibold">{value}</p>
                 </div>
               ))}
-              <Button variant="secondary" className="mt-2 rounded-[16px] border-white/20 bg-white/10 px-5 text-white hover:bg-white/20">
+              <Button variant="secondary" className="mt-2 rounded-[16px] border-white/20 bg-surface/10 px-5 text-white hover:bg-surface/20">
                 <IconArrowUpRight className="size-4" />
                 Open full report center
               </Button>

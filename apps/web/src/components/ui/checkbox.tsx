@@ -12,7 +12,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
           <input
             ref={ref}
             type="checkbox"
-            className="peer absolute inset-0 z-10 cursor-pointer appearance-none rounded-md border border-border-subtle bg-white transition checked:border-primary checked:bg-primary focus-visible:ring-2 focus-visible:ring-primary/15"
+            className="peer absolute inset-0 z-10 cursor-pointer appearance-none rounded-md border border-border-subtle bg-surface transition checked:border-primary checked:bg-primary focus-visible:ring-2 focus-visible:ring-primary/15"
             {...props}
           />
           <IconCheck className="pointer-events-none size-3.5 text-white opacity-0 transition peer-checked:opacity-100" />
