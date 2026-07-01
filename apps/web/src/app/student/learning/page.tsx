@@ -19,7 +19,7 @@ import {
   IconMenu2,
   IconX,
 } from '@tabler/icons-react';
-import { useStudentDemo } from '@/components/student/student-demo-store';
+import { useStudentDemo } from '@/components/student/student-portal-store';
 import { StudentIntakeModal } from '@/components/student/student-intake-modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

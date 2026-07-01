@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { IBM_Plex_Mono, Inter, Plus_Jakarta_Sans } from 'next/font/google';
+import { AuthProvider } from '@/components/auth/auth-provider';
 import { ThemeProvider } from '@/components/ui/theme-provider';
 import './globals.css';
 
@@ -37,7 +38,9 @@ export default function RootLayout({
       className={`${plusJakarta.variable} ${inter.variable} ${ibmPlexMono.variable} antialiased`}
     >
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

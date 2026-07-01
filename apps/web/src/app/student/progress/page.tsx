@@ -12,7 +12,7 @@ import {
   IconCertificate2,
   IconX,
 } from '@tabler/icons-react';
-import { useStudentDemo } from '@/components/student/student-demo-store';
+import { useStudentDemo } from '@/components/student/student-portal-store';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
@@ -217,8 +217,7 @@ export default function StudentProgressPage() {
                 Excellent Completion Pace
               </h3>
               <p className="mb-6 mt-3 text-on-surface-variant">
-                You are currently focused on {currentModule.title}. This page now reflects live demo
-                state from the dashboard, learning flow, and onboarding steps.
+                You are currently focused on {currentModule.title}. This page reflects backend-driven progress from the dashboard, learning flow, and onboarding steps.
               </p>
               <Button className="h-12 rounded-[16px] px-6" onClick={() => advanceLearning(30)}>
                 Resume Current Module

@@ -11,7 +11,6 @@ import {
   IconHelpCircle,
   IconHistory,
   IconIdBadge2,
-  IconLogout,
   IconMenu2,
   IconNotebook,
   IconReportAnalytics,
@@ -22,6 +21,7 @@ import {
   IconUsersGroup,
   IconX,
 } from '@tabler/icons-react';
+import { SignOutButton } from '@/components/auth/sign-out-button';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -296,16 +296,10 @@ export function AuditorShell({
                   </div>
 
                   <div className="border-t border-border-subtle p-2">
-                    <button
-                      onClick={() => {
-                        setProfileMenuOpen(false);
-                        window.location.href = '/';
-                      }}
+                    <SignOutButton
+                      onBeforeSignOut={() => setProfileMenuOpen(false)}
                       className="w-full flex items-center gap-3 rounded-[12px] px-4 py-2.5 text-sm text-error transition hover:bg-error/10"
-                    >
-                      <IconLogout className="size-4" />
-                      <span>Logout</span>
-                    </button>
+                    />
                   </div>
                 </div>
               )}

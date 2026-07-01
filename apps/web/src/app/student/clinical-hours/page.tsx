@@ -12,7 +12,7 @@ import {
   IconClock,
   IconCalendarEvent,
 } from '@tabler/icons-react';
-import { useStudentDemo } from '@/components/student/student-demo-store';
+import { useStudentDemo } from '@/components/student/student-portal-store';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
@@ -238,8 +238,7 @@ export default function StudentClinicalHoursPage() {
               <IconNotes className="size-5 text-primary" />
             </div>
             <p className="mt-4 text-sm text-on-surface-variant">
-              This view mirrors a working student clinical area using static data and shared state,
-              so stakeholders can see status movement, audit touchpoints, and evidence tracking.
+              This workspace tracks student clinical status, audit touchpoints, and evidence updates against the backend portal.
             </p>
             <div className="mt-4 flex items-center gap-2 text-[12px] font-semibold text-primary">
               <IconHistory className="size-4" />

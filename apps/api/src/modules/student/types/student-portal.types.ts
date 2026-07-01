@@ -1,0 +1,489 @@
+export type StudentWorkflowStage =
+  | 'entrance_exam'
+  | 'enrollment_wizard'
+  | 'admin_review'
+  | 'orientation_survey'
+  | 'active';
+
+export type ModuleStatus = 'Complete' | 'In Progress' | 'Locked';
+export type MessageStatus = 'Unread' | 'New' | 'Read';
+export type DocumentStatus = 'Verified' | 'Pending Review' | 'Missing';
+export type PaymentStatus = 'Completed' | 'Upcoming';
+export type ClinicalLogStatus = 'Verified' | 'Pending';
+export type AttendanceType = 'Theory' | 'Clinical';
+export type AttendanceStatus = 'Present' | 'Planned Absence' | 'Unplanned Absence';
+
+export interface StudentProfile {
+  id: string;
+  fullName: string;
+  preferredName?: string;
+  email: string;
+  phone: string;
+  location: string;
+  cohort: string;
+  levelLabel: string;
+  studentNumber: string;
+}
+
+export interface DashboardActionItem {
+  id: string;
+  title: string;
+  detail: string;
+  complete: boolean;
+  urgent?: boolean;
+}
+
+export interface DashboardMetric {
+  id: string;
+  label: string;
+  value: string;
+  current: number;
+  target: number;
+  unit?: string;
+}
+
+export interface OnboardingStep {
+  id: string;
+  title: string;
+  description: string;
+  complete: boolean;
+  actionLabel: string;
+}
+
+export interface OnboardingQuestion {
+  id: string;
+  prompt: string;
+  answer: string;
+}
+
+export interface OnboardingAcknowledgements {
+  schedule: boolean;
+  attendance: boolean;
+  technology: boolean;
+}
+
+export interface ReadinessUploads {
+  photoId: boolean;
+  diploma: boolean;
+  tbTest: boolean;
+}
+
+export interface OnboardingState {
+  workflowStage: StudentWorkflowStage;
+  steps: OnboardingStep[];
+  questions: OnboardingQuestion[];
+  acknowledgements: OnboardingAcknowledgements;
+  readinessUploads: ReadinessUploads;
+  submitted: boolean;
+}
+
+export interface LearningStep {
+  id: string;
+  title: string;
+  type: 'Video' | 'PDF' | 'Reading' | 'Skill Check' | 'Quiz';
+  duration: string;
+  note: string;
+  complete: boolean;
+}
+
+export interface CurriculumModule {
+  id: string;
+  title: string;
+  summary: string;
+  status: ModuleStatus;
+  progressPercent: number;
+  requiredHours: number;
+  completedHours: number;
+  examScore?: string;
+  certificateUnlocked: boolean;
+  steps: LearningStep[];
+}
+
+export interface StudentMessage {
+  id: string;
+  sender: 'student' | 'staff' | 'system';
+  text: string;
+  time: string;
+}
+
+export interface StudentThread {
+  id: string;
+  recipientName: string;
+  recipientRole: string;
+  moduleId: string;
+  moduleName: string;
+  status: MessageStatus;
+  preview: string;
+  time: string;
+  unread: boolean;
+  messages: StudentMessage[];
+}
+
+export interface ClinicalLogEntry {
+  id: string;
+  date: string;
+  moduleId: string;
+  moduleTitle: string;
+  hours: number;
+  instructor: string;
+  status: ClinicalLogStatus;
+  note?: string;
+}
+
+export interface ClinicalSession {
+  id: string;
+  title: string;
+  date: string;
+  location: string;
+  instructor: string;
+  type: AttendanceType;
+  status: 'Scheduled' | 'Pending Scheduling' | 'Completed';
+}
+
+export interface PaymentRecord {
+  id: string;
+  date: string;
+  amount: number;
+  status: PaymentStatus;
+  method: string;
+}
+
+export interface FinancialSummary {
+  totalTuition: number;
+  amountPaid: number;
+  balance: number;
+  depositRequired: number;
+  depositPaid: boolean;
+  status: 'Current' | 'Payment Due' | 'Past Due';
+  paymentPlan: PaymentRecord[];
+}
+
+export interface StudentDocument {
+  id: string;
+  title: string;
+  category: 'admissions' | 'academic' | 'clinical' | 'compliance';
+  subtitle: string;
+  status: DocumentStatus;
+  submittedAt: string;
+  required: boolean;
+  fileName?: string;
+}
+
+export interface StudentForm {
+  id: string;
+  title: string;
+  status: 'Ready' | 'Pending Signature' | 'Submitted';
+  description: string;
+  lastUpdated: string;
+  actionLabel: string;
+}
+
+export interface StudentAuditEvent {
+  id: string;
+  actor: string;
+  action: string;
+  target: string;
+  occurredAt: string;
+  details?: Record<string, string | number | boolean>;
+}
+
+export interface AttendanceRecord {
+  id: string;
+  date: string;
+  type: AttendanceType;
+  status: AttendanceStatus;
+  note: string;
+}
+
+export interface AssignmentItem {
+  id: string;
+  title: string;
+  due: string;
+  detail: string;
+  moduleId: string;
+  status: 'Pending' | 'Submitted';
+}
+
+export interface SupportTicket {
+  id: string;
+  subject: string;
+  category: string;
+  message: string;
+  status: 'Open' | 'In Review' | 'Resolved';
+  createdAt: string;
+}
+
+export interface StudentSettings {
+  email_updates: boolean;
+  sms_alerts: boolean;
+  remember_device: boolean;
+}
+
+export interface CdphForm {
+  lastName: string;
+  firstName: string;
+  dob: string;
+  phone: string;
+  email: string;
+  city: string;
+  zip: string;
+  conviction: boolean;
+  convictionDetails: string;
+}
+
+export interface EntranceExamState {
+  answers: Record<string, string>;
+  score: number | null;
+  taken: boolean;
+  passed: boolean;
+}
+
+export interface EnrollmentWizardState {
+  step: number;
+  hhaAddon: boolean;
+  scrubTop: string;
+  scrubBottom: string;
+  shipping: 'pickup' | 'ship';
+  wantsToTestAtDaisy: boolean | null;
+  agreements: {
+    ip: boolean;
+    refund: boolean;
+    conduct: boolean;
+    lateFee: boolean;
+  };
+  signature: string;
+  submitted: boolean;
+}
+
+export interface EntranceSurveyState {
+  step: number;
+  answers: Record<string, string>;
+  completed: boolean;
+}
+
+export interface StudentPortalState {
+  profile: StudentProfile;
+  workflowStage: StudentWorkflowStage;
+  tasks: DashboardActionItem[];
+  onboarding: OnboardingState;
+  modules: CurriculumModule[];
+  activeModuleId: string;
+  threads: StudentThread[];
+  activeThreadId: string;
+  clinicalSessions: ClinicalSession[];
+  clinicalLogs: ClinicalLogEntry[];
+  financials: FinancialSummary;
+  documents: StudentDocument[];
+  forms: StudentForm[];
+  auditTrail: StudentAuditEvent[];
+  entranceExam: EntranceExamState;
+  enrollmentWizard: EnrollmentWizardState;
+  entranceSurvey: EntranceSurveyState;
+  settings: StudentSettings;
+  attendanceRecords: AttendanceRecord[];
+  assignments: AssignmentItem[];
+  supportTickets: SupportTicket[];
+  cdphForm: CdphForm;
+  cdphSigned: boolean;
+  liveScanGenerated: boolean;
+  liveScanUploaded: boolean;
+  textbookIssued: boolean;
+  textbookOpened: boolean;
+  exitSurveyComplete: boolean;
+  learningMinutes: number;
+  learningSessionActive: boolean;
+  reflectionResponse: string;
+  questionOfDayAnswer: string;
+  lastAction: string;
+}
+
+export interface StudentDashboardSnapshot {
+  profile: StudentProfile;
+  workflowStage: StudentWorkflowStage;
+  metrics: DashboardMetric[];
+  currentModule: CurriculumModule;
+  tasks: DashboardActionItem[];
+  upcomingSessions: ClinicalSession[];
+  unreadCount: number;
+  completedOnboardingCount: number;
+  onboardingStepCount: number;
+  overallProgressPercent: number;
+}
+
+export interface StudentIntakeSnapshot {
+  workflowStage: StudentWorkflowStage;
+  entranceExam: EntranceExamState;
+  enrollmentWizard: EnrollmentWizardState;
+  entranceSurvey: EntranceSurveyState;
+}
+
+export interface UpdateWorkflowStageDto {
+  workflowStage: StudentWorkflowStage;
+}
+
+export interface StudentLearningSnapshot {
+  activeModuleId: string;
+  currentModule: CurriculumModule;
+  modules: CurriculumModule[];
+  learningMinutes: number;
+  learningSessionActive: boolean;
+  examUnlocked: boolean;
+  textbookIssued: boolean;
+  textbookOpened: boolean;
+  exitSurveyComplete: boolean;
+  moduleCertificatesReady: number;
+  programCertificateReady: boolean;
+}
+
+export interface StudentAttendanceSummary {
+  todayTheoryCheckedIn: boolean;
+  todayClinicalCheckedIn: boolean;
+  records: AttendanceRecord[];
+}
+
+export interface StudentFormsWorkspace {
+  forms: StudentForm[];
+  cdphForm: CdphForm;
+  cdphSigned: boolean;
+  liveScanGenerated: boolean;
+  liveScanUploaded: boolean;
+}
+
+export interface StudentCertificatesSummary {
+  moduleCertificatesReady: number;
+  totalModules: number;
+  programCertificateReady: boolean;
+  modules: Array<{
+    id: string;
+    title: string;
+    unlocked: boolean;
+    examScore?: string;
+  }>;
+}
+
+export interface TextAnswerDto {
+  answer: string;
+}
+
+export interface AnswerOnboardingQuestionDto {
+  answer: string;
+}
+
+export interface UpdateOnboardingAcknowledgementsDto {
+  schedule?: boolean;
+  attendance?: boolean;
+  technology?: boolean;
+}
+
+export interface UpdateReadinessUploadsDto {
+  photoId?: boolean;
+  diploma?: boolean;
+  tbTest?: boolean;
+}
+
+export interface SendStudentMessageDto {
+  threadId?: string;
+  recipientName: string;
+  recipientRole: string;
+  moduleId: string;
+  moduleName: string;
+  text: string;
+}
+
+export interface LogClinicalHoursDto {
+  date: string;
+  moduleId: string;
+  moduleTitle: string;
+  hours: number;
+  instructor: string;
+  note?: string;
+}
+
+export interface RecordPaymentDto {
+  amount: number;
+  method: string;
+  date?: string;
+}
+
+export interface UploadStudentDocumentDto {
+  title: string;
+  category: 'admissions' | 'academic' | 'clinical' | 'compliance';
+  subtitle: string;
+  status?: DocumentStatus;
+  submittedAt?: string;
+  required?: boolean;
+  fileName?: string;
+}
+
+export interface ReplaceStudentDocumentDto {
+  subtitle?: string;
+  fileName?: string;
+}
+
+export interface UpdateStudentProfileDto {
+  fullName?: string;
+  preferredName?: string;
+  email?: string;
+  phone?: string;
+  location?: string;
+}
+
+export interface UpdateEnrollmentWizardDto {
+  hhaAddon?: boolean;
+  scrubTop?: string;
+  scrubBottom?: string;
+  shipping?: 'pickup' | 'ship';
+  wantsToTestAtDaisy?: boolean | null;
+  signature?: string;
+}
+
+export interface UpdateEnrollmentWizardAgreementsDto {
+  ip?: boolean;
+  refund?: boolean;
+  conduct?: boolean;
+  lateFee?: boolean;
+}
+
+export interface UpdateWizardStepDto {
+  step: number;
+}
+
+export interface UpdateSettingDto {
+  email_updates?: boolean;
+  sms_alerts?: boolean;
+  remember_device?: boolean;
+}
+
+export interface AdvanceLearningDto {
+  minutes?: number;
+}
+
+export interface SelectModuleDto {
+  moduleId: string;
+}
+
+export interface AttendanceCheckInDto {
+  type: AttendanceType;
+}
+
+export interface ReportAbsenceDto {
+  kind: 'today' | 'future';
+}
+
+export interface SubmitSupportTicketDto {
+  subject: string;
+  category: string;
+  message: string;
+}
+
+export interface UpdateCdphFormDto {
+  lastName?: string;
+  firstName?: string;
+  dob?: string;
+  phone?: string;
+  email?: string;
+  city?: string;
+  zip?: string;
+  conviction?: boolean;
+  convictionDetails?: string;
+}

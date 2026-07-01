@@ -19,14 +19,15 @@ import {
   IconSettings,
   IconStethoscope,
   IconUserCheck,
-  IconLogout,
   IconUser,
   IconX,
 } from '@tabler/icons-react';
+import { useAuth } from '@/components/auth/auth-provider';
+import { SignOutButton } from '@/components/auth/sign-out-button';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { useStudentDemo } from '@/components/student/student-demo-store';
+import { useStudentDemo } from '@/components/student/student-portal-store';
 import { StudentIntakeModal } from '@/components/student/student-intake-modal';
 
 type StudentNavItem = {
@@ -50,6 +51,32 @@ const navItems: StudentNavItem[] = [
 
 function isActive(pathname: string, href: string) {
   return pathname === href;
+}
+
+function formatRoleLabel(role?: string) {
+  if (!role) {
+    return 'Student';
+  }
+
+  return role
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function getInitials(name: string) {
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+
+  if (parts.length === 0) {
+    return 'S';
+  }
+
+  return parts.map((part) => part.charAt(0).toUpperCase()).join('');
 }
 
 export interface StudentShellProps {
@@ -88,9 +115,28 @@ export function StudentShell({
 }: StudentShellProps) {
   const pathname = usePathname();
   const { workflowStage, portalUnlocked } = useStudentDemo();
+  const { user, syncedUser } = useAuth();
   const [workflowOpen, setWorkflowOpen] = React.useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+
+  const resolvedProfileName =
+    typeof user?.user_metadata?.full_name === 'string' && user.user_metadata.full_name.trim()
+      ? user.user_metadata.full_name.trim()
+      : typeof user?.user_metadata?.name === 'string' && user.user_metadata.name.trim()
+        ? user.user_metadata.name.trim()
+        : syncedUser?.email
+          ? syncedUser.email
+          : profileName;
+  const resolvedProfileMeta = `${formatRoleLabel(syncedUser?.role)}${
+    syncedUser?.status ? ` · ${syncedUser.status}` : ''
+  }`;
+  const resolvedProfileImageUrl =
+    typeof user?.user_metadata?.avatar_url === 'string' && user.user_metadata.avatar_url.trim()
+      ? user.user_metadata.avatar_url.trim()
+      : typeof user?.user_metadata?.picture === 'string' && user.user_metadata.picture.trim()
+        ? user.user_metadata.picture.trim()
+        : profileImageUrl;
 
   React.useEffect(() => {
     if (!portalUnlocked) {
@@ -292,28 +338,40 @@ export function StudentShell({
                 className="flex items-center gap-3 border-l border-border-subtle pl-2 transition hover:opacity-80 sm:pl-4"
               >
                 <div className="hidden text-right sm:block">
-                  <p className="text-sm font-semibold text-on-surface">{profileName}</p>
-                  <p className="text-[12px] text-on-surface-variant">{profileMeta}</p>
+                  <p className="text-sm font-semibold text-on-surface">{resolvedProfileName}</p>
+                  <p className="text-[12px] text-on-surface-variant">{resolvedProfileMeta}</p>
                 </div>
-                <img
-                  className="h-10 w-10 rounded-full border-2 border-primary-fixed object-cover cursor-pointer"
-                  src={profileImageUrl}
-                  alt={profileName}
-                />
+                {resolvedProfileImageUrl ? (
+                  <img
+                    className="h-10 w-10 rounded-full border-2 border-primary-fixed object-cover cursor-pointer"
+                    src={resolvedProfileImageUrl}
+                    alt={resolvedProfileName}
+                  />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary-fixed bg-primary/10 text-xs font-bold text-primary">
+                    {getInitials(resolvedProfileName)}
+                  </div>
+                )}
               </button>
 
               {profileMenuOpen && (
                 <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-[16px] border border-border-subtle bg-surface shadow-lg">
                   <div className="border-b border-border-subtle p-4">
                     <div className="flex items-center gap-3">
-                      <img
-                        className="h-12 w-12 rounded-full border-2 border-primary-fixed object-cover"
-                        src={profileImageUrl}
-                        alt={profileName}
-                      />
+                      {resolvedProfileImageUrl ? (
+                        <img
+                          className="h-12 w-12 rounded-full border-2 border-primary-fixed object-cover"
+                          src={resolvedProfileImageUrl}
+                          alt={resolvedProfileName}
+                        />
+                      ) : (
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-primary-fixed bg-primary/10 text-sm font-bold text-primary">
+                          {getInitials(resolvedProfileName)}
+                        </div>
+                      )}
                       <div>
-                        <p className="font-semibold text-on-surface">{profileName}</p>
-                        <p className="text-[12px] text-on-surface-variant">{profileMeta}</p>
+                        <p className="font-semibold text-on-surface">{resolvedProfileName}</p>
+                        <p className="text-[12px] text-on-surface-variant">{resolvedProfileMeta}</p>
                       </div>
                     </div>
                   </div>
@@ -338,16 +396,10 @@ export function StudentShell({
                   </div>
 
                   <div className="border-t border-border-subtle p-2">
-                    <button
-                      onClick={() => {
-                        setProfileMenuOpen(false);
-                        window.location.href = '/';
-                      }}
+                    <SignOutButton
+                      onBeforeSignOut={() => setProfileMenuOpen(false)}
                       className="w-full flex items-center gap-3 rounded-[12px] px-4 py-2.5 text-sm text-error transition hover:bg-error/10"
-                    >
-                      <IconLogout className="size-4" />
-                      <span>Logout</span>
-                    </button>
+                    />
                   </div>
                 </div>
               )}

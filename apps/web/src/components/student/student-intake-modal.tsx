@@ -10,7 +10,7 @@ import {
   IconSparkles,
   IconX,
 } from '@tabler/icons-react';
-import { useStudentDemo } from '@/components/student/student-demo-store';
+import { useStudentDemo } from '@/components/student/student-portal-store';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -249,8 +249,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
               Intake, Enrollment, and Orientation
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-white/80">
-              This mirrors the real student flow from your reference project, but everything is now
-              driven by static demo data and shared local state.
+              This mirrors the intended student intake flow, and each step now persists through the backend student workflow.
             </p>
           </div>
           <button
@@ -293,7 +292,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
               <section className="space-y-6">
               <div className="rounded-[22px] border border-warning/20 bg-warning/5 p-5">
                 <p className="text-sm leading-6 text-on-surface-variant">
-                  Passing score for the demo is 5 out of 6. Just like the reference app, this gates
+                  Passing score is 5 out of 6. This gates
                   the rest of the onboarding journey.
                 </p>
               </div>
@@ -309,7 +308,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                   <p className="mt-2 text-sm text-on-surface-variant">
                     {entranceExam.passed
                       ? 'The student is cleared to continue to enrollment setup.'
-                      : 'The reference app would stop here. For demo walkthroughs, you can continue manually.'}
+                      : 'The intake flow normally stops here until the entrance exam is passed or reviewed.'}
                   </p>
                   <div className="mt-5 flex flex-wrap gap-3">
                     <Button onClick={() => setWorkflowStage('enrollment_wizard')}>
@@ -508,8 +507,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                       Program Orientation
                     </h5>
                     <p className="mt-3 max-w-xl text-sm leading-6 text-white/80">
-                      In production this would be a real video. For the static flow, it still marks
-                      the student as having passed through the orientation checkpoint.
+                      This checkpoint represents the orientation briefing and records that the student completed the review stage.
                     </p>
                   </div>
                 </div>
@@ -569,8 +567,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                     </h4>
                     <div className="mt-5 rounded-[18px] bg-surface p-5">
                       <p className="text-sm text-on-surface-variant">
-                        Registration, tuition, optional HHA add-on, and delivery preference are now
-                        staged in local state exactly like a submitted enrollment packet.
+                        Registration, tuition, optional HHA add-on, and delivery preference are staged in the enrollment packet for review.
                       </p>
                       <Input
                         value={enrollmentWizard.signature}
@@ -714,7 +711,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                 </h3>
                 <p className="mt-3 text-sm leading-6 text-white/85">
                   The student can now move through learning, forms, documents, financials, and
-                  messaging with shared state just like a live portal.
+                  messaging through the live student portal workflow.
                 </p>
               </div>
               <div className="rounded-[22px] border border-border-subtle bg-surface-muted p-6">
