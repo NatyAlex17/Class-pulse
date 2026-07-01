@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 
 import type { LocalUserRecord } from '../../auth/types/auth-user.types';
 import { studentPortalSeed } from '../data/student-portal.seed';
+import { ExamConfigService } from './exam-config.service';
 import {
   ClinicalLogEntry,
   StudentAuditEvent,
@@ -13,9 +14,9 @@ import {
 export class StudentPortalRepository {
   private readonly portalByStudentId = new Map<string, StudentPortalState>();
 
-  constructor() {
+  constructor(private examConfigService: ExamConfigService) {
     studentPortalSeed.forEach((portal) => {
-      this.portalByStudentId.set(portal.profile.id, this.clone(portal));
+      this.portalByStudentId.set(portal.profile.id, this.enrichPortalWithExamConfig(this.clone(portal)));
     });
   }
 
@@ -26,7 +27,18 @@ export class StudentPortalRepository {
       throw new NotFoundException(`Student portal state not found for "${studentId}".`);
     }
 
-    return this.clone(portal);
+    return this.enrichPortalWithExamConfig(this.clone(portal));
+  }
+
+  private enrichPortalWithExamConfig(portal: StudentPortalState): StudentPortalState {
+    const examConfig = this.examConfigService.getConfig();
+    return {
+      ...portal,
+      intakeJourney: {
+        ...portal.intakeJourney,
+        entranceExam: examConfig,
+      },
+    };
   }
 
   ensureForLocalUser(localUser: LocalUserRecord): StudentPortalState {
@@ -36,18 +48,31 @@ export class StudentPortalRepository {
     }
 
     const template = studentPortalSeed[0];
-    const [firstName = 'Student'] = this.humanizeName(localUser.email).split(' ');
+    const fullName = this.humanizeName(localUser.email);
+    const [firstName = 'Student'] = fullName.split(' ');
+    const examConfig = this.examConfigService.getConfig();
     const personalized: StudentPortalState = this.clone({
       ...template,
       profile: {
         ...template.profile,
         id: localUser.id,
-        fullName: this.humanizeName(localUser.email),
+        fullName,
         preferredName: firstName,
         email: localUser.email,
         studentNumber: this.buildStudentNumber(localUser.id),
       },
       workflowStage: 'entrance_exam',
+      intakeJourney: {
+        ...template.intakeJourney,
+        entranceExam: examConfig,
+        enrollmentWizard: {
+          ...template.intakeJourney.enrollmentWizard,
+          signatureRequirement: {
+            value: fullName,
+            hint: `Signature must match ${fullName} to continue.`,
+          },
+        },
+      },
       entranceExam: {
         answers: {},
         score: null,

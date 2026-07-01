@@ -14,6 +14,7 @@ import type {
   SelectModuleDto,
   SendStudentMessageDto,
   SubmitSupportTicketDto,
+  SubmitStudentIntakeDto,
   TextAnswerDto,
   UpdateCdphFormDto,
   UpdateEnrollmentWizardAgreementsDto,
@@ -27,12 +28,16 @@ import type {
   UploadStudentDocumentDto,
 } from '../types/student-portal.types';
 import { StudentPortalService } from '../services/student-portal.service';
+import { IntakeSubmissionService } from '../services/intake-submission.service';
 
 @Controller('students/:studentId')
 @UseGuards(SupabaseAuthGuard)
 @Roles('student')
 export class StudentPortalController {
-  constructor(private readonly studentPortalService: StudentPortalService) {}
+  constructor(
+    private readonly studentPortalService: StudentPortalService,
+    private readonly intakeSubmissionService: IntakeSubmissionService,
+  ) {}
 
   @Get('portal')
   getPortal(@Param('studentId') studentId: string) {
@@ -540,6 +545,23 @@ export class StudentPortalController {
     return createApiResponse(
       this.studentPortalService.getCertificates(studentId),
       'Student certificate status retrieved successfully.',
+    );
+  }
+
+  @Post('intake/submit')
+  submitIntake(@Param('studentId') studentId: string, @Body() body: SubmitStudentIntakeDto) {
+    return createApiResponse(
+      this.intakeSubmissionService.submitIntake(studentId, body),
+      'Student intake submitted for admin review.',
+    );
+  }
+
+  @Get('intake/approval-status')
+  getApprovalStatus(@Param('studentId') studentId: string) {
+    const status = this.intakeSubmissionService.getStudentApprovalStatus(studentId);
+    return createApiResponse(
+      { status },
+      'Student intake approval status retrieved successfully.',
     );
   }
 }

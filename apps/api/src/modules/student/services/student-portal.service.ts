@@ -138,6 +138,7 @@ export class StudentPortalService {
     const portal = this.repository.findByStudentId(studentId);
     return {
       workflowStage: portal.workflowStage,
+      intakeJourney: portal.intakeJourney,
       entranceExam: portal.entranceExam,
       enrollmentWizard: portal.enrollmentWizard,
       entranceSurvey: portal.entranceSurvey,
@@ -227,7 +228,8 @@ export class StudentPortalService {
 
   setEnrollmentWizardStep(studentId: string, payload: UpdateWizardStepDto) {
     const portal = this.repository.findByStudentId(studentId);
-    portal.enrollmentWizard.step = Math.min(5, Math.max(1, payload.step));
+    const maxStep = portal.intakeJourney.enrollmentWizard.steps.length;
+    portal.enrollmentWizard.step = Math.min(maxStep, Math.max(1, payload.step));
     return this.repository.save(portal).enrollmentWizard;
   }
 
@@ -235,6 +237,7 @@ export class StudentPortalService {
     const portal = this.repository.findByStudentId(studentId);
     const allAgreementsAccepted = Object.values(portal.enrollmentWizard.agreements).every(Boolean);
     const hasSignature = portal.enrollmentWizard.signature.trim().length > 0;
+    const requiredSignature = portal.intakeJourney.enrollmentWizard.signatureRequirement.value.trim().toLowerCase();
     const hasScrubs =
       portal.enrollmentWizard.scrubTop.trim().length > 0 && portal.enrollmentWizard.scrubBottom.trim().length > 0;
     const hasTestingPreference = portal.enrollmentWizard.wantsToTestAtDaisy !== null;
@@ -245,8 +248,12 @@ export class StudentPortalService {
       );
     }
 
+    if (portal.enrollmentWizard.signature.trim().toLowerCase() !== requiredSignature) {
+      throw new BadRequestException('Enrollment signature does not match the required signer.');
+    }
+
     portal.enrollmentWizard.submitted = true;
-    portal.enrollmentWizard.step = 5;
+    portal.enrollmentWizard.step = portal.intakeJourney.enrollmentWizard.steps.length;
     portal.workflowStage = 'admin_review';
     portal.lastAction = 'Enrollment package submitted for review.';
     this.recordAudit(portal, 'student.intake.enrollment-wizard.submitted', 'enrollment-wizard', {
@@ -271,7 +278,8 @@ export class StudentPortalService {
 
   setEntranceSurveyStep(studentId: string, payload: UpdateWizardStepDto) {
     const portal = this.repository.findByStudentId(studentId);
-    portal.entranceSurvey.step = Math.min(5, Math.max(1, payload.step));
+    const maxStep = portal.intakeJourney.orientationSurvey.sections.length;
+    portal.entranceSurvey.step = Math.min(maxStep, Math.max(1, payload.step));
     return this.repository.save(portal).entranceSurvey;
   }
 
@@ -284,7 +292,7 @@ export class StudentPortalService {
     }
 
     portal.entranceSurvey.completed = true;
-    portal.entranceSurvey.step = 5;
+    portal.entranceSurvey.step = portal.intakeJourney.orientationSurvey.sections.length;
     portal.workflowStage = 'active';
     portal.tasks = portal.tasks.map((task) =>
       task.id === 'entrance-survey' ? { ...task, complete: true } : task,

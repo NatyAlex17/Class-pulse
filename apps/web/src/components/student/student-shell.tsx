@@ -304,6 +304,7 @@ export function StudentShell({
         <div className="flex h-full items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <button
+              suppressHydrationWarning
               onClick={() => setMobileMenuOpen(true)}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-subtle text-on-surface-variant transition hover:bg-surface-high hover:text-primary lg:hidden"
             >
@@ -329,11 +330,12 @@ export function StudentShell({
           <div className="flex items-center gap-2 sm:gap-4">
             {topActions}
             <ThemeToggle />
-            <button className="text-on-surface-variant transition hover:text-primary">
+            <button suppressHydrationWarning className="text-on-surface-variant transition hover:text-primary">
               <IconBell className="size-5" />
             </button>
             <div className="relative" data-profile-menu>
               <button
+                suppressHydrationWarning
                 onClick={() => setProfileMenuOpen(!profileMenuOpen)}
                 className="flex items-center gap-3 border-l border-border-subtle pl-2 transition hover:opacity-80 sm:pl-4"
               >

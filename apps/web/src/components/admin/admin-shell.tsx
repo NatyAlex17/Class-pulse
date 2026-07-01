@@ -14,8 +14,10 @@ import {
   IconMenu2,
   IconSearch,
   IconSettings,
+  IconAdjustments,
   IconUser,
   IconX,
+  IconChevronDown,
 } from '@tabler/icons-react';
 import { SignOutButton } from '@/components/auth/sign-out-button';
 import { cn } from '@/lib/utils';
@@ -25,8 +27,9 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 type AdminNavItem = {
   label: string;
-  href: string;
+  href?: string;
   icon: React.ComponentType<{ className?: string }>;
+  children?: AdminNavItem[];
 };
 
 const navItems: AdminNavItem[] = [
@@ -35,10 +38,21 @@ const navItems: AdminNavItem[] = [
   { label: 'Applications', href: '/admin/applications', icon: IconClipboardList },
   { label: 'Review Workspace', href: '/admin/applications/review', icon: IconAppWindow },
   { label: 'Reports', href: '/admin/reports', icon: IconFileAnalytics },
+  {
+    label: 'Configurations',
+    icon: IconAdjustments,
+    children: [
+      { label: 'Onboarding Configs', href: '/admin/configurations/onboarding', icon: IconSettings },
+    ],
+  },
 ];
 
 function isActive(pathname: string, href: string) {
   return pathname === href;
+}
+
+function isActiveOrChild(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(href + '/');
 }
 
 export interface AdminShellProps {
@@ -69,6 +83,34 @@ export function AdminShell({
   const pathname = usePathname();
   const [profileMenuOpen, setProfileMenuOpen] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+
+  // Auto-expand parent menus if child is active
+  const initialExpandedMenus = React.useMemo(() => {
+    const expanded = new Set<string>();
+    navItems.forEach((item) => {
+      if (item.children) {
+        const hasActiveChild = item.children.some((child) =>
+          isActiveOrChild(pathname, child.href || '')
+        );
+        if (hasActiveChild) {
+          expanded.add(item.label);
+        }
+      }
+    });
+    return expanded;
+  }, [pathname]);
+
+  const [expandedMenus, setExpandedMenus] = React.useState<Set<string>>(initialExpandedMenus);
+
+  const toggleMenu = (label: string) => {
+    const newExpanded = new Set(expandedMenus);
+    if (newExpanded.has(label)) {
+      newExpanded.delete(label);
+    } else {
+      newExpanded.add(label);
+    }
+    setExpandedMenus(newExpanded);
+  };
 
   React.useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -101,15 +143,57 @@ export function AdminShell({
           <p className="mt-1 text-sm text-on-surface-variant">Healthcare Education</p>
         </div>
 
-        <nav className="flex-1 space-y-2">
+        <nav className="flex-1 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const active = isActive(pathname, item.href);
+            const isExpanded = expandedMenus.has(item.label);
+            const hasChildren = item.children && item.children.length > 0;
 
+            if (hasChildren) {
+              return (
+                <div key={item.label}>
+                  <button
+                    onClick={() => toggleMenu(item.label)}
+                    className={cn(
+                      'flex w-full items-center justify-between gap-3 rounded-[16px] px-3 py-2.5 text-sm transition-colors',
+                      'text-on-surface-variant hover:bg-surface-high hover:text-primary',
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className="size-5" />
+                      <span>{item.label}</span>
+                    </div>
+                    <IconChevronDown
+                      className={cn('size-4 transition-transform', isExpanded && 'rotate-180')}
+                    />
+                  </button>
+                  {isExpanded && (
+                    <div className="mt-1 space-y-1 pl-4">
+                      {item.children.map((child) => (
+                        <Link
+                          key={child.href}
+                          href={child.href || '#'}
+                          className={cn(
+                            'flex items-center gap-3 rounded-[12px] px-3 py-2 text-xs transition-colors',
+                            isActiveOrChild(pathname, child.href || '')
+                              ? 'bg-primary/5 font-semibold text-primary'
+                              : 'text-on-surface-variant hover:bg-surface-high hover:text-primary',
+                          )}
+                        >
+                          <span>{child.label}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            const active = isActive(pathname, item.href || '');
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={item.href || '#'}
                 className={cn(
                   'flex items-center gap-3 rounded-[16px] px-3 py-2.5 text-sm transition-colors',
                   active
@@ -162,15 +246,59 @@ export function AdminShell({
               </button>
             </div>
 
-            <nav className="flex-1 space-y-2 overflow-y-auto">
+            <nav className="flex-1 space-y-1 overflow-y-auto">
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const active = isActive(pathname, item.href);
+                const isExpanded = expandedMenus.has(item.label);
+                const hasChildren = item.children && item.children.length > 0;
 
+                if (hasChildren) {
+                  return (
+                    <div key={item.label}>
+                      <button
+                        onClick={() => toggleMenu(item.label)}
+                        className={cn(
+                          'flex w-full items-center justify-between gap-3 rounded-[16px] px-3 py-3 text-sm transition-colors',
+                          'text-on-surface-variant hover:bg-surface-high hover:text-primary',
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon className="size-5" />
+                          <span>{item.label}</span>
+                        </div>
+                        <IconChevronDown
+                          className={cn('size-4 transition-transform', isExpanded && 'rotate-180')}
+                        />
+                      </button>
+                      {isExpanded && (
+                        <div className="mt-1 space-y-1 pl-6">
+                          {item.children.map((child) => (
+                            <Link
+                              key={child.href}
+                              href={child.href || '#'}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className={cn(
+                                'flex items-center gap-3 rounded-[12px] px-3 py-2 text-xs transition-colors',
+                                isActiveOrChild(pathname, child.href || '')
+                                  ? 'bg-primary/5 font-semibold text-primary'
+                                  : 'text-on-surface-variant hover:bg-surface-high hover:text-primary',
+                              )}
+                            >
+                              <span>{child.label}</span>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                const active = isActive(pathname, item.href || '');
                 return (
                   <Link
                     key={item.href}
-                    href={item.href}
+                    href={item.href || '#'}
+                    onClick={() => setMobileMenuOpen(false)}
                     className={cn(
                       'flex items-center gap-3 rounded-[16px] px-3 py-3 text-sm transition-colors',
                       active

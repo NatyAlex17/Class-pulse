@@ -1,6 +1,8 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   IconCheck,
   IconDots,
@@ -18,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
 type ApplicationDetail = {
   id: string;
@@ -238,6 +241,18 @@ export default function AdminApplicationsPage() {
           </div>
         }
       >
+        <div className="mb-6 flex gap-4 border-b border-border-subtle">
+          <Link href="/admin/applications">
+            <button className="px-4 py-3 font-semibold text-sm border-b-2 border-primary text-primary">
+              Traditional Applications
+            </button>
+          </Link>
+          <Link href="/admin/applications/intake-submissions">
+            <button className="px-4 py-3 font-semibold text-sm border-b-2 border-transparent text-on-surface-variant hover:text-on-surface">
+              Intake Submissions
+            </button>
+          </Link>
+        </div>
         <DataTable
           columns={columns}
           data={filteredRows}

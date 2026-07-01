@@ -238,6 +238,94 @@ export interface EntranceExamState {
   passed: boolean;
 }
 
+export interface IntakeOptionDefinition {
+  label: string;
+  value: string;
+  description?: string;
+  badge?: string;
+}
+
+export interface IntakeFieldDefinition {
+  id: string;
+  label: string;
+  type: 'choice' | 'text' | 'textarea' | 'select';
+  placeholder?: string;
+  options?: IntakeOptionDefinition[];
+}
+
+export interface IntakeStageDefinition {
+  id: StudentWorkflowStage;
+  label: string;
+}
+
+export interface EntranceExamQuestionDefinition {
+  id: string;
+  prompt: string;
+  type: 'choice' | 'text';
+  placeholder?: string;
+  correctAnswer: string;
+  options: IntakeOptionDefinition[];
+}
+
+export interface EnrollmentWizardStepDefinition {
+  step: number;
+  title: string;
+  description: string;
+  sections: Array<{
+    id: string;
+    title: string;
+    description?: string;
+    fields: IntakeFieldDefinition[];
+  }>;
+}
+
+export interface IntakeSurveySectionDefinition {
+  id: string;
+  title: string;
+  description?: string;
+  fields: IntakeFieldDefinition[];
+}
+
+export interface StudentIntakeJourneyConfig {
+  header: {
+    eyebrow: string;
+    title: string;
+    description: string;
+  };
+  stages: IntakeStageDefinition[];
+  entranceExam: {
+    intro: string;
+    passingScore: number;
+    questions: EntranceExamQuestionDefinition[];
+  };
+  enrollmentWizard: {
+    steps: EnrollmentWizardStepDefinition[];
+    signatureRequirement: {
+      value: string;
+      hint: string;
+    };
+    summaryItems: Array<{
+      id: string;
+      label: string;
+    }>;
+  };
+  adminReview: {
+    badgeLabel: string;
+    title: string;
+    description: string;
+    checklist: string[];
+  };
+  orientationSurvey: {
+    sections: IntakeSurveySectionDefinition[];
+  };
+  activation: {
+    badgeLabel: string;
+    title: string;
+    description: string;
+    checklist: string[];
+  };
+}
+
 export interface EnrollmentWizardState {
   step: number;
   hhaAddon: boolean;
@@ -264,6 +352,7 @@ export interface EntranceSurveyState {
 export interface StudentPortalState {
   profile: StudentProfile;
   workflowStage: StudentWorkflowStage;
+  intakeJourney: StudentIntakeJourneyConfig;
   tasks: DashboardActionItem[];
   onboarding: OnboardingState;
   modules: CurriculumModule[];
@@ -312,6 +401,7 @@ export interface StudentDashboardSnapshot {
 
 export interface StudentIntakeSnapshot {
   workflowStage: StudentWorkflowStage;
+  intakeJourney: StudentIntakeJourneyConfig;
   entranceExam: EntranceExamState;
   enrollmentWizard: EnrollmentWizardState;
   entranceSurvey: EntranceSurveyState;
@@ -486,4 +576,32 @@ export interface UpdateCdphFormDto {
   zip?: string;
   conviction?: boolean;
   convictionDetails?: string;
+}
+
+export type IntakeApprovalStatus = 'pending' | 'approved' | 'rejected';
+
+export interface StudentIntakeSubmission {
+  id: string;
+  studentId: string;
+  status: IntakeApprovalStatus;
+  entranceExamScore: number | null;
+  entranceExamPassed: boolean;
+  studentAnswers?: Record<string, string>;
+  enrollmentData: EnrollmentWizardState;
+  submittedAt: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+  reviewedBy?: string;
+}
+
+export interface SubmitStudentIntakeDto {
+  entranceExamScore: number;
+  entranceExamPassed: boolean;
+  studentAnswers: Record<string, string>;
+  enrollmentData: EnrollmentWizardState;
+}
+
+export interface ApproveIntakeDto {
+  approved: boolean;
+  rejectionReason?: string;
 }

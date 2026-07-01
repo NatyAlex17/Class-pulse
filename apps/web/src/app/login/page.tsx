@@ -231,6 +231,7 @@ export default function LoginPage() {
                   autoComplete="current-password"
                 />
                 <button
+                  suppressHydrationWarning
                   type="button"
                   onClick={() => setIsPasswordVisible((current) => !current)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant transition hover:text-on-surface"

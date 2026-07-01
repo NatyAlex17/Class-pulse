@@ -181,8 +181,96 @@ type EntranceSurveyState = {
   completed: boolean;
 };
 
+type IntakeOptionDefinition = {
+  label: string;
+  value: string;
+  description?: string;
+  badge?: string;
+};
+
+type IntakeFieldDefinition = {
+  id: string;
+  label: string;
+  type: 'choice' | 'text' | 'textarea' | 'select';
+  placeholder?: string;
+  options?: IntakeOptionDefinition[];
+};
+
+type IntakeStageDefinition = {
+  id: StudentWorkflowStage;
+  label: string;
+};
+
+type EntranceExamQuestionDefinition = {
+  id: string;
+  prompt: string;
+  type: 'choice' | 'text';
+  placeholder?: string;
+  options: IntakeOptionDefinition[];
+};
+
+type EnrollmentWizardStepDefinition = {
+  step: number;
+  title: string;
+  description: string;
+  sections: Array<{
+    id: string;
+    title: string;
+    description?: string;
+    fields: IntakeFieldDefinition[];
+  }>;
+};
+
+type IntakeSurveySectionDefinition = {
+  id: string;
+  title: string;
+  description?: string;
+  fields: IntakeFieldDefinition[];
+};
+
+type StudentIntakeJourney = {
+  header: {
+    eyebrow: string;
+    title: string;
+    description: string;
+  };
+  stages: IntakeStageDefinition[];
+  entranceExam: {
+    intro: string;
+    passingScore: number;
+    questions: EntranceExamQuestionDefinition[];
+  };
+  enrollmentWizard: {
+    steps: EnrollmentWizardStepDefinition[];
+    signatureRequirement: {
+      value: string;
+      hint: string;
+    };
+    summaryItems: Array<{
+      id: string;
+      label: string;
+    }>;
+  };
+  adminReview: {
+    badgeLabel: string;
+    title: string;
+    description: string;
+    checklist: string[];
+  };
+  orientationSurvey: {
+    sections: IntakeSurveySectionDefinition[];
+  };
+  activation: {
+    badgeLabel: string;
+    title: string;
+    description: string;
+    checklist: string[];
+  };
+};
+
 type StudentDemoState = {
   workflowStage: StudentWorkflowStage;
+  intakeJourney: StudentIntakeJourney | null;
   entranceExam: EntranceExamState;
   enrollmentWizard: EnrollmentWizardState;
   entranceSurvey: EntranceSurveyState;
@@ -293,6 +381,7 @@ type StudentDemoContextValue = StudentDemoState & {
 
 type StudentPortalApi = {
   workflowStage: StudentWorkflowStage;
+  intakeJourney: StudentIntakeJourney;
   tasks: TaskItem[];
   onboarding: {
     workflowStage: StudentWorkflowStage;
@@ -369,6 +458,7 @@ const StudentDemoContext = React.createContext<StudentDemoContextValue | null>(n
 function createFallbackState(): StudentDemoState {
   return {
     workflowStage: 'entrance_exam',
+    intakeJourney: null,
     entranceExam: { answers: {}, score: null, taken: false, passed: false },
     enrollmentWizard: {
       step: 1,
@@ -451,6 +541,7 @@ function createFallbackState(): StudentDemoState {
 function mapPortalToState(portal: StudentPortalApi): StudentDemoState {
   return {
     workflowStage: portal.workflowStage,
+    intakeJourney: portal.intakeJourney,
     entranceExam: portal.entranceExam,
     enrollmentWizard: portal.enrollmentWizard,
     entranceSurvey: portal.entranceSurvey,
@@ -647,16 +738,17 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
 
   const setEnrollmentWizardStep = React.useCallback(
     (step: number) => {
+      const maxStep = state.intakeJourney?.enrollmentWizard.steps.length ?? 1;
       setState((current) => ({
         ...current,
         enrollmentWizard: {
           ...current.enrollmentWizard,
-          step: Math.max(1, Math.min(5, step)),
+          step: Math.max(1, Math.min(maxStep, step)),
         },
       }));
       mutate('/intake/enrollment-wizard/step', 'PATCH', { step });
     },
-    [mutate],
+    [mutate, state.intakeJourney],
   );
 
   const submitEnrollmentWizard = React.useCallback(() => {
@@ -679,16 +771,17 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
 
   const setEntranceSurveyStep = React.useCallback(
     (step: number) => {
+      const maxStep = state.intakeJourney?.orientationSurvey.sections.length ?? 1;
       setState((current) => ({
         ...current,
         entranceSurvey: {
           ...current.entranceSurvey,
-          step: Math.max(1, Math.min(5, step)),
+          step: Math.max(1, Math.min(maxStep, step)),
         },
       }));
       mutate('/intake/entrance-survey/step', 'PATCH', { step });
     },
-    [mutate],
+    [mutate, state.intakeJourney],
   );
 
   const submitEntranceSurvey = React.useCallback(() => {

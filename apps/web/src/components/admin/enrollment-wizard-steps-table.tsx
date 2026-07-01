@@ -1,0 +1,155 @@
+'use client';
+
+import * as React from 'react';
+import Link from 'next/link';
+import { IconEdit, IconTrash, IconEye, IconPlus, IconAlertCircle } from '@tabler/icons-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+
+interface WizardStep {
+  id: string;
+  title: string;
+  description: string;
+  sections: Array<{
+    id: string;
+    title: string;
+    fields: Array<{ id: string; label: string }>;
+  }>;
+}
+
+interface EnrollmentWizardStepsTableProps {
+  steps: WizardStep[];
+  onDelete: (id: string) => void;
+}
+
+export function EnrollmentWizardStepsTable({
+  steps,
+  onDelete,
+}: EnrollmentWizardStepsTableProps) {
+  const [deleteConfirm, setDeleteConfirm] = React.useState<{ id: string; title: string } | null>(null);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-semibold text-on-surface">Steps ({steps.length})</h3>
+          <p className="mt-1 text-sm text-on-surface-variant">
+            {steps.length} step{steps.length !== 1 ? 's' : ''} configured
+          </p>
+        </div>
+        <Link href="/admin/configurations/onboarding/enrollment-wizard/create">
+          <Button>
+            <IconPlus className="size-4" />
+            Add Step
+          </Button>
+        </Link>
+      </div>
+
+      <div className="overflow-x-auto rounded-[16px] border border-border-subtle">
+        <table className="w-full text-sm">
+          <thead className="bg-surface-muted">
+            <tr>
+              <th className="px-6 py-3 text-left font-semibold text-on-surface">#</th>
+              <th className="px-6 py-3 text-left font-semibold text-on-surface">Title</th>
+              <th className="px-6 py-3 text-left font-semibold text-on-surface">Description</th>
+              <th className="px-6 py-3 text-left font-semibold text-on-surface">Sections</th>
+              <th className="px-6 py-3 text-center font-semibold text-on-surface">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border-subtle">
+            {steps.map((step, index) => (
+              <tr key={step.id} className="hover:bg-surface-muted/50 transition">
+                <td className="px-6 py-4 text-on-surface-variant">{index + 1}</td>
+                <td className="px-6 py-4 max-w-xs font-medium text-on-surface">{step.title}</td>
+                <td className="px-6 py-4 max-w-md truncate text-on-surface-variant">{step.description}</td>
+                <td className="px-6 py-4 text-on-surface-variant">
+                  {step.sections.length} section{step.sections.length !== 1 ? 's' : ''}
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center justify-center gap-2">
+                    <Link href={`/admin/configurations/onboarding/enrollment-wizard/${step.id}`}>
+                      <button
+                        className="p-2 text-on-surface-variant transition hover:bg-surface hover:text-primary rounded-[8px]"
+                        title="View details"
+                      >
+                        <IconEye className="size-4" />
+                      </button>
+                    </Link>
+                    <Link href={`/admin/configurations/onboarding/enrollment-wizard/${step.id}/edit`}>
+                      <button
+                        className="p-2 text-on-surface-variant transition hover:bg-surface hover:text-primary rounded-[8px]"
+                        title="Edit"
+                      >
+                        <IconEdit className="size-4" />
+                      </button>
+                    </Link>
+                    <button
+                      onClick={() => setDeleteConfirm({ id: step.id, title: step.title })}
+                      className="p-2 text-on-surface-variant transition hover:bg-error/10 hover:text-error rounded-[8px]"
+                      title="Delete"
+                    >
+                      <IconTrash className="size-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {steps.length === 0 && (
+        <div className="rounded-[16px] border border-border-subtle border-dashed p-8 text-center">
+          <p className="text-on-surface-variant">No steps yet</p>
+          <Link href="/admin/configurations/onboarding/enrollment-wizard/create">
+            <Button className="mt-4" variant="secondary">
+              <IconPlus className="size-4" />
+              Create First Step
+            </Button>
+          </Link>
+        </div>
+      )}
+
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="rounded-2xl border border-border-subtle bg-surface shadow-2xl max-w-md mx-4 p-6 space-y-4 animate-in fade-in zoom-in duration-300">
+            <div className="flex items-start gap-3">
+              <div className="h-12 w-12 rounded-lg bg-error/10 flex items-center justify-center shrink-0">
+                <IconAlertCircle className="size-6 text-error" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-on-surface text-lg">Delete Step?</h3>
+                <p className="text-sm text-on-surface-variant mt-1">
+                  This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-surface-muted rounded-lg p-3 border border-border-subtle">
+              <p className="text-sm font-medium text-on-surface break-words">"{deleteConfirm.title}"</p>
+            </div>
+
+            <div className="flex gap-3 justify-end pt-2">
+              <Button
+                variant="secondary"
+                onClick={() => setDeleteConfirm(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  onDelete(deleteConfirm.id);
+                  setDeleteConfirm(null);
+                }}
+              >
+                Delete Step
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

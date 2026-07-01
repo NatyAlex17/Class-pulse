@@ -142,7 +142,6 @@ export default function AuditorReportsPage() {
       title="Reports & Exports"
       subtitle="Generate certified regulatory documentation and deep-dive compliance insights for program audits and state submissions."
       searchPlaceholder="Search reports..."
-      activeItem="Reports"
     >
       <div className="space-y-10">
         <section className="grid grid-cols-1 gap-6 md:grid-cols-2">

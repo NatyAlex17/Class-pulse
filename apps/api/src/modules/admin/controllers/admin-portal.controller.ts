@@ -1,6 +1,12 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 
+import { SupabaseAuthGuard } from '../../../common/auth/supabase-auth.guard';
 import { createApiResponse } from '../../../common/utils/create-api-response';
+import { ExamConfigService, type EntranceExamConfig } from '../../student/services/exam-config.service';
+import { EnrollmentWizardConfigService, type EnrollmentWizardConfig } from '../../student/services/enrollment-wizard-config.service';
+import { OrientationSurveyConfigService, type OrientationSurveyConfig } from '../../student/services/orientation-survey-config.service';
+import { IntakeSubmissionService } from '../../student/services/intake-submission.service';
+import type { ApproveIntakeDto } from '../../student/types/student-portal.types';
 import type {
   AddAdminApplicationNoteDto,
   GenerateAdminReportExportDto,
@@ -11,7 +17,13 @@ import { AdminPortalService } from '../services/admin-portal.service';
 
 @Controller('admins/:adminId')
 export class AdminPortalController {
-  constructor(private readonly adminPortalService: AdminPortalService) {}
+  constructor(
+    private readonly adminPortalService: AdminPortalService,
+    private readonly examConfigService: ExamConfigService,
+    private readonly enrollmentWizardConfigService: EnrollmentWizardConfigService,
+    private readonly orientationSurveyConfigService: OrientationSurveyConfigService,
+    private readonly intakeSubmissionService: IntakeSubmissionService,
+  ) {}
 
   @Get('portal')
   getPortal(@Param('adminId') adminId: string) {
@@ -163,5 +175,115 @@ export class AdminPortalController {
       this.adminPortalService.getSettingsSummary(adminId),
       'Admin settings summary retrieved successfully.',
     );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('exam-config')
+  getExamConfig() {
+    return createApiResponse(
+      this.examConfigService.getConfig(),
+      'Entrance exam configuration retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Patch('exam-config')
+  updateExamConfig(@Body() config: EntranceExamConfig) {
+    return createApiResponse(
+      this.examConfigService.updateConfig(config),
+      'Entrance exam configuration updated successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Post('exam-config/reset')
+  resetExamConfig() {
+    return createApiResponse(
+      this.examConfigService.resetToDefault(),
+      'Entrance exam configuration reset to default successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('enrollment-wizard-config')
+  getEnrollmentWizardConfig() {
+    return createApiResponse(
+      this.enrollmentWizardConfigService.getConfig(),
+      'Enrollment wizard configuration retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Patch('enrollment-wizard-config')
+  updateEnrollmentWizardConfig(@Body() config: EnrollmentWizardConfig) {
+    return createApiResponse(
+      this.enrollmentWizardConfigService.updateConfig(config),
+      'Enrollment wizard configuration updated successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Post('enrollment-wizard-config/reset')
+  resetEnrollmentWizardConfig() {
+    return createApiResponse(
+      this.enrollmentWizardConfigService.resetToDefault(),
+      'Enrollment wizard configuration reset to default successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('orientation-survey-config')
+  getOrientationSurveyConfig() {
+    return createApiResponse(
+      this.orientationSurveyConfigService.getConfig(),
+      'Orientation survey configuration retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Patch('orientation-survey-config')
+  updateOrientationSurveyConfig(@Body() config: OrientationSurveyConfig) {
+    return createApiResponse(
+      this.orientationSurveyConfigService.updateConfig(config),
+      'Orientation survey configuration updated successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Post('orientation-survey-config/reset')
+  resetOrientationSurveyConfig() {
+    return createApiResponse(
+      this.orientationSurveyConfigService.resetToDefault(),
+      'Orientation survey configuration reset to default successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('intake/pending-submissions')
+  getPendingSubmissions() {
+    return createApiResponse(
+      this.intakeSubmissionService.getPendingSubmissions(),
+      'Pending student intake submissions retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Patch('intake/submissions/:submissionId/approve')
+  approveIntakeSubmission(
+    @Param('adminId') adminId: string,
+    @Param('submissionId') submissionId: string,
+    @Body() body: ApproveIntakeDto,
+  ) {
+    if (body.approved) {
+      return createApiResponse(
+        this.intakeSubmissionService.approveIntake(submissionId, adminId),
+        'Student intake approved successfully.',
+      );
+    } else {
+      return createApiResponse(
+        this.intakeSubmissionService.rejectIntake(submissionId, adminId, body.rejectionReason || 'Rejected'),
+        'Student intake rejected successfully.',
+      );
+    }
   }
 }

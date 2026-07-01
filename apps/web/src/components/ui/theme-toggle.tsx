@@ -11,6 +11,7 @@ export function ThemeToggle() {
 
   return (
     <Button
+      suppressHydrationWarning
       type="button"
       variant="secondary"
       size="sm"

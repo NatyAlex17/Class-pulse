@@ -1,5 +1,401 @@
 import { StudentPortalState } from '../types/student-portal.types';
 
+export const defaultEntranceExamConfig = {
+  intro: 'Passing score is 5 out of 6. This gates the rest of the onboarding journey.',
+  passingScore: 5,
+  questions: [
+    {
+      id: 'q1',
+      prompt: 'What must students do in the self-paced program?',
+      type: 'choice' as const,
+      correctAnswer: 'B. Read instructions and finish work',
+      options: [
+        { label: 'A. Only watch videos', value: 'A. Only watch videos' },
+        {
+          label: 'B. Read instructions and finish work',
+          value: 'B. Read instructions and finish work',
+        },
+        { label: 'C. Skip assignments', value: 'C. Skip assignments' },
+        { label: 'D. Wait for instructors to do everything', value: 'D. Wait for instructors to do everything' },
+      ],
+    },
+    {
+      id: 'q2',
+      prompt: 'Why is English important in this program?',
+      type: 'choice' as const,
+      correctAnswer: 'B. To understand lessons and exams',
+      options: [
+        { label: 'A. Only for chatting', value: 'A. Only for chatting' },
+        { label: 'B. To understand lessons and exams', value: 'B. To understand lessons and exams' },
+        { label: 'C. To avoid clinical hours', value: 'C. To avoid clinical hours' },
+        { label: 'D. Only for orientation day', value: 'D. Only for orientation day' },
+      ],
+    },
+    {
+      id: 'q3',
+      prompt: 'When can students ask instructors questions?',
+      type: 'choice' as const,
+      correctAnswer: 'C. During scheduled support hours',
+      options: [
+        { label: 'A. Never', value: 'A. Never' },
+        { label: 'B. Only after graduation', value: 'B. Only after graduation' },
+        { label: 'C. During scheduled support hours', value: 'C. During scheduled support hours' },
+        { label: 'D. Only on weekends', value: 'D. Only on weekends' },
+      ],
+    },
+    {
+      id: 'q4',
+      prompt: 'What can happen if a student does not understand instructions?',
+      type: 'choice' as const,
+      correctAnswer: 'B. They may fail assignments or exams',
+      options: [
+        { label: 'A. Nothing changes', value: 'A. Nothing changes' },
+        { label: 'B. They may fail assignments or exams', value: 'B. They may fail assignments or exams' },
+        { label: 'C. They automatically pass', value: 'C. They automatically pass' },
+        { label: 'D. The program pauses for everyone', value: 'D. The program pauses for everyone' },
+      ],
+    },
+    {
+      id: 'q5',
+      prompt: 'What is the main point of the readiness passage?',
+      type: 'choice' as const,
+      correctAnswer: 'B. English comprehension is required to succeed',
+      options: [
+        { label: 'A. Clinical practice is optional', value: 'A. Clinical practice is optional' },
+        {
+          label: 'B. English comprehension is required to succeed',
+          value: 'B. English comprehension is required to succeed',
+        },
+        { label: 'C. Instructors complete the work', value: 'C. Instructors complete the work' },
+        { label: 'D. Technology is never used', value: 'D. Technology is never used' },
+      ],
+    },
+    {
+      id: 'q6',
+      prompt:
+        'Write one complete sentence explaining why following instructions matters in healthcare training.',
+      type: 'text' as const,
+      correctAnswer: 'Following instructions is crucial in healthcare to ensure patient safety and quality care.',
+      placeholder: 'Write one complete sentence...',
+      options: [],
+    },
+  ],
+};
+
+const studentIntakeJourney = {
+  header: {
+    eyebrow: 'Student Journey',
+    title: 'Intake, Enrollment, and Orientation',
+    description:
+      'This mirrors the intended student intake flow, and each step now persists through the backend student workflow.',
+  },
+  stages: [
+    { id: 'entrance_exam', label: 'Entrance Exam' },
+    { id: 'enrollment_wizard', label: 'Enrollment Wizard' },
+    { id: 'admin_review', label: 'Admin Review' },
+    { id: 'orientation_survey', label: 'Orientation Survey' },
+    { id: 'active', label: 'Portal Active' },
+  ],
+  entranceExam: defaultEntranceExamConfig,
+  enrollmentWizard: {
+    steps: [
+      {
+        step: 1,
+        title: 'Step 1: Career Boost',
+        description: 'Choose whether to add the Home Health Aide pathway to the program plan.',
+        sections: [
+          {
+            id: 'career-boost',
+            title: 'Home Health Aide Add-On',
+            description: 'Add a second certification track to the student journey.',
+            fields: [
+              {
+                id: 'hhaAddon',
+                label: 'Would you like to add the Home Health Aide track?',
+                type: 'choice',
+                options: [
+                  { label: 'Add HHA track', value: 'true', badge: '+$500' },
+                  { label: 'Keep CNA only', value: 'false' },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        step: 2,
+        title: 'Step 2: Gear Up',
+        description: 'Capture scrub sizes, delivery preference, and state exam testing preference.',
+        sections: [
+          {
+            id: 'uniforms',
+            title: 'Scrub Sizing',
+            fields: [
+              {
+                id: 'scrubTop',
+                label: 'Scrub top size',
+                type: 'select',
+                options: ['XS', 'S', 'M', 'L', 'XL', '2XL'].map((size) => ({ label: size, value: size })),
+              },
+              {
+                id: 'scrubBottom',
+                label: 'Scrub bottom size',
+                type: 'select',
+                options: ['XS', 'S', 'M', 'L', 'XL', '2XL'].map((size) => ({ label: size, value: size })),
+              },
+            ],
+          },
+          {
+            id: 'delivery',
+            title: 'Delivery Preference',
+            fields: [
+              {
+                id: 'shipping',
+                label: 'How should supplies be delivered?',
+                type: 'choice',
+                options: [
+                  { label: 'Pick up at orientation', value: 'pickup' },
+                  { label: 'Ship to home (+$10)', value: 'ship' },
+                ],
+              },
+            ],
+          },
+          {
+            id: 'exam-preference',
+            title: 'State Exam Preference',
+            fields: [
+              {
+                id: 'wantsToTestAtDaisy',
+                label: 'Where would you like to test?',
+                type: 'choice',
+                options: [
+                  { label: 'Yes, test at Daisy Medical Institute', value: 'true' },
+                  { label: 'No, use another regional testing site', value: 'false' },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        step: 3,
+        title: 'Step 3: Orientation Briefing',
+        description: 'Record that the student reviewed the orientation and expectations briefing.',
+        sections: [
+          {
+            id: 'orientation-briefing',
+            title: 'Program Orientation',
+            description:
+              'This checkpoint represents the orientation briefing and records that the student completed the review stage.',
+            fields: [],
+          },
+        ],
+      },
+      {
+        step: 4,
+        title: 'Step 4: Terms of Agreement',
+        description: 'Collect acknowledgement of required policies before submission.',
+        sections: [
+          {
+            id: 'agreements',
+            title: 'Program Agreements',
+            fields: [
+              {
+                id: 'ip',
+                label: 'I understand curriculum and AI tools are proprietary.',
+                type: 'choice',
+                options: [
+                  { label: 'Acknowledge', value: 'true' },
+                  { label: 'Not yet', value: 'false' },
+                ],
+              },
+              {
+                id: 'refund',
+                label: 'I understand the refund and withdrawal timeline.',
+                type: 'choice',
+                options: [
+                  { label: 'Acknowledge', value: 'true' },
+                  { label: 'Not yet', value: 'false' },
+                ],
+              },
+              {
+                id: 'conduct',
+                label: 'I understand conduct standards can affect enrollment status.',
+                type: 'choice',
+                options: [
+                  { label: 'Acknowledge', value: 'true' },
+                  { label: 'Not yet', value: 'false' },
+                ],
+              },
+              {
+                id: 'lateFee',
+                label: 'I understand installment timing and late-fee policy.',
+                type: 'choice',
+                options: [
+                  { label: 'Acknowledge', value: 'true' },
+                  { label: 'Not yet', value: 'false' },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        step: 5,
+        title: 'Step 5: Review & Sign',
+        description: 'Review the packet summary and provide the required signature.',
+        sections: [
+          {
+            id: 'signature',
+            title: 'Program Signature',
+            description: 'Type the required signature exactly to submit enrollment.',
+            fields: [
+              {
+                id: 'signature',
+                label: 'Signature',
+                type: 'text',
+                placeholder: 'Type the required signature',
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    signatureRequirement: {
+      value: 'Amara Singh',
+      hint: 'Signature must match Amara Singh to continue.',
+    },
+    summaryItems: [
+      { id: 'hhaAddon', label: 'HHA add-on' },
+      { id: 'scrubs', label: 'Scrubs' },
+      { id: 'shipping', label: 'Delivery' },
+      { id: 'wantsToTestAtDaisy', label: 'State exam preference' },
+    ],
+  },
+  adminReview: {
+    badgeLabel: 'Pending Review',
+    title: 'Admissions is reviewing the packet',
+    description:
+      'This stage mirrors the reference dashboard where the student sees a waiting state before the main portal is unlocked.',
+    checklist: [
+      'Entrance exam passed and attached to admissions record',
+      'Enrollment selections captured for logistics and billing',
+      'Packet awaiting approval from student operations',
+    ],
+  },
+  orientationSurvey: {
+    sections: [
+      {
+        id: 'student-background',
+        title: 'Student Background',
+        fields: [
+          {
+            id: 'healthcare_exp',
+            label: 'Have you worked in healthcare before?',
+            type: 'select',
+            options: [
+              { label: 'No, this is my first time', value: 'first_time' },
+              { label: 'Yes, unpaid or volunteer', value: 'volunteer' },
+              { label: 'Yes, paid experience', value: 'paid' },
+            ],
+          },
+          {
+            id: 'motivation',
+            label: 'What motivated you to enroll?',
+            type: 'textarea',
+          },
+        ],
+      },
+      {
+        id: 'confidence-readiness',
+        title: 'Confidence & Readiness',
+        fields: [
+          {
+            id: 'confidence',
+            label: 'How confident do you feel starting the program?',
+            type: 'select',
+            options: [
+              { label: 'Very confident', value: 'very_confident' },
+              { label: 'Somewhat confident', value: 'somewhat_confident' },
+              { label: 'A little nervous', value: 'nervous' },
+            ],
+          },
+          {
+            id: 'support_needs',
+            label: 'Where do you expect to need the most support?',
+            type: 'textarea',
+          },
+        ],
+      },
+      {
+        id: 'expectations',
+        title: 'Expectations',
+        fields: [
+          {
+            id: 'expectations',
+            label: 'What do you expect to gain from this program?',
+            type: 'textarea',
+          },
+          {
+            id: 'success_definition',
+            label: 'What does a successful student experience look like to you?',
+            type: 'textarea',
+          },
+        ],
+      },
+      {
+        id: 'goals-outcomes',
+        title: 'Goals & Outcomes',
+        fields: [
+          {
+            id: 'post_grad_goals',
+            label: 'What are your goals after completing the program?',
+            type: 'textarea',
+          },
+          {
+            id: 'work_timeline',
+            label: 'How soon do you hope to start working after certification?',
+            type: 'select',
+            options: [
+              { label: 'Immediately', value: 'immediately' },
+              { label: 'Within 1-3 months', value: 'one_to_three_months' },
+              { label: 'Not sure yet', value: 'not_sure' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'support-communication',
+        title: 'Support & Communication',
+        fields: [
+          {
+            id: 'instructor_support',
+            label: 'What kind of support do you expect from instructors?',
+            type: 'textarea',
+          },
+          {
+            id: 'additional_info',
+            label: 'Anything else you would like the team to know?',
+            type: 'textarea',
+          },
+        ],
+      },
+    ],
+  },
+  activation: {
+    badgeLabel: 'Portal Active',
+    title: 'Student flow fully unlocked',
+    description:
+      'The student can now move through learning, forms, documents, financials, and messaging through the live student portal workflow.',
+    checklist: [
+      'Entrance exam stored',
+      'Enrollment package submitted',
+      'Orientation survey completed',
+      'Student tools available',
+    ],
+  },
+} satisfies StudentPortalState['intakeJourney'];
+
 export const studentPortalSeed: StudentPortalState[] = [
   {
     profile: {
@@ -14,6 +410,7 @@ export const studentPortalSeed: StudentPortalState[] = [
       studentNumber: 'CV-S-10012',
     },
     workflowStage: 'active',
+    intakeJourney: studentIntakeJourney,
     tasks: [
       {
         id: 'theory-hours',

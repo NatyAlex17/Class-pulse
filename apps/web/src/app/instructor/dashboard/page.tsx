@@ -16,7 +16,6 @@ import {
   IconX,
   IconTrendingUp,
   IconAward,
-  IconBarChart3,
 } from '@tabler/icons-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
