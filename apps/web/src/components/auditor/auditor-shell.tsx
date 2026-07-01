@@ -36,9 +36,17 @@ type AuditorNavItem = {
 const navItems: AuditorNavItem[] = [
   { label: 'Compliance Dashboard', href: '/auditor/dashboard', icon: IconClipboardData },
   { label: 'Student Records', href: '/auditor/student-records', icon: IconUsersGroup },
-  { label: 'Instructor Qualifications', href: '/auditor/instructor-qualifications', icon: IconUserCheck },
+  {
+    label: 'Instructor Qualifications',
+    href: '/auditor/instructor-qualifications',
+    icon: IconUserCheck,
+  },
   { label: 'Clinical Compliance', href: '/auditor/clinical-compliance', icon: IconNotebook },
-  { label: 'Program Requirements', href: '/auditor/program-requirements', icon: IconAlertSquareRounded },
+  {
+    label: 'Program Requirements',
+    href: '/auditor/program-requirements',
+    icon: IconAlertSquareRounded,
+  },
   { label: 'Documents & Evidence', href: '/auditor/documents', icon: IconFolderCheck },
   { label: 'Reports', href: '/auditor/reports', icon: IconReportAnalytics },
   { label: 'Audit Log', href: '/auditor/audit-log', icon: IconHistory },
@@ -57,12 +65,14 @@ export interface AuditorShellProps {
   topProgramLabel?: string;
   profileName?: string;
   profileRole?: string;
+  activeItem?: string;
 }
 
 export function AuditorShell({
   children,
   title,
   subtitle,
+  activeItem,
   searchPlaceholder = 'Search students, codes...',
   topActions,
   topProgramLabel = 'Golden State Nurse Assistant Training Program',
@@ -119,7 +129,7 @@ export function AuditorShell({
                   'flex items-center gap-3 rounded-[16px] px-3 py-2.5 text-sm transition-colors',
                   active
                     ? 'border-r-4 border-primary bg-primary-container/10 font-semibold text-primary'
-                    : 'text-on-surface-variant hover:bg-surface-high hover:text-primary',
+                    : 'text-on-surface-variant hover:bg-surface-high hover:text-primary'
                 )}
               >
                 <Icon className="size-5" />
@@ -179,7 +189,7 @@ export function AuditorShell({
                       'flex items-center gap-3 rounded-[16px] px-3 py-3 text-sm transition-colors',
                       active
                         ? 'bg-primary-container/10 font-semibold text-primary'
-                        : 'text-on-surface-variant hover:bg-surface-high hover:text-primary',
+                        : 'text-on-surface-variant hover:bg-surface-high hover:text-primary'
                     )}
                   >
                     <Icon className="size-5" />
@@ -229,10 +239,7 @@ export function AuditorShell({
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative hidden md:block">
               <IconSearch className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-variant" />
-              <Input
-                className="h-11 rounded-[16px] pl-10"
-                placeholder={searchPlaceholder}
-              />
+              <Input className="h-11 rounded-[16px] pl-10" placeholder={searchPlaceholder} />
             </div>
             <ThemeToggle />
             <button className="text-on-surface-variant transition hover:text-primary">
@@ -241,10 +248,7 @@ export function AuditorShell({
             <button className="hidden text-on-surface-variant transition hover:text-primary sm:block">
               <IconHelpCircle className="size-5" />
             </button>
-            <Button
-              variant="secondary"
-              className="hidden rounded-[16px] px-5 lg:inline-flex"
-            >
+            <Button variant="secondary" className="hidden rounded-[16px] px-5 lg:inline-flex">
               <IconIdBadge2 className="size-4" />
               Program Selector
             </Button>
@@ -316,9 +320,7 @@ export function AuditorShell({
       </header>
 
       <main className="pb-24 pt-16 lg:ml-[240px]">
-        <div
-          className="min-h-[calc(100vh-4rem)] px-4 py-6 sm:px-6 lg:px-8"
-        >
+        <div className="min-h-[calc(100vh-4rem)] px-4 py-6 sm:px-6 lg:px-8">
           <div className="mx-auto w-full max-w-[1240px]">
             <div className="mb-8">
               <h2 className="font-display text-[30px] font-bold tracking-[-0.02em] text-on-surface">
@@ -350,7 +352,7 @@ export function AuditorShell({
               href={item.href}
               className={cn(
                 'flex flex-col items-center gap-1 text-[10px] font-medium',
-                active ? 'text-primary' : 'text-on-surface-variant',
+                active ? 'text-primary' : 'text-on-surface-variant'
               )}
             >
               <Icon className="size-5" />
