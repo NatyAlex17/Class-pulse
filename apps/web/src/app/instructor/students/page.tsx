@@ -11,9 +11,6 @@ import {
   IconMail,
   IconMapPin,
   IconCalendar,
-  IconCheckCircle,
-  IconAlertCircle,
-  IconTrendingUp,
   IconFileText,
 } from '@tabler/icons-react';
 import { InstructorShell } from '@/components/instructor/instructor-shell';
@@ -60,8 +57,16 @@ const studentsData: StudentDetail[] = [
     certificationStatus: 'In Progress',
     progressPercent: 85,
     recentNotes: [
-      { date: '2024-10-28', note: 'Strong performance in patient care. Needs improvement in documentation speed.', instructor: 'James Miller' },
-      { date: '2024-10-20', note: 'Excellent communication with patients. Keep up the good work!', instructor: 'Sarah Chen' },
+      {
+        date: '2024-10-28',
+        note: 'Strong performance in patient care. Needs improvement in documentation speed.',
+        instructor: 'James Miller',
+      },
+      {
+        date: '2024-10-20',
+        note: 'Excellent communication with patients. Keep up the good work!',
+        instructor: 'Sarah Chen',
+      },
     ],
     skills: [
       { name: 'Vital Signs Assessment', level: 'Competent' },
@@ -85,8 +90,16 @@ const studentsData: StudentDetail[] = [
     certificationStatus: 'At Risk',
     progressPercent: 70,
     recentNotes: [
-      { date: '2024-10-25', note: 'Struggling with some clinical procedures. Recommended additional tutoring.', instructor: 'Patricia Johnson' },
-      { date: '2024-10-18', note: 'Attendance concerns - 3 absences this month.', instructor: 'James Miller' },
+      {
+        date: '2024-10-25',
+        note: 'Struggling with some clinical procedures. Recommended additional tutoring.',
+        instructor: 'Patricia Johnson',
+      },
+      {
+        date: '2024-10-18',
+        note: 'Attendance concerns - 3 absences this month.',
+        instructor: 'James Miller',
+      },
     ],
     skills: [
       { name: 'Vital Signs Assessment', level: 'Developing' },
@@ -110,8 +123,16 @@ const studentsData: StudentDetail[] = [
     certificationStatus: 'On Track',
     progressPercent: 95,
     recentNotes: [
-      { date: '2024-10-27', note: 'Excellent all-around performance. Ready for independent practice.', instructor: 'Sarah Chen' },
-      { date: '2024-10-15', note: 'Outstanding leadership skills demonstrated during group projects.', instructor: 'James Miller' },
+      {
+        date: '2024-10-27',
+        note: 'Excellent all-around performance. Ready for independent practice.',
+        instructor: 'Sarah Chen',
+      },
+      {
+        date: '2024-10-15',
+        note: 'Outstanding leadership skills demonstrated during group projects.',
+        instructor: 'James Miller',
+      },
     ],
     skills: [
       { name: 'Vital Signs Assessment', level: 'Competent' },
@@ -135,7 +156,11 @@ const studentsData: StudentDetail[] = [
     certificationStatus: 'Developing',
     progressPercent: 72,
     recentNotes: [
-      { date: '2024-10-26', note: 'Showing improvement in clinical skills. Continue with current support plan.', instructor: 'Patricia Johnson' },
+      {
+        date: '2024-10-26',
+        note: 'Showing improvement in clinical skills. Continue with current support plan.',
+        instructor: 'Patricia Johnson',
+      },
     ],
     skills: [
       { name: 'Vital Signs Assessment', level: 'Competent' },
@@ -158,7 +183,9 @@ const columns: DataTableColumn<StudentRow>[] = [
     id: 'risk',
     header: 'Risk',
     cell: (row) => (
-      <Badge variant={row.risk === 'Urgent' ? 'error' : row.risk === 'Watch' ? 'warning' : 'success'}>
+      <Badge
+        variant={row.risk === 'Urgent' ? 'error' : row.risk === 'Watch' ? 'warning' : 'success'}
+      >
         {row.risk}
       </Badge>
     ),
@@ -171,7 +198,8 @@ export default function InstructorStudentsPage() {
   const [filterRisk, setFilterRisk] = React.useState<string | null>(null);
 
   const filteredStudents = students.filter((student) => {
-    const matchesSearch = student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch =
+      student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.cohort.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = !filterRisk || student.risk === filterRisk;
     return matchesSearch && matchesFilter;
@@ -193,18 +221,24 @@ export default function InstructorStudentsPage() {
       <div className="grid gap-6">
         <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft">
-            <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Assigned students</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+              Assigned students
+            </p>
             <p className="mt-2 font-mono text-[28px] font-semibold text-primary">42</p>
           </div>
           <div className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft">
-            <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Watchlist</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+              Watchlist
+            </p>
             <div className="mt-2 flex items-center gap-2 font-mono text-[28px] font-semibold text-warning">
               <IconClockHour4 className="size-6" />
               <span>8</span>
             </div>
           </div>
           <div className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft">
-            <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Audit ready</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+              Audit ready
+            </p>
             <div className="mt-2 flex items-center gap-2 font-mono text-[28px] font-semibold text-success">
               <IconShieldCheck className="size-6" />
               <span>27</span>
@@ -217,7 +251,9 @@ export default function InstructorStudentsPage() {
           data={filteredStudents}
           mobileCardTitle={(row) => row.name}
           mobileCardSubtitle={(row) => `${row.cohort} / ${row.placement}`}
-          onRowClick={(row) => setSelectedStudent(studentsData.find((s) => s.name === row.name) || null)}
+          onRowClick={(row) =>
+            setSelectedStudent(studentsData.find((s) => s.name === row.name) || null)
+          }
           rowActions={() => (
             <button className="rounded-full p-2 text-on-surface-variant transition hover:bg-surface-muted hover:text-primary">
               <IconDots className="size-4" />
@@ -310,8 +346,12 @@ export default function InstructorStudentsPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="rounded-[16px] border border-border-subtle p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-[12px] font-bold text-on-surface-variant uppercase">Progress</p>
-                    <span className="font-mono text-sm font-bold text-primary">{selectedStudent.progressPercent}%</span>
+                    <p className="text-[12px] font-bold text-on-surface-variant uppercase">
+                      Progress
+                    </p>
+                    <span className="font-mono text-sm font-bold text-primary">
+                      {selectedStudent.progressPercent}%
+                    </span>
                   </div>
                   <div className="h-2 rounded-full bg-surface-container overflow-hidden">
                     <div
@@ -322,7 +362,9 @@ export default function InstructorStudentsPage() {
                 </div>
 
                 <div className="rounded-[16px] border border-border-subtle p-4">
-                  <p className="text-[12px] font-bold text-on-surface-variant uppercase mb-2">Certification Status</p>
+                  <p className="text-[12px] font-bold text-on-surface-variant uppercase mb-2">
+                    Certification Status
+                  </p>
                   <Badge
                     variant={
                       selectedStudent.certificationStatus === 'On Track'
@@ -355,7 +397,9 @@ export default function InstructorStudentsPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <IconCalendar className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-on-surface-variant">Started {selectedStudent.startDate}</span>
+                    <span className="text-sm text-on-surface-variant">
+                      Started {selectedStudent.startDate}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -363,13 +407,21 @@ export default function InstructorStudentsPage() {
               {/* Clinical Hours & Checklist */}
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="rounded-[16px] border border-border-subtle p-4">
-                  <p className="text-[12px] font-bold text-on-surface-variant uppercase mb-2">Clinical Hours</p>
-                  <p className="font-mono text-2xl font-bold text-primary">{selectedStudent.hours}</p>
+                  <p className="text-[12px] font-bold text-on-surface-variant uppercase mb-2">
+                    Clinical Hours
+                  </p>
+                  <p className="font-mono text-2xl font-bold text-primary">
+                    {selectedStudent.hours}
+                  </p>
                   <p className="mt-1 text-sm text-on-surface-variant">of 40 hours required</p>
                 </div>
                 <div className="rounded-[16px] border border-border-subtle p-4">
-                  <p className="text-[12px] font-bold text-on-surface-variant uppercase mb-2">Checklist</p>
-                  <p className="font-mono text-2xl font-bold text-primary">{selectedStudent.checklist}</p>
+                  <p className="text-[12px] font-bold text-on-surface-variant uppercase mb-2">
+                    Checklist
+                  </p>
+                  <p className="font-mono text-2xl font-bold text-primary">
+                    {selectedStudent.checklist}
+                  </p>
                   <p className="mt-1 text-sm text-on-surface-variant">skills completed</p>
                 </div>
               </div>
@@ -401,7 +453,9 @@ export default function InstructorStudentsPage() {
               <div className="rounded-[16px] border border-border-subtle p-4">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold text-on-surface">Attendance</h3>
-                  <span className="text-2xl font-bold text-warning">{selectedStudent.absences}</span>
+                  <span className="text-2xl font-bold text-warning">
+                    {selectedStudent.absences}
+                  </span>
                 </div>
                 <p className="mt-2 text-sm text-on-surface-variant">
                   {selectedStudent.absences === 0
@@ -415,9 +469,14 @@ export default function InstructorStudentsPage() {
                 <h3 className="mb-4 font-semibold text-on-surface">Instructor Notes</h3>
                 <div className="space-y-4">
                   {selectedStudent.recentNotes.map((note, idx) => (
-                    <div key={idx} className="rounded-[12px] border border-border-subtle bg-surface-muted p-3">
+                    <div
+                      key={idx}
+                      className="rounded-[12px] border border-border-subtle bg-surface-muted p-3"
+                    >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-semibold text-on-surface-variant">{note.instructor}</span>
+                        <span className="text-xs font-semibold text-on-surface-variant">
+                          {note.instructor}
+                        </span>
                         <span className="text-xs text-on-surface-variant">{note.date}</span>
                       </div>
                       <p className="text-sm text-on-surface">{note.note}</p>
@@ -428,7 +487,11 @@ export default function InstructorStudentsPage() {
 
               {/* Action Buttons */}
               <div className="flex gap-3">
-                <Button variant="secondary" className="flex-1 rounded-[14px]" onClick={() => setSelectedStudent(null)}>
+                <Button
+                  variant="secondary"
+                  className="flex-1 rounded-[14px]"
+                  onClick={() => setSelectedStudent(null)}
+                >
                   Close
                 </Button>
                 <Button className="flex-1 rounded-[14px] gap-2">
