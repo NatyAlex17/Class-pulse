@@ -154,8 +154,11 @@ type StudentWorkflowStage =
 type EntranceExamState = {
   answers: Record<string, string>;
   score: number | null;
+  totalQuestions: number;
+  rank: string | null;
   taken: boolean;
   passed: boolean;
+  submittedAt?: string;
 };
 
 type EnrollmentWizardState = {
@@ -459,7 +462,7 @@ function createFallbackState(): StudentDemoState {
   return {
     workflowStage: 'entrance_exam',
     intakeJourney: null,
-    entranceExam: { answers: {}, score: null, taken: false, passed: false },
+    entranceExam: { answers: {}, score: null, totalQuestions: 0, rank: null, taken: false, passed: false },
     enrollmentWizard: {
       step: 1,
       hhaAddon: false,
@@ -606,10 +609,11 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
 
   const studentId = syncedUser?.localUserId;
   const accessToken = session?.access_token;
+  const isStudentUser = syncedUser?.role === 'student';
 
   const callStudentApi = React.useCallback(
     async <TData,>(path: string, init?: RequestInit) => {
-      if (!studentId || !accessToken) {
+      if (!studentId || !accessToken || !isStudentUser) {
         throw new Error('Student portal is not authenticated.');
       }
 
@@ -639,21 +643,21 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       const payload = (await response.json()) as ApiEnvelope<TData>;
       return payload.data;
     },
-    [accessToken, studentId],
+    [accessToken, isStudentUser, studentId],
   );
 
   const refreshPortal = React.useCallback(async () => {
-    if (!studentId || !accessToken) {
+    if (!studentId || !accessToken || !isStudentUser) {
       setState(createFallbackState());
       return;
     }
 
     const portal = await callStudentApi<StudentPortalApi>('/portal', { method: 'GET' });
     setState(mapPortalToState(portal));
-  }, [accessToken, callStudentApi, studentId]);
+  }, [accessToken, callStudentApi, isStudentUser, studentId]);
 
   React.useEffect(() => {
-    if (!isSupabaseEnabled || !studentId || !accessToken) {
+    if (!isSupabaseEnabled || !studentId || !accessToken || !isStudentUser) {
       setState(createFallbackState());
       return;
     }
@@ -661,7 +665,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
     void refreshPortal().catch(() => {
       setState(createFallbackState());
     });
-  }, [accessToken, isSupabaseEnabled, refreshPortal, studentId]);
+  }, [accessToken, isStudentUser, isSupabaseEnabled, refreshPortal, studentId]);
 
   const mutate = React.useCallback(
     (path: string, method: 'POST' | 'PATCH', body?: unknown) => {

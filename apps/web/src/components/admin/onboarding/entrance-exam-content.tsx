@@ -17,6 +17,8 @@ interface ExamConfig {
     id: string;
     prompt: string;
     type: 'choice' | 'text';
+    placeholder?: string;
+    preferredAnswer: string;
     options: Array<{ label: string; value: string }>;
   }>;
 }
@@ -34,13 +36,14 @@ export function EntranceExamConfigContent() {
 
   const fetchConfig = async () => {
     if (!adminId || !session?.access_token) {
-      setError('Not authenticated');
+      setError('Sign in to manage the entrance exam configuration.');
       setLoading(false);
       return;
     }
 
     try {
       setLoading(true);
+      setError(null);
       const response = await fetch(`${API_BASE_URL}/admins/${adminId}/exam-config`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -49,6 +52,12 @@ export function EntranceExamConfigContent() {
       });
 
       if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          setConfig(null);
+          setError('Your admin session is not authorized to load exam configuration right now.');
+          return;
+        }
+
         throw new Error(`Failed to fetch: ${response.statusText}`);
       }
 
@@ -57,7 +66,6 @@ export function EntranceExamConfigContent() {
       setError(null);
     } catch (err) {
       setError(`Failed to load exam configuration: ${err instanceof Error ? err.message : 'Unknown error'}`);
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -128,7 +136,7 @@ export function EntranceExamConfigContent() {
   }
 
   if (!config) {
-    return <div className="p-8 text-center text-error">Failed to load configuration</div>;
+    return <div className="p-8 text-center text-error">{error ?? 'Failed to load configuration'}</div>;
   }
 
   return (
@@ -145,6 +153,42 @@ export function EntranceExamConfigContent() {
           {success}
         </div>
       )}
+
+      <div className="grid gap-4 lg:grid-cols-[1.4fr_0.6fr]">
+        <div className="rounded-[16px] border border-border-subtle bg-surface-muted p-5">
+          <label className="mb-2 block text-sm font-semibold text-on-surface">Exam Intro</label>
+          <Textarea
+            value={config.intro}
+            onChange={(event) => setConfig({ ...config, intro: event.target.value })}
+            placeholder="Explain how the entrance exam works."
+            className="min-h-28"
+          />
+        </div>
+        <div className="rounded-[16px] border border-border-subtle bg-surface-muted p-5">
+          <label className="mb-2 block text-sm font-semibold text-on-surface">Passing Score</label>
+          <Input
+            type="number"
+            min={1}
+            max={Math.max(config.questions.length, 1)}
+            value={config.passingScore}
+            onChange={(event) =>
+              setConfig({
+                ...config,
+                passingScore: Number(event.target.value || 0),
+              })
+            }
+          />
+          <p className="mt-2 text-xs text-on-surface-variant">
+            Reviewers use this threshold after marking each question correct or wrong during intake review.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex justify-end">
+        <Button onClick={saveBasicSettings} disabled={saving}>
+          {saving ? 'Saving...' : 'Save Exam Settings'}
+        </Button>
+      </div>
 
       <ExamQuestionsTable
         questions={config.questions}

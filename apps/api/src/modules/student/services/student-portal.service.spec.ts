@@ -1,13 +1,30 @@
+import { existsSync, rmSync } from 'fs';
+import { join } from 'path';
+
 import { BadRequestException } from '@nestjs/common';
 
+import { ExamConfigService } from './exam-config.service';
+import { IntakeSubmissionService } from './intake-submission.service';
 import { StudentPortalRepository } from './student-portal.repository';
 import { StudentPortalService } from './student-portal.service';
 
 describe('StudentPortalService', () => {
   let service: StudentPortalService;
+  let intakeSubmissionService: IntakeSubmissionService;
 
   beforeEach(() => {
-    service = new StudentPortalService(new StudentPortalRepository());
+    const intakeSubmissionPath = join(process.cwd(), '.data', 'intake-submissions.json');
+    if (existsSync(intakeSubmissionPath)) {
+      rmSync(intakeSubmissionPath);
+    }
+
+    const examConfigService = new ExamConfigService();
+    intakeSubmissionService = new IntakeSubmissionService();
+    service = new StudentPortalService(
+      new StudentPortalRepository(examConfigService),
+      examConfigService,
+      intakeSubmissionService,
+    );
   });
 
   it('returns a structured dashboard snapshot', () => {
@@ -56,18 +73,177 @@ describe('StudentPortalService', () => {
     expect(logEntry.hours).toBe(4);
   });
 
-  it('passes the entrance exam when enough correct answers are submitted', () => {
-    service.answerEntranceExamQuestion('student-amara-singh', 'q1', { answer: 'B. Correct' });
-    service.answerEntranceExamQuestion('student-amara-singh', 'q2', { answer: 'B. Correct' });
-    service.answerEntranceExamQuestion('student-amara-singh', 'q3', { answer: 'C. Correct' });
-    service.answerEntranceExamQuestion('student-amara-singh', 'q4', { answer: 'B. Correct' });
-    service.answerEntranceExamQuestion('student-amara-singh', 'q6', { answer: 'I will follow directions carefully.' });
+  it('submits the entrance exam for manual review', () => {
+    service.answerEntranceExamQuestion('student-amara-singh', 'q1', { answer: 'B. Read instructions and finish work' });
+    service.answerEntranceExamQuestion('student-amara-singh', 'q2', { answer: 'B. To understand lessons and exams' });
+    service.answerEntranceExamQuestion('student-amara-singh', 'q3', { answer: 'C. During scheduled support hours' });
+    service.answerEntranceExamQuestion('student-amara-singh', 'q4', { answer: 'B. They may fail assignments or exams' });
+    service.answerEntranceExamQuestion('student-amara-singh', 'q5', { answer: 'B. English comprehension is required to succeed' });
+    service.answerEntranceExamQuestion('student-amara-singh', 'q6', {
+      answer: 'Following instructions is crucial in healthcare to ensure patient safety and quality care.',
+    });
 
     const exam = service.submitEntranceExam('student-amara-singh');
     const intake = service.getIntake('student-amara-singh');
 
-    expect(exam.passed).toBe(true);
-    expect(intake.workflowStage).toBe('enrollment_wizard');
+    expect(exam.score).toBeNull();
+    expect(exam.rank).toBeNull();
+    expect(exam.passed).toBe(false);
+    expect(intake.workflowStage).toBe('admin_review');
+    expect(intakeSubmissionService.getStudentApprovalStatus('student-amara-singh')).toBe('pending');
+    expect(intakeSubmissionService.getStudentSubmission('student-amara-singh')?.questions).toHaveLength(6);
+  });
+
+  it('blocks enrollment until admin approves the intake', () => {
+    expect(() =>
+      service.updateEnrollmentWizard('student-amara-singh', {
+        scrubTop: 'M',
+      }),
+    ).toThrow(BadRequestException);
+  });
+
+  it('unlocks enrollment after admin approval', () => {
+    const submission = intakeSubmissionService.submitIntake('student-amara-singh', {
+      entranceExamScore: null,
+      entranceExamPassed: null,
+      passingScore: 5,
+      questions: [
+        {
+          questionId: 'q1',
+          prompt: 'Question 1',
+          type: 'choice',
+          preferredAnswer: 'A',
+          options: [{ label: 'A', value: 'A' }],
+          studentAnswer: 'A',
+          reviewStatus: 'pending',
+        },
+      ],
+      enrollmentData: service.getIntake('student-amara-singh').enrollmentWizard,
+    });
+    const approvedSubmission = intakeSubmissionService.approveIntake(submission.id, 'admin-001', { q1: 'correct' });
+    service.markIntakeApproved('student-amara-singh', {
+      score: approvedSubmission.entranceExamScore,
+      passed: approvedSubmission.entranceExamPassed,
+      totalQuestions: approvedSubmission.questions.length,
+    });
+
+    const enrollment = service.updateEnrollmentWizard('student-amara-singh', {
+      scrubTop: 'M',
+    });
+
+    expect(enrollment.scrubTop).toBe('M');
+  });
+
+  it('moves approved students to orientation survey after enrollment wizard submission', () => {
+    const submission = intakeSubmissionService.submitIntake('student-amara-singh', {
+      entranceExamScore: null,
+      entranceExamPassed: null,
+      passingScore: 5,
+      questions: [
+        {
+          questionId: 'q1',
+          prompt: 'Question 1',
+          type: 'choice',
+          preferredAnswer: 'A',
+          options: [{ label: 'A', value: 'A' }],
+          studentAnswer: 'A',
+          reviewStatus: 'pending',
+        },
+      ],
+      enrollmentData: service.getIntake('student-amara-singh').enrollmentWizard,
+    });
+
+    const approvedSubmission = intakeSubmissionService.approveIntake(submission.id, 'admin-001', { q1: 'correct' });
+    service.markIntakeApproved('student-amara-singh', {
+      score: approvedSubmission.entranceExamScore,
+      passed: approvedSubmission.entranceExamPassed,
+      totalQuestions: approvedSubmission.questions.length,
+    });
+
+    service.updateEnrollmentWizard('student-amara-singh', {
+      scrubTop: 'M',
+      scrubBottom: 'M',
+      shipping: 'pickup',
+      wantsToTestAtDaisy: true,
+      signature: 'Amara Singh',
+    });
+    service.updateEnrollmentWizardAgreements('student-amara-singh', {
+      ip: true,
+      refund: true,
+      conduct: true,
+      lateFee: true,
+    });
+
+    service.submitEnrollmentWizard('student-amara-singh');
+
+    expect(service.getIntake('student-amara-singh').workflowStage).toBe('orientation_survey');
+  });
+
+  it('rescues already-approved students stuck in admin review after enrollment submission', () => {
+    const submission = intakeSubmissionService.submitIntake('student-amara-singh', {
+      entranceExamScore: null,
+      entranceExamPassed: null,
+      passingScore: 5,
+      questions: [
+        {
+          questionId: 'q1',
+          prompt: 'Question 1',
+          type: 'choice',
+          preferredAnswer: 'A',
+          options: [{ label: 'A', value: 'A' }],
+          studentAnswer: 'A',
+          reviewStatus: 'pending',
+        },
+      ],
+      enrollmentData: service.getIntake('student-amara-singh').enrollmentWizard,
+    });
+
+    const approvedSubmission = intakeSubmissionService.approveIntake(submission.id, 'admin-001', { q1: 'correct' });
+    service.markIntakeApproved('student-amara-singh', {
+      score: approvedSubmission.entranceExamScore,
+      passed: approvedSubmission.entranceExamPassed,
+      totalQuestions: approvedSubmission.questions.length,
+    });
+
+    service.updateEnrollmentWizard('student-amara-singh', {
+      scrubTop: 'M',
+      scrubBottom: 'M',
+      shipping: 'pickup',
+      wantsToTestAtDaisy: true,
+      signature: 'Amara Singh',
+    });
+    service.updateEnrollmentWizardAgreements('student-amara-singh', {
+      ip: true,
+      refund: true,
+      conduct: true,
+      lateFee: true,
+    });
+    service.submitEnrollmentWizard('student-amara-singh');
+    service.setWorkflowStage('student-amara-singh', 'admin_review');
+
+    expect(service.getPortal('student-amara-singh').workflowStage).toBe('orientation_survey');
+  });
+
+  it('requires each question to be reviewed before approval', () => {
+    const submission = intakeSubmissionService.submitIntake('student-amara-singh', {
+      entranceExamScore: null,
+      entranceExamPassed: null,
+      passingScore: 1,
+      questions: [
+        {
+          questionId: 'q1',
+          prompt: 'Question 1',
+          type: 'text',
+          preferredAnswer: 'Preferred',
+          options: [],
+          studentAnswer: 'Student answer',
+          reviewStatus: 'pending',
+        },
+      ],
+      enrollmentData: service.getIntake('student-amara-singh').enrollmentWizard,
+    });
+
+    expect(() => intakeSubmissionService.approveIntake(submission.id, 'admin-001')).toThrow(BadRequestException);
   });
 
   it('updates settings and returns the saved preference values', () => {

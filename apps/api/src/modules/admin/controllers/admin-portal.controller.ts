@@ -6,6 +6,7 @@ import { ExamConfigService, type EntranceExamConfig } from '../../student/servic
 import { EnrollmentWizardConfigService, type EnrollmentWizardConfig } from '../../student/services/enrollment-wizard-config.service';
 import { OrientationSurveyConfigService, type OrientationSurveyConfig } from '../../student/services/orientation-survey-config.service';
 import { IntakeSubmissionService } from '../../student/services/intake-submission.service';
+import { StudentPortalService } from '../../student/services/student-portal.service';
 import type { ApproveIntakeDto } from '../../student/types/student-portal.types';
 import type {
   AddAdminApplicationNoteDto,
@@ -23,6 +24,7 @@ export class AdminPortalController {
     private readonly enrollmentWizardConfigService: EnrollmentWizardConfigService,
     private readonly orientationSurveyConfigService: OrientationSurveyConfigService,
     private readonly intakeSubmissionService: IntakeSubmissionService,
+    private readonly studentPortalService: StudentPortalService,
   ) {}
 
   @Get('portal')
@@ -275,13 +277,28 @@ export class AdminPortalController {
     @Body() body: ApproveIntakeDto,
   ) {
     if (body.approved) {
+      const submission = this.intakeSubmissionService.approveIntake(submissionId, adminId, body.questionReviews);
+      this.studentPortalService.markIntakeApproved(submission.studentId, {
+        score: submission.entranceExamScore,
+        passed: submission.entranceExamPassed,
+        totalQuestions: submission.questions.length,
+      });
+
       return createApiResponse(
-        this.intakeSubmissionService.approveIntake(submissionId, adminId),
+        submission,
         'Student intake approved successfully.',
       );
     } else {
+      const submission = this.intakeSubmissionService.rejectIntake(
+        submissionId,
+        adminId,
+        body.rejectionReason || 'Rejected',
+        body.questionReviews,
+      );
+      this.studentPortalService.markIntakeRejected(submission.studentId, submission.rejectionReason || 'Rejected');
+
       return createApiResponse(
-        this.intakeSubmissionService.rejectIntake(submissionId, adminId, body.rejectionReason || 'Rejected'),
+        submission,
         'Student intake rejected successfully.',
       );
     }

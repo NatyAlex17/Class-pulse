@@ -76,6 +76,8 @@ export class StudentPortalRepository {
       entranceExam: {
         answers: {},
         score: null,
+        totalQuestions: examConfig.questions.length,
+        rank: null,
         taken: false,
         passed: false,
       },

@@ -16,6 +16,7 @@ interface Question {
   prompt: string;
   type: 'choice' | 'text';
   placeholder?: string;
+  preferredAnswer: string;
   options: Array<{ label: string; value: string }>;
 }
 
@@ -114,9 +115,9 @@ export default function QuestionDetailPage() {
         <div className="grid gap-6">
           {/* Question Type Card */}
           <div className="rounded-xl border border-border-subtle p-6">
-            <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-3">
-              Type
-            </p>
+              <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-3">
+                Reviewer Guidance
+              </p>
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                 <span className="text-lg">
@@ -129,8 +130,8 @@ export default function QuestionDetailPage() {
                 </p>
                 <p className="text-sm text-on-surface-variant">
                   {question.type === 'choice'
-                    ? `${question.options.length} options available`
-                    : 'Open-ended response'}
+                    ? `Preferred option: ${question.options.find((option) => option.value === question.preferredAnswer)?.label ?? question.preferredAnswer}`
+                    : `Preferred response: ${question.preferredAnswer}`}
                 </p>
               </div>
             </div>
@@ -169,6 +170,9 @@ export default function QuestionDetailPage() {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-on-surface break-words">{option.label}</p>
                         <p className="text-xs text-on-surface-variant font-mono mt-1">{option.value}</p>
+                        {option.value === question.preferredAnswer ? (
+                          <Badge variant="success" className="mt-2">Preferred Answer</Badge>
+                        ) : null}
                       </div>
                     </div>
                   </div>

@@ -219,6 +219,18 @@ export interface StudentSettings {
   remember_device: boolean;
 }
 
+export type IntakeQuestionReviewStatus = 'pending' | 'correct' | 'wrong';
+
+export interface SubmittedEntranceExamQuestion {
+  questionId: string;
+  prompt: string;
+  type: 'choice' | 'text';
+  preferredAnswer: string;
+  options: IntakeOptionDefinition[];
+  studentAnswer: string;
+  reviewStatus: IntakeQuestionReviewStatus;
+}
+
 export interface CdphForm {
   lastName: string;
   firstName: string;
@@ -234,8 +246,11 @@ export interface CdphForm {
 export interface EntranceExamState {
   answers: Record<string, string>;
   score: number | null;
+  totalQuestions: number;
+  rank: string | null;
   taken: boolean;
   passed: boolean;
+  submittedAt?: string;
 }
 
 export interface IntakeOptionDefinition {
@@ -263,7 +278,7 @@ export interface EntranceExamQuestionDefinition {
   prompt: string;
   type: 'choice' | 'text';
   placeholder?: string;
-  correctAnswer: string;
+  preferredAnswer: string;
   options: IntakeOptionDefinition[];
 }
 
@@ -585,8 +600,9 @@ export interface StudentIntakeSubmission {
   studentId: string;
   status: IntakeApprovalStatus;
   entranceExamScore: number | null;
-  entranceExamPassed: boolean;
-  studentAnswers?: Record<string, string>;
+  entranceExamPassed: boolean | null;
+  passingScore: number;
+  questions: SubmittedEntranceExamQuestion[];
   enrollmentData: EnrollmentWizardState;
   submittedAt: string;
   approvedAt?: string;
@@ -595,13 +611,15 @@ export interface StudentIntakeSubmission {
 }
 
 export interface SubmitStudentIntakeDto {
-  entranceExamScore: number;
-  entranceExamPassed: boolean;
-  studentAnswers: Record<string, string>;
+  entranceExamScore: number | null;
+  entranceExamPassed: boolean | null;
+  passingScore: number;
+  questions: SubmittedEntranceExamQuestion[];
   enrollmentData: EnrollmentWizardState;
 }
 
 export interface ApproveIntakeDto {
   approved: boolean;
   rejectionReason?: string;
+  questionReviews?: Record<string, 'correct' | 'wrong'>;
 }

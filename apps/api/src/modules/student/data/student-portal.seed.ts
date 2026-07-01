@@ -1,14 +1,14 @@
 import { StudentPortalState } from '../types/student-portal.types';
 
 export const defaultEntranceExamConfig = {
-  intro: 'Passing score is 5 out of 6. This gates the rest of the onboarding journey.',
+  intro: 'Each question can include a preferred answer for reviewer guidance, but staff scoring is finalized during intake review.',
   passingScore: 5,
   questions: [
     {
       id: 'q1',
       prompt: 'What must students do in the self-paced program?',
       type: 'choice' as const,
-      correctAnswer: 'B. Read instructions and finish work',
+      preferredAnswer: 'B. Read instructions and finish work',
       options: [
         { label: 'A. Only watch videos', value: 'A. Only watch videos' },
         {
@@ -23,7 +23,7 @@ export const defaultEntranceExamConfig = {
       id: 'q2',
       prompt: 'Why is English important in this program?',
       type: 'choice' as const,
-      correctAnswer: 'B. To understand lessons and exams',
+      preferredAnswer: 'B. To understand lessons and exams',
       options: [
         { label: 'A. Only for chatting', value: 'A. Only for chatting' },
         { label: 'B. To understand lessons and exams', value: 'B. To understand lessons and exams' },
@@ -35,7 +35,7 @@ export const defaultEntranceExamConfig = {
       id: 'q3',
       prompt: 'When can students ask instructors questions?',
       type: 'choice' as const,
-      correctAnswer: 'C. During scheduled support hours',
+      preferredAnswer: 'C. During scheduled support hours',
       options: [
         { label: 'A. Never', value: 'A. Never' },
         { label: 'B. Only after graduation', value: 'B. Only after graduation' },
@@ -47,7 +47,7 @@ export const defaultEntranceExamConfig = {
       id: 'q4',
       prompt: 'What can happen if a student does not understand instructions?',
       type: 'choice' as const,
-      correctAnswer: 'B. They may fail assignments or exams',
+      preferredAnswer: 'B. They may fail assignments or exams',
       options: [
         { label: 'A. Nothing changes', value: 'A. Nothing changes' },
         { label: 'B. They may fail assignments or exams', value: 'B. They may fail assignments or exams' },
@@ -59,7 +59,7 @@ export const defaultEntranceExamConfig = {
       id: 'q5',
       prompt: 'What is the main point of the readiness passage?',
       type: 'choice' as const,
-      correctAnswer: 'B. English comprehension is required to succeed',
+      preferredAnswer: 'B. English comprehension is required to succeed',
       options: [
         { label: 'A. Clinical practice is optional', value: 'A. Clinical practice is optional' },
         {
@@ -75,7 +75,7 @@ export const defaultEntranceExamConfig = {
       prompt:
         'Write one complete sentence explaining why following instructions matters in healthcare training.',
       type: 'text' as const,
-      correctAnswer: 'Following instructions is crucial in healthcare to ensure patient safety and quality care.',
+      preferredAnswer: 'Following instructions is crucial in healthcare to ensure patient safety and quality care.',
       placeholder: 'Write one complete sentence...',
       options: [],
     },
@@ -846,6 +846,8 @@ export const studentPortalSeed: StudentPortalState[] = [
     entranceExam: {
       answers: {},
       score: null,
+      totalQuestions: defaultEntranceExamConfig.questions.length,
+      rank: null,
       taken: false,
       passed: false,
     },

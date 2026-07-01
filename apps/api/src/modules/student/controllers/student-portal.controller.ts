@@ -14,7 +14,6 @@ import type {
   SelectModuleDto,
   SendStudentMessageDto,
   SubmitSupportTicketDto,
-  SubmitStudentIntakeDto,
   TextAnswerDto,
   UpdateCdphFormDto,
   UpdateEnrollmentWizardAgreementsDto,
@@ -549,18 +548,17 @@ export class StudentPortalController {
   }
 
   @Post('intake/submit')
-  submitIntake(@Param('studentId') studentId: string, @Body() body: SubmitStudentIntakeDto) {
+  submitIntake(@Param('studentId') studentId: string) {
     return createApiResponse(
-      this.intakeSubmissionService.submitIntake(studentId, body),
+      this.studentPortalService.submitEntranceExam(studentId),
       'Student intake submitted for admin review.',
     );
   }
 
   @Get('intake/approval-status')
   getApprovalStatus(@Param('studentId') studentId: string) {
-    const status = this.intakeSubmissionService.getStudentApprovalStatus(studentId);
     return createApiResponse(
-      { status },
+      this.intakeSubmissionService.getStudentApprovalSummary(studentId),
       'Student intake approval status retrieved successfully.',
     );
   }

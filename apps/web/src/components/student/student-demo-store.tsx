@@ -152,8 +152,11 @@ type StudentWorkflowStage =
 type EntranceExamState = {
   answers: Record<string, string>;
   score: number | null;
+  totalQuestions: number;
+  rank: string | null;
   taken: boolean;
   passed: boolean;
+  submittedAt?: string;
 };
 
 type EnrollmentWizardState = {
@@ -338,6 +341,8 @@ const initialState: StudentDemoState = {
   entranceExam: {
     answers: {},
     score: null,
+    totalQuestions: 0,
+    rank: null,
     taken: false,
     passed: false,
   },

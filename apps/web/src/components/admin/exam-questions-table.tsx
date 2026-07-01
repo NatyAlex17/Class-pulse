@@ -5,12 +5,12 @@ import Link from 'next/link';
 import { IconEdit, IconTrash, IconEye, IconPlus, IconAlertCircle } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
 
 interface Question {
   id: string;
   prompt: string;
   type: 'choice' | 'text';
+  preferredAnswer: string;
   options: Array<{ label: string; value: string }>;
 }
 
@@ -35,7 +35,7 @@ export function ExamQuestionsTable({
           <h3 className="font-semibold text-on-surface">Questions ({questions.length})</h3>
           {passingScore !== undefined && totalQuestions !== undefined && (
             <p className="mt-1 text-sm text-on-surface-variant">
-              Pass: {passingScore} out of {totalQuestions}
+              Pass threshold: {passingScore} correct marks out of {totalQuestions}
             </p>
           )}
         </div>
@@ -54,7 +54,7 @@ export function ExamQuestionsTable({
               <th className="px-6 py-3 text-left font-semibold text-on-surface">#</th>
               <th className="px-6 py-3 text-left font-semibold text-on-surface">Question</th>
               <th className="px-6 py-3 text-left font-semibold text-on-surface">Type</th>
-              <th className="px-6 py-3 text-left font-semibold text-on-surface">Options</th>
+              <th className="px-6 py-3 text-left font-semibold text-on-surface">Reviewer Guide</th>
               <th className="px-6 py-3 text-center font-semibold text-on-surface">Actions</th>
             </tr>
           </thead>

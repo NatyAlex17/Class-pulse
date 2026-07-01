@@ -36,30 +36,27 @@ import type {
   UpdateWizardStepDto,
   UploadStudentDocumentDto,
 } from '../types/student-portal.types';
+import { ExamConfigService } from './exam-config.service';
+import { IntakeSubmissionService } from './intake-submission.service';
 import { StudentPortalRepository } from './student-portal.repository';
 
 const CLINICAL_HOURS_REQUIRED = 40;
 const EXAM_UNLOCK_MINUTES = 480;
-const ENTRANCE_EXAM_PASSING_SCORE = 5;
-const ENTRANCE_EXAM_QUESTIONS = [
-  { id: 'q1', correct: 'B' },
-  { id: 'q2', correct: 'B' },
-  { id: 'q3', correct: 'C' },
-  { id: 'q4', correct: 'B' },
-  { id: 'q5', correct: 'B' },
-  { id: 'q6', correct: 'written' },
-] as const;
 
 @Injectable()
 export class StudentPortalService {
-  constructor(private readonly repository: StudentPortalRepository) {}
+  constructor(
+    private readonly repository: StudentPortalRepository,
+    private readonly examConfigService: ExamConfigService,
+    private readonly intakeSubmissionService: IntakeSubmissionService,
+  ) {}
 
   ensurePortalForLocalUser(localUser: LocalUserRecord) {
     return this.repository.ensureForLocalUser(localUser);
   }
 
   getPortal(studentId: string): StudentPortalState {
-    return this.repository.findByStudentId(studentId);
+    return this.syncWorkflowState(this.repository.findByStudentId(studentId));
   }
 
   getProfile(studentId: string) {
@@ -82,7 +79,7 @@ export class StudentPortalService {
   }
 
   getDashboard(studentId: string): StudentDashboardSnapshot {
-    const portal = this.repository.findByStudentId(studentId);
+    const portal = this.syncWorkflowState(this.repository.findByStudentId(studentId));
     const currentModule = this.getCurrentModule(portal);
     const completedOnboardingCount = portal.onboarding.steps.filter((step) => step.complete).length;
     const unreadCount = this.getUnreadCount(portal);
@@ -135,7 +132,7 @@ export class StudentPortalService {
   }
 
   getIntake(studentId: string): StudentIntakeSnapshot {
-    const portal = this.repository.findByStudentId(studentId);
+    const portal = this.syncWorkflowState(this.repository.findByStudentId(studentId));
     return {
       workflowStage: portal.workflowStage,
       intakeJourney: portal.intakeJourney,
@@ -146,6 +143,10 @@ export class StudentPortalService {
   }
 
   setWorkflowStage(studentId: string, workflowStage: StudentPortalState['workflowStage']) {
+    if (['enrollment_wizard', 'orientation_survey', 'active'].includes(workflowStage)) {
+      this.assertStudentApproved(studentId);
+    }
+
     const portal = this.repository.findByStudentId(studentId);
     portal.workflowStage = workflowStage;
     portal.onboarding.workflowStage = workflowStage;
@@ -161,6 +162,8 @@ export class StudentPortalService {
       throw new BadRequestException('Entrance exam answers cannot be empty.');
     }
 
+    this.assertEntranceExamEditable(studentId);
+
     const portal = this.repository.findByStudentId(studentId);
     portal.entranceExam.answers[questionId] = payload.answer.trim();
     portal.lastAction = 'Entrance exam response saved.';
@@ -172,35 +175,55 @@ export class StudentPortalService {
 
   submitEntranceExam(studentId: string) {
     const portal = this.repository.findByStudentId(studentId);
-    const score = ENTRANCE_EXAM_QUESTIONS.reduce((total, question) => {
-      const answer = portal.entranceExam.answers[question.id]?.trim() ?? '';
+    const examConfig = this.examConfigService.getConfig();
+    const unansweredQuestion = examConfig.questions.find(
+      (question) => (portal.entranceExam.answers[question.id] ?? '').trim().length === 0,
+    );
 
-      if (question.correct === 'written') {
-        return total + (answer.length >= 12 ? 1 : 0);
-      }
+    if (unansweredQuestion) {
+      throw new BadRequestException(`Question "${unansweredQuestion.prompt}" must be answered before submission.`);
+    }
 
-      return total + (answer.startsWith(question.correct) ? 1 : 0);
-    }, 0);
+    const submittedAt = new Date().toISOString();
 
-    const passed = score >= ENTRANCE_EXAM_PASSING_SCORE;
     portal.entranceExam = {
       ...portal.entranceExam,
-      score,
+      score: null,
+      totalQuestions: examConfig.questions.length,
+      rank: null,
       taken: true,
-      passed,
+      passed: false,
+      submittedAt,
     };
-    portal.workflowStage = passed ? 'enrollment_wizard' : 'entrance_exam';
-    portal.lastAction = passed
-      ? `Entrance exam passed with ${score}/${ENTRANCE_EXAM_QUESTIONS.length}.`
-      : `Entrance exam scored ${score}/${ENTRANCE_EXAM_QUESTIONS.length}.`;
+    portal.workflowStage = 'admin_review';
+    portal.onboarding.workflowStage = 'admin_review';
+    portal.lastAction = 'Entrance exam submitted for admin review.';
+
+    this.intakeSubmissionService.submitIntake(studentId, {
+      entranceExamScore: null,
+      entranceExamPassed: null,
+      passingScore: examConfig.passingScore,
+      questions: examConfig.questions.map((question) => ({
+        questionId: question.id,
+        prompt: question.prompt,
+        type: question.type,
+        preferredAnswer: question.preferredAnswer,
+        options: question.options,
+        studentAnswer: portal.entranceExam.answers[question.id]?.trim() ?? '',
+        reviewStatus: 'pending',
+      })),
+      enrollmentData: portal.enrollmentWizard,
+    });
+
     this.recordAudit(portal, 'student.intake.entrance-exam.submitted', 'entrance-exam', {
-      score,
-      passed,
+      reviewed: false,
+      totalQuestions: examConfig.questions.length,
     });
     return this.repository.save(portal).entranceExam;
   }
 
   updateEnrollmentWizard(studentId: string, payload: UpdateEnrollmentWizardDto) {
+    this.assertStudentApproved(studentId);
     const portal = this.repository.findByStudentId(studentId);
     portal.enrollmentWizard = {
       ...portal.enrollmentWizard,
@@ -214,6 +237,7 @@ export class StudentPortalService {
   }
 
   updateEnrollmentWizardAgreements(studentId: string, payload: UpdateEnrollmentWizardAgreementsDto) {
+    this.assertStudentApproved(studentId);
     const portal = this.repository.findByStudentId(studentId);
     portal.enrollmentWizard.agreements = {
       ...portal.enrollmentWizard.agreements,
@@ -227,6 +251,7 @@ export class StudentPortalService {
   }
 
   setEnrollmentWizardStep(studentId: string, payload: UpdateWizardStepDto) {
+    this.assertStudentApproved(studentId);
     const portal = this.repository.findByStudentId(studentId);
     const maxStep = portal.intakeJourney.enrollmentWizard.steps.length;
     portal.enrollmentWizard.step = Math.min(maxStep, Math.max(1, payload.step));
@@ -234,6 +259,7 @@ export class StudentPortalService {
   }
 
   submitEnrollmentWizard(studentId: string) {
+    this.assertStudentApproved(studentId);
     const portal = this.repository.findByStudentId(studentId);
     const allAgreementsAccepted = Object.values(portal.enrollmentWizard.agreements).every(Boolean);
     const hasSignature = portal.enrollmentWizard.signature.trim().length > 0;
@@ -254,8 +280,9 @@ export class StudentPortalService {
 
     portal.enrollmentWizard.submitted = true;
     portal.enrollmentWizard.step = portal.intakeJourney.enrollmentWizard.steps.length;
-    portal.workflowStage = 'admin_review';
-    portal.lastAction = 'Enrollment package submitted for review.';
+    portal.workflowStage = 'orientation_survey';
+    portal.onboarding.workflowStage = 'orientation_survey';
+    portal.lastAction = 'Enrollment package submitted. Orientation survey unlocked.';
     this.recordAudit(portal, 'student.intake.enrollment-wizard.submitted', 'enrollment-wizard', {
       submitted: true,
     });
@@ -267,6 +294,8 @@ export class StudentPortalService {
       throw new BadRequestException('Entrance survey answers cannot be empty.');
     }
 
+    this.assertStudentApproved(studentId);
+
     const portal = this.repository.findByStudentId(studentId);
     portal.entranceSurvey.answers[questionId] = payload.answer.trim();
     portal.lastAction = 'Orientation survey answer saved.';
@@ -277,6 +306,7 @@ export class StudentPortalService {
   }
 
   setEntranceSurveyStep(studentId: string, payload: UpdateWizardStepDto) {
+    this.assertStudentApproved(studentId);
     const portal = this.repository.findByStudentId(studentId);
     const maxStep = portal.intakeJourney.orientationSurvey.sections.length;
     portal.entranceSurvey.step = Math.min(maxStep, Math.max(1, payload.step));
@@ -284,6 +314,7 @@ export class StudentPortalService {
   }
 
   submitEntranceSurvey(studentId: string) {
+    this.assertStudentApproved(studentId);
     const portal = this.repository.findByStudentId(studentId);
     const answeredCount = Object.values(portal.entranceSurvey.answers).filter((value) => value.trim().length > 0).length;
 
@@ -982,6 +1013,40 @@ export class StudentPortalService {
     return this.repository.findByStudentId(studentId).assignments;
   }
 
+  markIntakeApproved(
+    studentId: string,
+    review?: { score: number | null; passed: boolean | null; totalQuestions: number },
+  ) {
+    const portal = this.repository.findByStudentId(studentId);
+    if (review && review.score !== null && review.passed !== null) {
+      portal.entranceExam.score = review.score;
+      portal.entranceExam.totalQuestions = review.totalQuestions;
+      portal.entranceExam.passed = review.passed;
+      portal.entranceExam.rank = this.calculateEntranceExamRank(review.score, review.totalQuestions);
+    }
+    portal.workflowStage = 'enrollment_wizard';
+    portal.onboarding.workflowStage = 'enrollment_wizard';
+    portal.lastAction = 'Student intake approved. Enrollment workflow unlocked.';
+    this.recordAudit(portal, 'student.intake.approved', 'entrance-exam', {
+      approved: true,
+      score: review?.score ?? undefined,
+      passed: review?.passed ?? undefined,
+    });
+    return this.repository.save(portal).workflowStage;
+  }
+
+  markIntakeRejected(studentId: string, reason: string) {
+    const portal = this.repository.findByStudentId(studentId);
+    portal.workflowStage = 'admin_review';
+    portal.onboarding.workflowStage = 'admin_review';
+    portal.lastAction = 'Student intake was rejected and remains locked pending staff follow-up.';
+    this.recordAudit(portal, 'student.intake.rejected', 'entrance-exam', {
+      rejected: true,
+      reason,
+    });
+    return this.repository.save(portal).workflowStage;
+  }
+
   submitAssignment(studentId: string, assignmentId: string) {
     const portal = this.repository.findByStudentId(studentId);
     const assignment = portal.assignments.find((item) => item.id === assignmentId);
@@ -1163,5 +1228,71 @@ export class StudentPortalService {
 
   private slugify(value: string) {
     return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  }
+
+  private syncWorkflowState(portal: StudentPortalState) {
+    const approvalStatus = this.intakeSubmissionService.getStudentApprovalStatus(portal.profile.id);
+    let nextStage = portal.workflowStage;
+
+    if (approvalStatus === 'approved') {
+      if (portal.entranceSurvey.completed) {
+        nextStage = 'active';
+      } else if (portal.enrollmentWizard.submitted) {
+        nextStage = 'orientation_survey';
+      } else {
+        nextStage = 'enrollment_wizard';
+      }
+    }
+
+    if (nextStage !== portal.workflowStage || nextStage !== portal.onboarding.workflowStage) {
+      portal.workflowStage = nextStage;
+      portal.onboarding.workflowStage = nextStage;
+      portal.lastAction = `Workflow stage synchronized to ${nextStage.replaceAll('_', ' ')}.`;
+      return this.repository.save(portal);
+    }
+
+    return portal;
+  }
+
+  private assertStudentApproved(studentId: string) {
+    const approvalStatus = this.intakeSubmissionService.getStudentApprovalStatus(studentId);
+
+    if (approvalStatus !== 'approved') {
+      throw new BadRequestException('This step is locked until admin approves the student intake.');
+    }
+  }
+
+  private assertEntranceExamEditable(studentId: string) {
+    const approvalStatus = this.intakeSubmissionService.getStudentApprovalStatus(studentId);
+
+    if (approvalStatus === 'pending' || approvalStatus === 'approved') {
+      throw new BadRequestException('Entrance exam answers are locked after submission.');
+    }
+  }
+
+  private calculateEntranceExamRank(score: number, totalQuestions: number) {
+    if (totalQuestions === 0) {
+      return null;
+    }
+
+    const percent = Math.round((score / totalQuestions) * 100);
+
+    if (percent >= 90) {
+      return 'A';
+    }
+
+    if (percent >= 80) {
+      return 'B';
+    }
+
+    if (percent >= 70) {
+      return 'C';
+    }
+
+    if (percent >= 60) {
+      return 'D';
+    }
+
+    return 'F';
   }
 }

@@ -34,6 +34,8 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
   const { session, syncedUser, signOut } = useAuth();
   const [approvalStatus, setApprovalStatus] = React.useState<'pending' | 'approved' | 'rejected' | null | undefined>(undefined);
   const [isCheckingStatus, setIsCheckingStatus] = React.useState(false);
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const [isSubmittingExam, setIsSubmittingExam] = React.useState(false);
 
   const {
     workflowStage,
@@ -42,7 +44,6 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
     enrollmentWizard,
     entranceSurvey,
     answerEntranceExamQuestion,
-    submitEntranceExam,
     updateEnrollmentWizardField,
     toggleEnrollmentAgreement,
     setEnrollmentWizardStep,
@@ -50,74 +51,20 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
     updateEntranceSurveyAnswer,
     setEntranceSurveyStep,
     submitEntranceSurvey,
-    setWorkflowStage,
   } = useStudentDemo();
 
   const studentId = React.useMemo(() => syncedUser?.localUserId || 'student-001', [syncedUser?.localUserId]);
   const hasAuth = Boolean(session?.access_token);
+  const isStudentUser = syncedUser?.role === 'student';
 
-  React.useEffect(() => {
-    if (!open || !hasAuth) return;
-
-    const checkApprovalStatus = async () => {
-      try {
-        setIsCheckingStatus(true);
-        const response = await fetch(`${API_BASE_URL}/students/${studentId}/intake/approval-status`, {
-          headers: {
-            'Authorization': `Bearer ${session?.access_token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setApprovalStatus(data.data.status);
-        }
-      } catch (err) {
-        console.error('Failed to check approval status:', err);
-      } finally {
-        setIsCheckingStatus(false);
-      }
-    };
-
-    checkApprovalStatus();
-  }, [open, hasAuth, studentId, session?.access_token]);
-
-  const handleSubmitExam = async () => {
-    if (!session?.access_token) return;
-
-    try {
-      const intakeSubmissionData = {
-        entranceExamScore: entranceExam.score,
-        entranceExamPassed: entranceExam.passed,
-        studentAnswers: entranceExam.answers,
-        enrollmentData: enrollmentWizard,
-      };
-
-      const response = await fetch(`${API_BASE_URL}/students/${studentId}/intake/submit`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(intakeSubmissionData),
-      });
-
-      if (response.ok) {
-        // Move to admin review stage
-        setWorkflowStage('admin_review');
-        // Refresh approval status
-        checkApprovalStatus();
-      }
-    } catch (err) {
-      console.error('Error submitting intake:', err);
+  const checkApprovalStatus = React.useCallback(async () => {
+    if (!hasAuth || !isStudentUser || !syncedUser?.localUserId) {
+      setApprovalStatus(null);
+      return;
     }
-  };
-
-  const checkApprovalStatus = async () => {
-    if (!hasAuth) return;
 
     try {
+      setIsCheckingStatus(true);
       const response = await fetch(`${API_BASE_URL}/students/${studentId}/intake/approval-status`, {
         headers: {
           'Authorization': `Bearer ${session?.access_token}`,
@@ -128,9 +75,45 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
       if (response.ok) {
         const data = await response.json();
         setApprovalStatus(data.data.status);
+      } else {
+        setApprovalStatus(null);
       }
+    } catch {
+      setApprovalStatus(null);
+    } finally {
+      setIsCheckingStatus(false);
+    }
+  }, [hasAuth, isStudentUser, session?.access_token, studentId, syncedUser?.localUserId]);
+
+  React.useEffect(() => {
+    if (!open || !hasAuth || !isStudentUser) return;
+    void checkApprovalStatus();
+  }, [checkApprovalStatus, hasAuth, isStudentUser, open]);
+
+  const handleSubmitExam = async () => {
+    if (!session?.access_token || !isStudentUser || !syncedUser?.localUserId) return;
+
+    try {
+      setIsSubmittingExam(true);
+      setSubmitError(null);
+      const response = await fetch(`${API_BASE_URL}/students/${studentId}/intake/entrance-exam/submit`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error?.message ?? 'Failed to submit entrance exam.');
+      }
+
+      await checkApprovalStatus();
     } catch (err) {
-      console.error('Failed to check approval status:', err);
+      setSubmitError(err instanceof Error ? err.message : 'Failed to submit entrance exam.');
+    } finally {
+      setIsSubmittingExam(false);
     }
   };
 
@@ -152,6 +135,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
   const examQuestions = journey?.entranceExam.questions ?? [];
   const enrollmentSteps = journey?.enrollmentWizard.steps ?? [];
   const surveySections = journey?.orientationSurvey.sections ?? [];
+  const hasStudentAccess = hasAuth && isStudentUser && Boolean(syncedUser?.localUserId);
 
   const examComplete = examQuestions.every((question) =>
     (entranceExam.answers[question.id] ?? '').trim(),
@@ -284,7 +268,21 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
           </div>
         )}
 
-        {approvalStatus === null && workflowStage === 'entrance_exam' && !entranceExam.taken && (
+        {!hasStudentAccess ? (
+          <div className="shrink-0 border-b border-warning/20 bg-warning/5 px-6 py-4 sm:px-8">
+            <div className="flex items-start gap-3">
+              <IconAlertCircle className="size-5 text-warning mt-0.5 shrink-0" />
+              <div className="flex-1">
+                <p className="font-semibold text-on-surface text-sm">Student Access Required</p>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  This intake flow can only run with a synced student account. The current session is not authorized for student intake requests.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {approvalStatus === null && workflowStage === 'entrance_exam' && !entranceExam.taken && hasStudentAccess && (
           <div className="shrink-0 border-b border-info/20 bg-info/5 px-6 py-4 sm:px-8">
             <div className="flex items-start gap-3">
               <IconAlertCircle className="size-5 text-info mt-0.5 shrink-0" />
@@ -298,6 +296,12 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
           </div>
         )}
 
+        {submitError ? (
+          <div className="shrink-0 border-b border-error/20 bg-error/5 px-6 py-4 text-sm text-error sm:px-8">
+            {submitError}
+          </div>
+        ) : null}
+
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8">
             {workflowStage === 'entrance_exam' ? (
@@ -308,31 +312,31 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                 </p>
               </div>
 
-              {entranceExam.taken && entranceExam.score !== null ? (
+              {entranceExam.taken ? (
                 <div className="rounded-[22px] border border-border-subtle bg-surface-muted p-6">
-                  <Badge variant={entranceExam.passed ? 'success' : 'warning'}>
-                    {entranceExam.passed ? 'Passed' : 'Needs Review'}
+                  <Badge variant={entranceExam.score === null ? 'warning' : entranceExam.passed ? 'success' : 'warning'}>
+                    {entranceExam.score === null ? 'Pending Review' : entranceExam.passed ? 'Passed' : 'Needs Review'}
                   </Badge>
                   <h3 className="mt-4 font-display text-[26px] font-semibold text-on-surface">
-                    Score: {entranceExam.score} / {journey.entranceExam.questions.length}
+                    {entranceExam.score === null
+                      ? 'Submitted for review'
+                      : `Score: ${entranceExam.score} / ${journey.entranceExam.questions.length}`}
                   </h3>
+                  <p className="mt-2 text-sm font-semibold text-on-surface">
+                    Rank: {entranceExam.rank ?? 'Pending'}
+                  </p>
                   <p className="mt-2 text-sm text-on-surface-variant">
-                    {entranceExam.passed
-                      ? 'The student is cleared to continue to enrollment setup.'
-                      : 'The intake flow normally stops here until the entrance exam is passed or reviewed.'}
+                    {entranceExam.score === null
+                      ? 'Your answers are waiting for staff review. The reviewer will mark each question correct or wrong before final approval.'
+                      : entranceExam.passed
+                        ? 'The result is ready and now waiting for admin approval before the student can continue.'
+                        : 'The result is waiting for admin review. The student stays locked here until staff approves or rejects the intake.'}
                   </p>
                   <div className="mt-5 flex flex-wrap gap-3">
                     {approvalStatus === 'approved' ? (
-                      <>
-                        <Button onClick={() => setWorkflowStage('enrollment_wizard')}>
-                          Continue To Enrollment
-                        </Button>
-                        {!entranceExam.passed ? (
-                          <Button variant="secondary" onClick={() => setWorkflowStage('enrollment_wizard')}>
-                            Override For Demo
-                          </Button>
-                        ) : null}
-                      </>
+                      <p className="text-sm text-success">
+                        Admin approved this intake. Enrollment is now unlocked.
+                      </p>
                     ) : (
                       <p className="text-sm text-on-surface-variant">
                         {approvalStatus === 'pending' && 'Your application is pending admin review.'}
@@ -687,11 +691,8 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                   ))}
                 </div>
                 <div className="mt-6 flex flex-wrap gap-3">
-                  <Button onClick={() => setWorkflowStage('orientation_survey')}>
-                    Simulate Approval
-                  </Button>
-                  <Button variant="secondary" onClick={() => setWorkflowStage('enrollment_wizard')}>
-                    Return To Wizard
+                  <Button variant="secondary" onClick={checkApprovalStatus} disabled={isCheckingStatus}>
+                    {isCheckingStatus ? 'Checking Approval...' : 'Refresh Approval Status'}
                   </Button>
                 </div>
               </div>
@@ -828,14 +829,11 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
           {workflowStage === 'entrance_exam' && (
             <div className="shrink-0 border-t border-border-subtle bg-surface px-6 py-4 sm:px-8">
               <Button
-                disabled={!examComplete || approvalStatus === 'pending'}
-                onClick={() => {
-                  submitEntranceExam();
-                  handleSubmitExam();
-                }}
+                disabled={!examComplete || approvalStatus === 'pending' || isSubmittingExam || !hasStudentAccess}
+                onClick={handleSubmitExam}
                 className="w-full"
               >
-                Submit for Admin Review
+                {isSubmittingExam ? 'Submitting...' : 'Submit for Admin Review'}
               </Button>
             </div>
           )}

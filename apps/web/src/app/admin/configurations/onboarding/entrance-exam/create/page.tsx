@@ -22,6 +22,7 @@ interface Question {
   prompt: string;
   type: 'choice' | 'text';
   placeholder?: string;
+  preferredAnswer: string;
   options: QuestionOption[];
 }
 
@@ -33,6 +34,7 @@ export default function CreateQuestionPage() {
     prompt: 'New question',
     type: 'choice',
     placeholder: '',
+    preferredAnswer: 'a',
     options: [
       { label: 'Option A', value: 'a' },
       { label: 'Option B', value: 'b' },
@@ -55,9 +57,13 @@ export default function CreateQuestionPage() {
   };
 
   const removeOption = (index: number) => {
+    const nextOptions = question.options.filter((_, i) => i !== index);
     setQuestion({
       ...question,
-      options: question.options.filter((_, i) => i !== index),
+      options: nextOptions,
+      preferredAnswer: nextOptions.some((option) => option.value === question.preferredAnswer)
+        ? question.preferredAnswer
+        : (nextOptions[0]?.value ?? ''),
     });
   };
 
@@ -150,7 +156,17 @@ export default function CreateQuestionPage() {
               {(['choice', 'text'] as const).map((type) => (
                 <button
                   key={type}
-                  onClick={() => setQuestion({ ...question, type, options: type === 'choice' ? question.options : [] })}
+                  onClick={() =>
+                    setQuestion({
+                      ...question,
+                      type,
+                      options: type === 'choice' ? question.options : [],
+                      preferredAnswer:
+                        type === 'choice'
+                          ? question.preferredAnswer || question.options[0]?.value || ''
+                          : question.preferredAnswer,
+                    })
+                  }
                   className={cn(
                     'px-4 py-3 rounded-lg font-semibold transition capitalize',
                     question.type === type
@@ -174,6 +190,16 @@ export default function CreateQuestionPage() {
                 value={question.placeholder || ''}
                 onChange={(e) => setQuestion({ ...question, placeholder: e.target.value })}
                 placeholder="e.g., Write your response..."
+              />
+
+              <label className="mt-4 block text-sm font-semibold text-on-surface mb-3">
+                Preferred Answer
+              </label>
+              <Textarea
+                value={question.preferredAnswer}
+                onChange={(e) => setQuestion({ ...question, preferredAnswer: e.target.value })}
+                placeholder="Enter the reviewer guidance answer"
+                className="h-24"
               />
             </div>
           )}
@@ -204,6 +230,18 @@ export default function CreateQuestionPage() {
                       placeholder="Option text"
                       className="font-medium flex-1 h-9 text-sm"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setQuestion({ ...question, preferredAnswer: option.value })}
+                      className={cn(
+                        'rounded-lg border px-3 py-2 text-xs font-semibold transition shrink-0',
+                        question.preferredAnswer === option.value
+                          ? 'border-success bg-success text-white'
+                          : 'border-border-subtle bg-surface text-on-surface-variant hover:border-success/40',
+                      )}
+                    >
+                      {question.preferredAnswer === option.value ? 'Preferred' : 'Mark Preferred'}
+                    </button>
                     <button
                       onClick={() => removeOption(index)}
                       className="p-2 text-error hover:bg-error/10 rounded-lg transition opacity-0 group-hover:opacity-100 shrink-0"
