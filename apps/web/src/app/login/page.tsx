@@ -29,7 +29,7 @@ import { getBrowserSupabaseClient } from '@/lib/supabase/browser-client';
 const demoLogins = [
   { label: 'Student', path: '/student/dashboard' },
   { label: 'Instructor', path: '/instructor/dashboard' },
-  { label: 'Admin', path: '/admin/dashboard' },
+  { label: 'Admin', path: '/admin/operations' },
   { label: 'Auditor', path: '/auditor/dashboard' },
 ];
 

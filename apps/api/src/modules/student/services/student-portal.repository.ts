@@ -3,8 +3,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import type { LocalUserRecord } from '../../auth/types/auth-user.types';
 import { studentPortalSeed } from '../data/student-portal.seed';
 import { ExamConfigService } from './exam-config.service';
+import { LearningResourcesConfigService } from './learning-resources-config.service';
 import {
   ClinicalLogEntry,
+  CurriculumModule,
+  LearningStep,
   StudentAuditEvent,
   StudentPortalState,
   StudentThread,
@@ -14,9 +17,12 @@ import {
 export class StudentPortalRepository {
   private readonly portalByStudentId = new Map<string, StudentPortalState>();
 
-  constructor(private examConfigService: ExamConfigService) {
+  constructor(
+    private examConfigService: ExamConfigService,
+    private learningResourcesConfigService: LearningResourcesConfigService,
+  ) {
     studentPortalSeed.forEach((portal) => {
-      this.portalByStudentId.set(portal.profile.id, this.enrichPortalWithExamConfig(this.clone(portal)));
+      this.portalByStudentId.set(portal.profile.id, this.enrichPortalWithConfigs(this.clone(portal)));
     });
   }
 
@@ -27,17 +33,22 @@ export class StudentPortalRepository {
       throw new NotFoundException(`Student portal state not found for "${studentId}".`);
     }
 
-    return this.enrichPortalWithExamConfig(this.clone(portal));
+    return this.enrichPortalWithConfigs(this.clone(portal));
   }
 
-  private enrichPortalWithExamConfig(portal: StudentPortalState): StudentPortalState {
+  private enrichPortalWithConfigs(portal: StudentPortalState): StudentPortalState {
     const examConfig = this.examConfigService.getConfig();
+    const modules = this.applyLearningResourcesConfig(portal.modules);
     return {
       ...portal,
       intakeJourney: {
         ...portal.intakeJourney,
         entranceExam: examConfig,
       },
+      activeModuleId: modules.some((module) => module.id === portal.activeModuleId)
+        ? portal.activeModuleId
+        : (modules[0]?.id ?? portal.activeModuleId),
+      modules,
     };
   }
 
@@ -130,18 +141,7 @@ export class StudentPortalRepository {
         complete: false,
       })),
       activeModuleId: template.modules[0]?.id ?? template.activeModuleId,
-      modules: template.modules.map((module, index) => ({
-        ...module,
-        status: index === 0 ? 'In Progress' : 'Locked',
-        progressPercent: 0,
-        completedHours: 0,
-        examScore: undefined,
-        certificateUnlocked: false,
-        steps: module.steps.map((step) => ({
-          ...step,
-          complete: false,
-        })),
-      })),
+      modules: this.applyLearningResourcesConfig(undefined, template.modules),
       clinicalLogs: [],
       attendanceRecords: [],
       learningMinutes: 0,
@@ -191,6 +191,59 @@ export class StudentPortalRepository {
 
   private clone<TValue>(value: TValue): TValue {
     return JSON.parse(JSON.stringify(value)) as TValue;
+  }
+
+  private applyLearningResourcesConfig(existingModules?: CurriculumModule[], fallbackModules?: CurriculumModule[]) {
+    const configuredModules = this.learningResourcesConfigService.getConfig().modules;
+    const hasConfig = configuredModules.length > 0;
+    const seedModules = fallbackModules ?? [];
+
+    if (!hasConfig) {
+      return (existingModules ?? seedModules).map((module) => ({
+        ...module,
+        steps: module.steps.map((step) => ({ ...step })),
+      }));
+    }
+
+    return configuredModules.map((configuredModule, moduleIndex) => {
+      const existingModule = existingModules?.find((module) => module.id === configuredModule.id);
+      const seedModule = seedModules.find((module) => module.id === configuredModule.id);
+      const steps = configuredModule.sections.flatMap((section) =>
+        section.resources.map<LearningStep>((resource) => {
+          const existingStep =
+            existingModule?.steps.find((step) => step.id === resource.id) ??
+            seedModule?.steps.find((step) => step.id === resource.id);
+
+          return {
+            id: resource.id,
+            title: resource.title,
+            type: resource.type === 'video' ? 'Video' : resource.type === 'pdf' ? 'PDF' : 'Link',
+            duration: resource.duration,
+            note: resource.description,
+            complete: existingStep?.complete ?? false,
+            resourceUrl: resource.url,
+            sectionId: section.id,
+            sectionTitle: section.title,
+          };
+        }),
+      );
+
+      const completedSteps = steps.filter((step) => step.complete).length;
+      const progressPercent = steps.length > 0 ? Math.round((completedSteps / steps.length) * 100) : 0;
+
+      return {
+        id: configuredModule.id,
+        title: configuredModule.title,
+        summary: configuredModule.summary,
+        status: existingModule?.status ?? (moduleIndex === 0 ? 'In Progress' : 'Locked'),
+        progressPercent,
+        requiredHours: configuredModule.requiredHours,
+        completedHours: Math.min(existingModule?.completedHours ?? 0, configuredModule.requiredHours),
+        examScore: existingModule?.examScore,
+        certificateUnlocked: existingModule?.certificateUnlocked ?? false,
+        steps,
+      } satisfies CurriculumModule;
+    });
   }
 
   private humanizeName(email: string) {

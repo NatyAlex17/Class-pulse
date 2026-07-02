@@ -77,13 +77,18 @@ export interface OnboardingState {
   submitted: boolean;
 }
 
+export type LearningStepType = 'Video' | 'PDF' | 'Link' | 'Reading' | 'Skill Check' | 'Quiz';
+
 export interface LearningStep {
   id: string;
   title: string;
-  type: 'Video' | 'PDF' | 'Reading' | 'Skill Check' | 'Quiz';
+  type: LearningStepType;
   duration: string;
   note: string;
   complete: boolean;
+  resourceUrl?: string;
+  sectionId?: string;
+  sectionTitle?: string;
 }
 
 export interface CurriculumModule {
@@ -97,6 +102,30 @@ export interface CurriculumModule {
   examScore?: string;
   certificateUnlocked: boolean;
   steps: LearningStep[];
+}
+
+export interface LearningResourceDefinition {
+  id: string;
+  title: string;
+  type: 'video' | 'pdf' | 'link';
+  duration: string;
+  description: string;
+  url: string;
+}
+
+export interface LearningSectionDefinition {
+  id: string;
+  title: string;
+  description: string;
+  resources: LearningResourceDefinition[];
+}
+
+export interface LearningModuleDefinition {
+  id: string;
+  title: string;
+  summary: string;
+  requiredHours: number;
+  sections: LearningSectionDefinition[];
 }
 
 export interface StudentMessage {

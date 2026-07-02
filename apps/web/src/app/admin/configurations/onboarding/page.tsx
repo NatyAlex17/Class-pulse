@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AdminShell } from '@/components/admin/admin-shell';
 import { EntranceExamConfigContent } from '@/components/admin/onboarding/entrance-exam-content';
@@ -14,7 +15,7 @@ const tabs = [
   { id: 'orientation-survey', label: 'Orientation Survey' },
 ];
 
-export default function OnboardingConfigsPage() {
+function OnboardingConfigsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = React.useState('entrance-exam');
@@ -61,5 +62,19 @@ export default function OnboardingConfigsPage() {
         </div>
       </div>
     </AdminShell>
+  );
+}
+
+export default function OnboardingConfigsPage() {
+  return (
+    <Suspense
+      fallback={
+        <AdminShell title="Onboarding Configurations" subtitle="Loading configuration workspace...">
+          <div className="p-8 text-center">Loading configuration workspace...</div>
+        </AdminShell>
+      }
+    >
+      <OnboardingConfigsContent />
+    </Suspense>
   );
 }

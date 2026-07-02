@@ -3,7 +3,7 @@ export type AppRole = 'student' | 'instructor' | 'admin' | 'auditor';
 const roleRoutes: Record<AppRole, string> = {
   student: '/student/dashboard',
   instructor: '/instructor/dashboard',
-  admin: '/admin/dashboard',
+  admin: '/admin/operations',
   auditor: '/auditor/dashboard',
 };
 

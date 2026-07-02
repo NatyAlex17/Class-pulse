@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import {
   IconAppWindow,
   IconBell,
+  IconBook2,
   IconClipboardList,
   IconDashboard,
   IconFileAnalytics,
@@ -33,7 +34,7 @@ type AdminNavItem = {
 };
 
 const navItems: AdminNavItem[] = [
-  { label: 'Dashboard', href: '/admin/dashboard', icon: IconDashboard },
+  { label: 'Dashboard', href: '/admin', icon: IconDashboard },
   { label: 'Command Center', href: '/admin/operations', icon: IconLayoutDashboard },
   { label: 'Applications', href: '/admin/applications', icon: IconClipboardList },
   { label: 'Review Workspace', href: '/admin/applications/review', icon: IconAppWindow },
@@ -43,6 +44,7 @@ const navItems: AdminNavItem[] = [
     icon: IconAdjustments,
     children: [
       { label: 'Onboarding Configs', href: '/admin/configurations/onboarding', icon: IconSettings },
+      { label: 'Learning Resources', href: '/admin/configurations/learning-resources', icon: IconBook2 },
     ],
   },
 ];
@@ -72,7 +74,7 @@ export function AdminShell({
   subtitle,
   searchPlaceholder = 'Global search for students, records, or logs...',
   topLinks = [
-    { label: 'Cohort View', href: '/admin/dashboard' },
+    { label: 'Cohort View', href: '/admin' },
     { label: 'Applications', href: '/admin/applications' },
     { label: 'Reports', href: '/admin/reports' },
   ],
@@ -169,7 +171,7 @@ export function AdminShell({
                   </button>
                   {isExpanded && (
                     <div className="mt-1 space-y-1 pl-4">
-                      {item.children.map((child) => (
+                      {(item.children ?? []).map((child) => (
                         <Link
                           key={child.href}
                           href={child.href || '#'}
@@ -272,7 +274,7 @@ export function AdminShell({
                       </button>
                       {isExpanded && (
                         <div className="mt-1 space-y-1 pl-6">
-                          {item.children.map((child) => (
+                          {(item.children ?? []).map((child) => (
                             <Link
                               key={child.href}
                               href={child.href || '#'}
@@ -455,12 +457,13 @@ export function AdminShell({
           { label: 'Settings', href: '/admin/settings', icon: IconSettings },
         ].map((item) => {
           const Icon = item.icon;
-          const active = isActive(pathname, item.href);
+          const href = item.href || '#';
+          const active = isActive(pathname, href);
 
           return (
             <Link
-              key={`${item.href}-${item.label}`}
-              href={item.href}
+              key={`${href}-${item.label}`}
+              href={href}
               className={cn(
                 'flex flex-col items-center gap-1 text-[10px] font-medium',
                 active ? 'text-primary' : 'text-on-surface-variant',

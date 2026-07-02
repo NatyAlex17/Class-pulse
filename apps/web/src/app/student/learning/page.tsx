@@ -186,6 +186,24 @@ const suggestionQuestions = [
   'Explain respiratory rhythm vs depth.',
 ];
 
+function toEmbedUrl(url?: string) {
+  if (!url) {
+    return '';
+  }
+
+  if (url.includes('youtube.com/watch?v=')) {
+    const videoId = url.split('watch?v=')[1]?.split('&')[0];
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+  }
+
+  if (url.includes('youtu.be/')) {
+    const videoId = url.split('youtu.be/')[1]?.split('?')[0];
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+  }
+
+  return url;
+}
+
 export default function StudentLearningPage() {
   const {
     learningMinutes,
@@ -207,26 +225,53 @@ export default function StudentLearningPage() {
   const [message, setMessage] = React.useState('');
   const [workflowOpen, setWorkflowOpen] = React.useState(false);
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
-  const [selectedLessonId, setSelectedLessonId] = React.useState<string>('lesson-7');
+  const [selectedLessonId, setSelectedLessonId] = React.useState<string>('');
   const [viewMode, setViewMode] = React.useState<'lesson' | 'module'>('lesson');
   const [quizAnswers, setQuizAnswers] = React.useState<Record<string, string>>({});
   const [quizSubmitted, setQuizSubmitted] = React.useState(false);
   const [quizScore, setQuizScore] = React.useState(0);
-  const [completedLessons, setCompletedLessons] = React.useState<Set<string>>(new Set(['lesson-1']));
+  const [completedLessons, setCompletedLessons] = React.useState<Set<string>>(new Set());
   const remainingMinutes = Math.max(480 - learningMinutes, 0);
   const engagementPercent = Math.round((learningMinutes / 480) * 100);
 
-  const currentModuleData = moduleContent[currentModule.id as keyof typeof moduleContent];
-  const selectedLesson = currentModuleData?.lessons.find(l => l.id === selectedLessonId) || currentModuleData?.lessons[0];
-  const currentLessonIndex = currentModuleData?.lessons.findIndex(l => l.id === selectedLessonId) || 0;
-  const nextLesson = currentModuleData?.lessons[currentLessonIndex + 1];
-  const nextModuleId = modules.find(m => m.id === currentModule.id)?.id === 'm3' ? 'm4' : undefined;
+  const lessons = currentModule.steps;
+  const selectedLesson = lessons.find((lesson) => lesson.id === selectedLessonId) ?? lessons[0];
+  const currentLessonIndex = selectedLesson ? lessons.findIndex((lesson) => lesson.id === selectedLesson.id) : -1;
+  const nextLesson = currentLessonIndex >= 0 ? lessons[currentLessonIndex + 1] : undefined;
+  const nextModuleId = modules[modules.findIndex((module) => module.id === currentModule.id) + 1]?.id;
+  const lessonSections = lessons.reduce<Array<{ title: string; lessons: typeof lessons }>>((sections, lesson) => {
+    const title = lesson.sectionTitle || 'Module Content';
+    const existing = sections.find((section) => section.title === title);
+
+    if (existing) {
+      existing.lessons.push(lesson);
+      return sections;
+    }
+
+    return [...sections, { title, lessons: [lesson] }];
+  }, []);
 
   React.useEffect(() => {
     if (!portalUnlocked) {
       setWorkflowOpen(true);
     }
   }, [portalUnlocked]);
+
+  React.useEffect(() => {
+    setSelectedLessonId((current) => {
+      if (current && lessons.some((lesson) => lesson.id === current)) {
+        return current;
+      }
+
+      return lessons[0]?.id ?? '';
+    });
+  }, [lessons]);
+
+  React.useEffect(() => {
+    setCompletedLessons(
+      new Set(modules.flatMap((module) => module.steps.filter((step) => step.complete).map((step) => step.id))),
+    );
+  }, [modules]);
 
   return (
     <main className="h-screen overflow-hidden bg-background text-on-surface">
@@ -316,36 +361,45 @@ export default function StudentLearningPage() {
                   {currentModule.title}
                 </h3>
                 <div className="space-y-2">
-                  {currentModuleData?.lessons.map((lesson, index) => {
-                    const isSelected = lesson.id === selectedLessonId;
-                    const isComplete = currentModule.steps.find(s => s.id === lesson.id)?.complete || false;
-                    return (
-                      <button
-                        key={lesson.id}
-                        onClick={() => {
-                          setSelectedLessonId(lesson.id);
-                          setViewMode('lesson');
-                          markStepComplete(currentModule.id, lesson.id);
-                        }}
-                        className={cn(
-                          'w-full text-left rounded-[14px] border p-3 text-sm transition',
-                          isSelected
-                            ? 'border-primary/30 bg-primary/10'
-                            : 'border-border-subtle bg-surface hover:border-primary/20'
-                        )}
-                      >
-                        <div className="flex items-start gap-2">
-                          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold bg-primary/10 text-primary">
-                            {isComplete ? <IconCheck className="size-4" /> : index + 1}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-on-surface truncate">{lesson.title}</p>
-                            <p className="text-[11px] text-on-surface-variant mt-0.5">{lesson.type}</p>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
+                  {lessonSections.map((section) => (
+                    <div key={section.title} className="space-y-2">
+                      <p className="px-2 font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+                        {section.title}
+                      </p>
+                      {section.lessons.map((lesson, index) => {
+                        const isSelected = lesson.id === selectedLessonId;
+                        const isComplete = currentModule.steps.find((step) => step.id === lesson.id)?.complete || false;
+                        return (
+                          <button
+                            key={lesson.id}
+                            onClick={() => {
+                              setSelectedLessonId(lesson.id);
+                              setViewMode('lesson');
+                              markStepComplete(currentModule.id, lesson.id);
+                            }}
+                            className={cn(
+                              'w-full text-left rounded-[14px] border p-3 text-sm transition',
+                              isSelected
+                                ? 'border-primary/30 bg-primary/10'
+                                : 'border-border-subtle bg-surface hover:border-primary/20',
+                            )}
+                          >
+                            <div className="flex items-start gap-2">
+                              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                                {isComplete ? <IconCheck className="size-4" /> : index + 1}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="truncate font-semibold text-on-surface">{lesson.title}</p>
+                                <p className="mt-0.5 text-[11px] text-on-surface-variant">
+                                  {lesson.type} • {lesson.duration}
+                                </p>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -356,7 +410,7 @@ export default function StudentLearningPage() {
                     key={mod.id}
                     onClick={() => {
                       selectModule(mod.id);
-                      setSelectedLessonId(`lesson-${Math.floor(Math.random() * 15) + 1}`);
+                      setSelectedLessonId(mod.steps[0]?.id ?? '');
                     }}
                     className={cn(
                       'w-full text-left rounded-[14px] border p-3 text-sm transition',
@@ -400,7 +454,7 @@ export default function StudentLearningPage() {
                       <iframe
                         width="100%"
                         height="100%"
-                        src={selectedLesson.videoUrl}
+                        src={toEmbedUrl(selectedLesson.resourceUrl)}
                         title={selectedLesson.title}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
@@ -410,7 +464,7 @@ export default function StudentLearningPage() {
                   <div className="flex gap-3">
                     <div className="flex-1 rounded-[14px] bg-surface border border-border-subtle p-4">
                       <p className="text-sm font-semibold text-on-surface">{selectedLesson.title}</p>
-                      <p className="text-[12px] text-on-surface-variant mt-1">{selectedLesson.duration} • {selectedLesson.content}</p>
+                      <p className="text-[12px] text-on-surface-variant mt-1">{selectedLesson.duration} • {selectedLesson.note}</p>
                     </div>
                     <Button
                       className="rounded-[14px] bg-success hover:bg-success/90"
@@ -428,7 +482,7 @@ export default function StudentLearningPage() {
                 </div>
               )}
 
-              {(selectedLesson.type === 'PDF' || selectedLesson.type === 'Reading') && (
+              {(selectedLesson.type === 'PDF' || selectedLesson.type === 'Reading' || selectedLesson.type === 'Link') && (
                 <div className="rounded-[20px] overflow-hidden border border-border-subtle bg-surface-muted space-y-6">
                   {/* Document Viewer */}
                   <div className="bg-surface rounded-[20px] p-8 space-y-6">
@@ -438,7 +492,7 @@ export default function StudentLearningPage() {
                       </div>
                       <div className="flex-1">
                         <h3 className="font-display text-[24px] font-bold text-on-surface">{selectedLesson.title}</h3>
-                        <p className="mt-1 text-on-surface-variant">{selectedLesson.content}</p>
+                        <p className="mt-1 text-on-surface-variant">{selectedLesson.note}</p>
                       </div>
                     </div>
 
@@ -446,7 +500,11 @@ export default function StudentLearningPage() {
                     <div className="rounded-[16px] bg-surface-muted p-8 border border-border-subtle space-y-6 max-h-[600px] overflow-y-auto">
                       <div className="space-y-4">
                         <h4 className="font-display text-[20px] font-semibold text-on-surface">
-                          {selectedLesson.type === 'PDF' ? 'Clinical Procedures & Checklists' : 'Learning Module'}
+                          {selectedLesson.type === 'PDF'
+                            ? 'Clinical Procedures & Checklists'
+                            : selectedLesson.type === 'Link'
+                              ? 'External Learning Resource'
+                              : 'Learning Module'}
                         </h4>
 
                         {selectedLesson.type === 'PDF' && (
@@ -477,25 +535,17 @@ export default function StudentLearningPage() {
                           </div>
                         )}
 
-                        {selectedLesson.type === 'Reading' && (
+                        {(selectedLesson.type === 'Reading' || selectedLesson.type === 'Link') && (
                           <div className="space-y-4">
                             <div className="bg-surface p-4 rounded-[12px] border border-border-subtle space-y-3">
                               <h5 className="font-semibold text-on-surface">Core Concepts</h5>
                               <div className="space-y-2 text-sm text-on-surface-variant leading-relaxed">
+                                <p>{selectedLesson.note}</p>
                                 <p>
-                                  <strong>Vital Signs Definition:</strong> Measurements that reflect the body's physiological state, including temperature, pulse, respiration, and blood pressure.
+                                  <strong>Student Action:</strong> Review the assigned resource and capture the key ideas before moving to the next lesson item.
                                 </p>
                                 <p>
-                                  <strong>Physiological Basis:</strong> Understanding why vital signs change is crucial for clinical assessment and patient monitoring.
-                                </p>
-                                <p>
-                                  <strong>Assessment Techniques:</strong> Proper methodology ensures accuracy and prevents patient harm during measurement.
-                                </p>
-                                <p>
-                                  <strong>Normal Ranges:</strong> Knowing standard values helps identify deviations that may indicate pathology.
-                                </p>
-                                <p>
-                                  <strong>Documentation:</strong> Accurate recording is essential for continuity of care and legal protection.
+                                  <strong>Completion Rule:</strong> Mark the lesson complete only after you have opened the material and reviewed it fully.
                                 </p>
                               </div>
                             </div>
@@ -503,11 +553,9 @@ export default function StudentLearningPage() {
                             <div className="bg-primary/5 p-4 rounded-[12px] border border-primary/20 space-y-3">
                               <h5 className="font-semibold text-primary">Key Concepts to Remember</h5>
                               <ul className="space-y-2 text-sm text-on-surface-variant">
-                                <li>✓ Always verify patient identity before assessment</li>
-                                <li>✓ Use appropriate equipment and techniques for accuracy</li>
-                                <li>✓ Compare readings to patient's baseline, not just normal range</li>
-                                <li>✓ Recognize that vital signs change with age, activity, and conditions</li>
-                                <li>✓ Document observations and any interventions taken</li>
+                                <li>• Resources are grouped by section to mimic a modern course curriculum.</li>
+                                <li>• Videos, PDFs, and links can all be used as trackable lesson items.</li>
+                                <li>• Use the instructor panel if a linked reference needs clarification.</li>
                               </ul>
                             </div>
                           </div>
@@ -521,10 +569,10 @@ export default function StudentLearningPage() {
                     <Button
                       className="flex-1 rounded-[14px] h-11"
                       variant="secondary"
-                      onClick={() => window.open('https://www.w3.org/WAI/WCAG21/Techniques/pdf/pdf1', '_blank')}
+                      onClick={() => window.open(selectedLesson.resourceUrl || '#', '_blank')}
                     >
                       <IconFile className="size-4 mr-2" />
-                      Download PDF
+                      {selectedLesson.type === 'PDF' ? 'Open PDF' : 'Open Resource'}
                     </Button>
                     <Button
                       className="flex-1 rounded-[14px] h-11 bg-success hover:bg-success/90"
@@ -553,7 +601,7 @@ export default function StudentLearningPage() {
                     </div>
                     <div className="flex-1">
                       <h3 className="font-display text-[24px] font-bold text-on-surface">{selectedLesson.title}</h3>
-                      <p className="mt-1 text-on-surface-variant">{selectedLesson.content}</p>
+                      <p className="mt-1 text-on-surface-variant">{selectedLesson.note}</p>
                     </div>
                   </div>
 
@@ -702,7 +750,7 @@ export default function StudentLearningPage() {
                   <Button
                     variant="secondary"
                     className="rounded-[14px]"
-                    onClick={() => setSelectedLessonId(currentModuleData!.lessons[currentLessonIndex - 1].id)}
+                    onClick={() => setSelectedLessonId(lessons[currentLessonIndex - 1].id)}
                   >
                     <IconArrowLeft className="size-4 mr-2" />
                     Previous

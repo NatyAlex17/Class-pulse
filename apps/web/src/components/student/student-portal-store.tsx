@@ -29,10 +29,13 @@ type TaskItem = {
 type LearningStep = {
   id: string;
   title: string;
-  type: 'Video' | 'PDF' | 'Reading' | 'Skill Check' | 'Quiz';
+  type: 'Video' | 'PDF' | 'Link' | 'Reading' | 'Skill Check' | 'Quiz';
   duration: string;
   note: string;
   complete: boolean;
+  resourceUrl?: string;
+  sectionId?: string;
+  sectionTitle?: string;
 };
 
 type ModuleItem = {

@@ -4,6 +4,10 @@ import { SupabaseAuthGuard } from '../../../common/auth/supabase-auth.guard';
 import { createApiResponse } from '../../../common/utils/create-api-response';
 import { ExamConfigService, type EntranceExamConfig } from '../../student/services/exam-config.service';
 import { EnrollmentWizardConfigService, type EnrollmentWizardConfig } from '../../student/services/enrollment-wizard-config.service';
+import {
+  LearningResourcesConfigService,
+  type LearningResourcesConfig,
+} from '../../student/services/learning-resources-config.service';
 import { OrientationSurveyConfigService, type OrientationSurveyConfig } from '../../student/services/orientation-survey-config.service';
 import { IntakeSubmissionService } from '../../student/services/intake-submission.service';
 import { StudentPortalService } from '../../student/services/student-portal.service';
@@ -22,6 +26,7 @@ export class AdminPortalController {
     private readonly adminPortalService: AdminPortalService,
     private readonly examConfigService: ExamConfigService,
     private readonly enrollmentWizardConfigService: EnrollmentWizardConfigService,
+    private readonly learningResourcesConfigService: LearningResourcesConfigService,
     private readonly orientationSurveyConfigService: OrientationSurveyConfigService,
     private readonly intakeSubmissionService: IntakeSubmissionService,
     private readonly studentPortalService: StudentPortalService,
@@ -230,6 +235,33 @@ export class AdminPortalController {
     return createApiResponse(
       this.enrollmentWizardConfigService.resetToDefault(),
       'Enrollment wizard configuration reset to default successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('learning-resources-config')
+  getLearningResourcesConfig() {
+    return createApiResponse(
+      this.learningResourcesConfigService.getConfig(),
+      'Learning resources configuration retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Patch('learning-resources-config')
+  updateLearningResourcesConfig(@Body() config: LearningResourcesConfig) {
+    return createApiResponse(
+      this.learningResourcesConfigService.updateConfig(config),
+      'Learning resources configuration updated successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Post('learning-resources-config/reset')
+  resetLearningResourcesConfig() {
+    return createApiResponse(
+      this.learningResourcesConfigService.resetToDefault(),
+      'Learning resources configuration reset to default successfully.',
     );
   }
 

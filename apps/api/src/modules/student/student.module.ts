@@ -10,11 +10,12 @@ import { ExamConfigService } from './services/exam-config.service';
 import { EnrollmentWizardConfigService } from './services/enrollment-wizard-config.service';
 import { OrientationSurveyConfigService } from './services/orientation-survey-config.service';
 import { IntakeSubmissionService } from './services/intake-submission.service';
+import { LearningResourcesConfigService } from './services/learning-resources-config.service';
 
 @Module({
   imports: [forwardRef(() => AuthModule)],
   controllers: [StudentPortalController],
-  providers: [Reflector, SupabaseAuthGuard, ExamConfigService, EnrollmentWizardConfigService, OrientationSurveyConfigService, IntakeSubmissionService, StudentPortalRepository, StudentPortalService],
-  exports: [StudentPortalService, ExamConfigService, EnrollmentWizardConfigService, OrientationSurveyConfigService, IntakeSubmissionService],
+  providers: [Reflector, SupabaseAuthGuard, ExamConfigService, EnrollmentWizardConfigService, OrientationSurveyConfigService, LearningResourcesConfigService, IntakeSubmissionService, StudentPortalRepository, StudentPortalService],
+  exports: [StudentPortalService, ExamConfigService, EnrollmentWizardConfigService, OrientationSurveyConfigService, LearningResourcesConfigService, IntakeSubmissionService],
 })
 export class StudentModule {}

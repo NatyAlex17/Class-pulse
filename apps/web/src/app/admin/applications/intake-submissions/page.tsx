@@ -107,8 +107,8 @@ export default function IntakeSubmissionsPage() {
       Object.fromEntries(
         selectedSubmission.questions
           .filter((question) => question.reviewStatus !== 'pending')
-          .map((question) => [question.questionId, question.reviewStatus]),
-      ),
+          .map((question) => [question.questionId, question.reviewStatus as 'correct' | 'wrong']),
+      ) as Record<string, 'correct' | 'wrong'>,
     );
   }, [selectedSubmission]);
 

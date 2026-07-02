@@ -11,7 +11,6 @@ import {
   IconMail,
   IconMapPin,
   IconCalendar,
-  IconCheckCircle,
   IconAlertCircle,
   IconTrendingUp,
   IconFileText,
