@@ -1,0 +1,350 @@
+{
+  "submissions": [
+    {
+      "id": "submission-1783019703817",
+      "studentId": "600bdc8d-3122-4c52-bdbb-6fdb246ee3eb",
+      "status": "approved",
+      "entranceExamScore": 6,
+      "entranceExamPassed": true,
+      "passingScore": 5,
+      "questions": [
+        {
+          "questionId": "q1",
+          "prompt": "What must students do in the self-paced program?",
+          "type": "choice",
+          "preferredAnswer": "B. Read instructions and finish work",
+          "options": [
+            {
+              "label": "A. Only watch videos",
+              "value": "A. Only watch videos"
+            },
+            {
+              "label": "B. Read instructions and finish work",
+              "value": "B. Read instructions and finish work"
+            },
+            {
+              "label": "C. Skip assignments",
+              "value": "C. Skip assignments"
+            },
+            {
+              "label": "D. Wait for instructors to do everything",
+              "value": "D. Wait for instructors to do everything"
+            }
+          ],
+          "studentAnswer": "A. Only watch videos",
+          "reviewStatus": "correct"
+        },
+        {
+          "questionId": "q2",
+          "prompt": "Why is English important in this program?",
+          "type": "choice",
+          "preferredAnswer": "B. To understand lessons and exams",
+          "options": [
+            {
+              "label": "A. Only for chatting",
+              "value": "A. Only for chatting"
+            },
+            {
+              "label": "B. To understand lessons and exams",
+              "value": "B. To understand lessons and exams"
+            },
+            {
+              "label": "C. To avoid clinical hours",
+              "value": "C. To avoid clinical hours"
+            },
+            {
+              "label": "D. Only for orientation day",
+              "value": "D. Only for orientation day"
+            }
+          ],
+          "studentAnswer": "B. To understand lessons and exams",
+          "reviewStatus": "correct"
+        },
+        {
+          "questionId": "q3",
+          "prompt": "When can students ask instructors questions?",
+          "type": "choice",
+          "preferredAnswer": "C. During scheduled support hours",
+          "options": [
+            {
+              "label": "A. Never",
+              "value": "A. Never"
+            },
+            {
+              "label": "B. Only after graduation",
+              "value": "B. Only after graduation"
+            },
+            {
+              "label": "C. During scheduled support hours",
+              "value": "C. During scheduled support hours"
+            },
+            {
+              "label": "D. Only on weekends",
+              "value": "D. Only on weekends"
+            }
+          ],
+          "studentAnswer": "C. During scheduled support hours",
+          "reviewStatus": "correct"
+        },
+        {
+          "questionId": "q4",
+          "prompt": "What can happen if a student does not understand instructions?",
+          "type": "choice",
+          "preferredAnswer": "B. They may fail assignments or exams",
+          "options": [
+            {
+              "label": "A. Nothing changes",
+              "value": "A. Nothing changes"
+            },
+            {
+              "label": "B. They may fail assignments or exams",
+              "value": "B. They may fail assignments or exams"
+            },
+            {
+              "label": "C. They automatically pass",
+              "value": "C. They automatically pass"
+            },
+            {
+              "label": "D. The program pauses for everyone",
+              "value": "D. The program pauses for everyone"
+            }
+          ],
+          "studentAnswer": "D. The program pauses for everyone",
+          "reviewStatus": "correct"
+        },
+        {
+          "questionId": "q5",
+          "prompt": "What is the main point of the readiness passage?",
+          "type": "choice",
+          "preferredAnswer": "B. English comprehension is required to succeed",
+          "options": [
+            {
+              "label": "A. Clinical practice is optional",
+              "value": "A. Clinical practice is optional"
+            },
+            {
+              "label": "B. English comprehension is required to succeed",
+              "value": "B. English comprehension is required to succeed"
+            },
+            {
+              "label": "C. Instructors complete the work",
+              "value": "C. Instructors complete the work"
+            },
+            {
+              "label": "D. Technology is never used",
+              "value": "D. Technology is never used"
+            }
+          ],
+          "studentAnswer": "A. Clinical practice is optional",
+          "reviewStatus": "correct"
+        },
+        {
+          "questionId": "q6",
+          "prompt": "Write one complete sentence explaining why following instructions matters in healthcare training.",
+          "type": "text",
+          "preferredAnswer": "Following instructions is crucial in healthcare to ensure patient safety and quality care.",
+          "options": [],
+          "studentAnswer": "correc",
+          "reviewStatus": "correct"
+        }
+      ],
+      "enrollmentData": {
+        "step": 1,
+        "hhaAddon": false,
+        "scrubTop": "",
+        "scrubBottom": "",
+        "shipping": "pickup",
+        "wantsToTestAtDaisy": null,
+        "agreements": {
+          "ip": false,
+          "refund": false,
+          "conduct": false,
+          "lateFee": false
+        },
+        "signature": "",
+        "submitted": false
+      },
+      "submittedAt": "2026-07-02T19:15:03.817Z",
+      "approvedAt": "2026-07-02T19:16:23.160Z",
+      "reviewedBy": "cf1754f4-4bae-4963-aab4-e77236d6aefb"
+    },
+    {
+      "id": "submission-1783023108182",
+      "studentId": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+      "status": "approved",
+      "entranceExamScore": 6,
+      "entranceExamPassed": true,
+      "passingScore": 5,
+      "questions": [
+        {
+          "questionId": "q1",
+          "prompt": "What must students do in the self-paced program?",
+          "type": "choice",
+          "preferredAnswer": "B. Read instructions and finish work",
+          "options": [
+            {
+              "label": "A. Only watch videos",
+              "value": "A. Only watch videos"
+            },
+            {
+              "label": "B. Read instructions and finish work",
+              "value": "B. Read instructions and finish work"
+            },
+            {
+              "label": "C. Skip assignments",
+              "value": "C. Skip assignments"
+            },
+            {
+              "label": "D. Wait for instructors to do everything",
+              "value": "D. Wait for instructors to do everything"
+            }
+          ],
+          "studentAnswer": "A. Only watch videos",
+          "reviewStatus": "correct"
+        },
+        {
+          "questionId": "q2",
+          "prompt": "Why is English important in this program?",
+          "type": "choice",
+          "preferredAnswer": "B. To understand lessons and exams",
+          "options": [
+            {
+              "label": "A. Only for chatting",
+              "value": "A. Only for chatting"
+            },
+            {
+              "label": "B. To understand lessons and exams",
+              "value": "B. To understand lessons and exams"
+            },
+            {
+              "label": "C. To avoid clinical hours",
+              "value": "C. To avoid clinical hours"
+            },
+            {
+              "label": "D. Only for orientation day",
+              "value": "D. Only for orientation day"
+            }
+          ],
+          "studentAnswer": "B. To understand lessons and exams",
+          "reviewStatus": "correct"
+        },
+        {
+          "questionId": "q3",
+          "prompt": "When can students ask instructors questions?",
+          "type": "choice",
+          "preferredAnswer": "C. During scheduled support hours",
+          "options": [
+            {
+              "label": "A. Never",
+              "value": "A. Never"
+            },
+            {
+              "label": "B. Only after graduation",
+              "value": "B. Only after graduation"
+            },
+            {
+              "label": "C. During scheduled support hours",
+              "value": "C. During scheduled support hours"
+            },
+            {
+              "label": "D. Only on weekends",
+              "value": "D. Only on weekends"
+            }
+          ],
+          "studentAnswer": "C. During scheduled support hours",
+          "reviewStatus": "correct"
+        },
+        {
+          "questionId": "q4",
+          "prompt": "What can happen if a student does not understand instructions?",
+          "type": "choice",
+          "preferredAnswer": "B. They may fail assignments or exams",
+          "options": [
+            {
+              "label": "A. Nothing changes",
+              "value": "A. Nothing changes"
+            },
+            {
+              "label": "B. They may fail assignments or exams",
+              "value": "B. They may fail assignments or exams"
+            },
+            {
+              "label": "C. They automatically pass",
+              "value": "C. They automatically pass"
+            },
+            {
+              "label": "D. The program pauses for everyone",
+              "value": "D. The program pauses for everyone"
+            }
+          ],
+          "studentAnswer": "D. The program pauses for everyone",
+          "reviewStatus": "correct"
+        },
+        {
+          "questionId": "q5",
+          "prompt": "What is the main point of the readiness passage?",
+          "type": "choice",
+          "preferredAnswer": "B. English comprehension is required to succeed",
+          "options": [
+            {
+              "label": "A. Clinical practice is optional",
+              "value": "A. Clinical practice is optional"
+            },
+            {
+              "label": "B. English comprehension is required to succeed",
+              "value": "B. English comprehension is required to succeed"
+            },
+            {
+              "label": "C. Instructors complete the work",
+              "value": "C. Instructors complete the work"
+            },
+            {
+              "label": "D. Technology is never used",
+              "value": "D. Technology is never used"
+            }
+          ],
+          "studentAnswer": "A. Clinical practice is optional",
+          "reviewStatus": "correct"
+        },
+        {
+          "questionId": "q6",
+          "prompt": "Write one complete sentence explaining why following instructions matters in healthcare training.",
+          "type": "text",
+          "preferredAnswer": "Following instructions is crucial in healthcare to ensure patient safety and quality care.",
+          "options": [],
+          "studentAnswer": "test",
+          "reviewStatus": "correct"
+        }
+      ],
+      "enrollmentData": {
+        "step": 1,
+        "hhaAddon": false,
+        "scrubTop": "",
+        "scrubBottom": "",
+        "shipping": "pickup",
+        "wantsToTestAtDaisy": null,
+        "agreements": {
+          "ip": false,
+          "refund": false,
+          "conduct": false,
+          "lateFee": false
+        },
+        "signature": "",
+        "submitted": false
+      },
+      "submittedAt": "2026-07-02T20:11:48.182Z",
+      "approvedAt": "2026-07-02T20:13:43.690Z",
+      "reviewedBy": "cf1754f4-4bae-4963-aab4-e77236d6aefb"
+    }
+  ],
+  "approvalStatuses": [
+    [
+      "600bdc8d-3122-4c52-bdbb-6fdb246ee3eb",
+      "approved"
+    ],
+    [
+      "86749b18-386e-484e-bd6a-cf5fb938a6be",
+      "approved"
+    ]
+  ]
+}

@@ -213,6 +213,7 @@ type EntranceExamQuestionDefinition = {
   prompt: string;
   type: 'choice' | 'text';
   placeholder?: string;
+  preferredAnswer: string;
   options: IntakeOptionDefinition[];
 };
 
@@ -341,6 +342,7 @@ type StudentDemoContextValue = StudentDemoState & {
   paymentBalance: number;
   todayTheoryCheckedIn: boolean;
   todayClinicalCheckedIn: boolean;
+  refreshLearning: () => Promise<void>;
   setWorkflowStage: (stage: StudentWorkflowStage) => void;
   answerEntranceExamQuestion: (questionId: string, answer: string) => void;
   submitEntranceExam: () => void;
@@ -449,6 +451,20 @@ type StudentPortalApi = {
   reflectionResponse: string;
   questionOfDayAnswer: string;
   lastAction: string;
+};
+
+type StudentLearningApi = {
+  activeModuleId: string;
+  currentModule: ModuleItem;
+  modules: ModuleItem[];
+  learningMinutes: number;
+  learningSessionActive: boolean;
+  examUnlocked: boolean;
+  textbookIssued: boolean;
+  textbookOpened: boolean;
+  exitSurveyComplete: boolean;
+  moduleCertificatesReady: number;
+  programCertificateReady: boolean;
 };
 
 type ApiEnvelope<TData> = {
@@ -607,8 +623,21 @@ function mapPortalToState(portal: StudentPortalApi): StudentDemoState {
   };
 }
 
+function mergeLearningIntoState(current: StudentDemoState, learning: StudentLearningApi): StudentDemoState {
+  return {
+    ...current,
+    activeModuleId: learning.activeModuleId,
+    modules: learning.modules,
+    learningMinutes: learning.learningMinutes,
+    learningSessionActive: learning.learningSessionActive,
+    textbookIssued: learning.textbookIssued,
+    textbookOpened: learning.textbookOpened,
+    exitSurveyComplete: learning.exitSurveyComplete,
+  };
+}
+
 export function StudentDemoProvider({ children }: { children: React.ReactNode }) {
-  const { session, syncedUser, isSupabaseEnabled } = useAuth();
+  const { session, syncedUser, isSupabaseEnabled, isLoading, refreshSyncedUser } = useAuth();
   const [state, setState] = React.useState<StudentDemoState>(() => createFallbackState());
 
   const studentId = syncedUser?.localUserId;
@@ -616,16 +645,24 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
   const isStudentUser = syncedUser?.role === 'student';
 
   const callStudentApi = React.useCallback(
-    async <TData,>(path: string, init?: RequestInit) => {
-      if (!studentId || !accessToken || !isStudentUser) {
+    async <TData,>(
+      path: string,
+      init?: RequestInit,
+      options?: { studentId?: string; accessToken?: string; isStudentUser?: boolean },
+    ) => {
+      const resolvedStudentId = options?.studentId ?? studentId;
+      const resolvedAccessToken = options?.accessToken ?? accessToken;
+      const resolvedIsStudentUser = options?.isStudentUser ?? isStudentUser;
+
+      if (!resolvedStudentId || !resolvedAccessToken || !resolvedIsStudentUser) {
         throw new Error('Student portal is not authenticated.');
       }
 
-      const response = await fetch(`${API_BASE_URL}/students/${studentId}${path}`, {
+      const response = await fetch(`${API_BASE_URL}/students/${resolvedStudentId}${path}`, {
         ...init,
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${resolvedAccessToken}`,
           ...(init?.headers ?? {}),
         },
         cache: 'no-store',
@@ -660,27 +697,65 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
     setState(mapPortalToState(portal));
   }, [accessToken, callStudentApi, isStudentUser, studentId]);
 
+  const refreshLearning = React.useCallback(async () => {
+    if (!studentId || !accessToken || !isStudentUser) {
+      return;
+    }
+
+    const learning = await callStudentApi<StudentLearningApi>('/learning', { method: 'GET' });
+    setState((current) => mergeLearningIntoState(current, learning));
+  }, [accessToken, callStudentApi, isStudentUser, studentId]);
+
   React.useEffect(() => {
-    if (!isSupabaseEnabled || !studentId || !accessToken || !isStudentUser) {
+    if (isLoading) {
+      return;
+    }
+
+    if (!isSupabaseEnabled || !accessToken) {
       setState(createFallbackState());
       return;
     }
 
-    void refreshPortal().catch(() => {
-      setState(createFallbackState());
-    });
-  }, [accessToken, isStudentUser, isSupabaseEnabled, refreshPortal, studentId]);
+    const hydratePortal = async () => {
+      try {
+        const resolvedSyncedUser =
+          syncedUser ?? (await refreshSyncedUser(accessToken).catch(() => null));
+
+        if (!resolvedSyncedUser || resolvedSyncedUser.role !== 'student') {
+          setState(createFallbackState());
+          return;
+        }
+
+        const options = {
+          studentId: resolvedSyncedUser.localUserId,
+          accessToken,
+          isStudentUser: true,
+        };
+        const [portal, learning] = await Promise.all([
+          callStudentApi<StudentPortalApi>('/portal', { method: 'GET' }, options),
+          callStudentApi<StudentLearningApi>('/learning', { method: 'GET' }, options),
+        ]);
+        setState(mergeLearningIntoState(mapPortalToState(portal), learning));
+      } catch {
+        setState(createFallbackState());
+      }
+    };
+
+    void hydratePortal();
+  }, [accessToken, callStudentApi, isLoading, isSupabaseEnabled, refreshPortal, refreshSyncedUser, syncedUser]);
 
   const mutate = React.useCallback(
     (path: string, method: 'POST' | 'PATCH', body?: unknown) => {
+      const refresh = path.startsWith('/learning') ? refreshLearning : refreshPortal;
+
       void callStudentApi(path, {
         method,
         body: body ? JSON.stringify(body) : undefined,
       })
-        .then(() => refreshPortal())
-        .catch(() => refreshPortal());
+        .then(() => refresh())
+        .catch(() => refresh());
     },
-    [callStudentApi, refreshPortal],
+    [callStudentApi, refreshLearning, refreshPortal],
   );
 
   const setWorkflowStage = React.useCallback(
@@ -1113,6 +1188,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       paymentBalance,
       todayTheoryCheckedIn,
       todayClinicalCheckedIn,
+      refreshLearning,
       setWorkflowStage,
       answerEntranceExamQuestion,
       submitEntranceExam,
@@ -1177,6 +1253,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       paymentBalance,
       portalUnlocked,
       programCertificateReady,
+      refreshLearning,
       readinessCount,
       replaceDocument,
       reportAbsence,

@@ -1,3 +1,6 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
+
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import type { LocalUserRecord } from '../../auth/types/auth-user.types';
@@ -15,15 +18,14 @@ import {
 
 @Injectable()
 export class StudentPortalRepository {
+  private readonly storagePath = join(process.cwd(), '.data', 'student-portals.json');
   private readonly portalByStudentId = new Map<string, StudentPortalState>();
 
   constructor(
     private examConfigService: ExamConfigService,
     private learningResourcesConfigService: LearningResourcesConfigService,
   ) {
-    studentPortalSeed.forEach((portal) => {
-      this.portalByStudentId.set(portal.profile.id, this.enrichPortalWithConfigs(this.clone(portal)));
-    });
+    this.loadState();
   }
 
   findByStudentId(studentId: string): StudentPortalState {
@@ -155,11 +157,13 @@ export class StudentPortalRepository {
     });
 
     this.portalByStudentId.set(localUser.id, personalized);
+    this.persistState();
     return this.clone(personalized);
   }
 
   save(portal: StudentPortalState): StudentPortalState {
     this.portalByStudentId.set(portal.profile.id, this.clone(portal));
+    this.persistState();
     return this.clone(portal);
   }
 
@@ -191,6 +195,53 @@ export class StudentPortalRepository {
 
   private clone<TValue>(value: TValue): TValue {
     return JSON.parse(JSON.stringify(value)) as TValue;
+  }
+
+  private loadState() {
+    if (!existsSync(this.storagePath)) {
+      this.loadSeedState();
+      return;
+    }
+
+    try {
+      const raw = readFileSync(this.storagePath, 'utf8');
+      const parsed = JSON.parse(raw) as { portals?: StudentPortalState[] };
+
+      this.portalByStudentId.clear();
+
+      (parsed.portals ?? []).forEach((portal) => {
+        this.portalByStudentId.set(portal.profile.id, this.clone(portal));
+      });
+
+      if (this.portalByStudentId.size === 0) {
+        this.loadSeedState();
+      }
+    } catch {
+      this.portalByStudentId.clear();
+      this.loadSeedState();
+    }
+  }
+
+  private loadSeedState() {
+    this.portalByStudentId.clear();
+    studentPortalSeed.forEach((portal) => {
+      this.portalByStudentId.set(portal.profile.id, this.clone(portal));
+    });
+  }
+
+  private persistState() {
+    mkdirSync(join(process.cwd(), '.data'), { recursive: true });
+    writeFileSync(
+      this.storagePath,
+      JSON.stringify(
+        {
+          portals: Array.from(this.portalByStudentId.values()),
+        },
+        null,
+        2,
+      ),
+      'utf8',
+    );
   }
 
   private applyLearningResourcesConfig(existingModules?: CurriculumModule[], fallbackModules?: CurriculumModule[]) {

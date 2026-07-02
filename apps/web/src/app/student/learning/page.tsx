@@ -211,6 +211,7 @@ export default function StudentLearningPage() {
     examUnlocked,
     portalUnlocked,
     workflowStage,
+    intakeJourney,
     currentModule,
     modules,
     advanceLearning,
@@ -220,6 +221,7 @@ export default function StudentLearningPage() {
     sendMessage,
     activeThread,
     submitModuleExam,
+    refreshLearning,
   } = useStudentDemo();
   const [tab, setTab] = React.useState<'ai' | 'instructor'>('ai');
   const [message, setMessage] = React.useState('');
@@ -238,9 +240,16 @@ export default function StudentLearningPage() {
   const selectedLesson = lessons.find((lesson) => lesson.id === selectedLessonId) ?? lessons[0];
   const currentLessonIndex = selectedLesson ? lessons.findIndex((lesson) => lesson.id === selectedLesson.id) : -1;
   const nextLesson = currentLessonIndex >= 0 ? lessons[currentLessonIndex + 1] : undefined;
-  const quizQuestionSet = selectedLesson
-    ? quizQuestions[selectedLesson.id as keyof typeof quizQuestions] ?? []
+  const quizQuestionSet = selectedLesson?.type === 'Quiz'
+    ? (intakeJourney?.entranceExam.questions ?? []).map((question) => ({
+        ...question,
+        question: question.prompt,
+        correct: question.preferredAnswer,
+      }))
     : [];
+  const quizPassingScoreCount = intakeJourney?.entranceExam.passingScore ?? quizQuestionSet.length;
+  const quizPassingPercent =
+    quizQuestionSet.length > 0 ? Math.round((quizPassingScoreCount / quizQuestionSet.length) * 100) : 70;
   const nextModuleId = modules[modules.findIndex((module) => module.id === currentModule.id) + 1]?.id;
   const lessonSections = lessons.reduce<Array<{ title: string; lessons: typeof lessons }>>((sections, lesson) => {
     const title = lesson.sectionTitle || 'Module Content';
@@ -253,6 +262,10 @@ export default function StudentLearningPage() {
 
     return [...sections, { title, lessons: [lesson] }];
   }, []);
+
+  React.useEffect(() => {
+    void refreshLearning();
+  }, [refreshLearning]);
 
   React.useEffect(() => {
     if (!portalUnlocked) {
@@ -275,6 +288,12 @@ export default function StudentLearningPage() {
       new Set(modules.flatMap((module) => module.steps.filter((step) => step.complete).map((step) => step.id))),
     );
   }, [modules]);
+
+  React.useEffect(() => {
+    setQuizAnswers({});
+    setQuizSubmitted(false);
+    setQuizScore(0);
+  }, [selectedLessonId]);
 
   return (
     <main className="h-screen overflow-hidden bg-background text-on-surface">
@@ -378,7 +397,6 @@ export default function StudentLearningPage() {
                             onClick={() => {
                               setSelectedLessonId(lesson.id);
                               setViewMode('lesson');
-                              markStepComplete(currentModule.id, lesson.id);
                             }}
                             className={cn(
                               'w-full text-left rounded-[14px] border p-3 text-sm transition',
@@ -487,6 +505,109 @@ export default function StudentLearningPage() {
 
               {(selectedLesson.type === 'PDF' || selectedLesson.type === 'Reading' || selectedLesson.type === 'Link') && (
                 <div className="rounded-[20px] overflow-hidden border border-border-subtle bg-surface-muted space-y-6">
+                  <div className="bg-surface rounded-[20px] p-8 space-y-6">
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-[14px] bg-primary/10 text-primary shrink-0">
+                        <IconFile className="size-8" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-display text-[24px] font-bold text-on-surface">{selectedLesson.title}</h3>
+                        <p className="mt-1 text-on-surface-variant">{selectedLesson.note}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div className="rounded-[14px] border border-border-subtle bg-surface-muted p-4 md:col-span-2">
+                        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+                          Lesson Summary
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                          {selectedLesson.content || selectedLesson.note || currentModule.summary}
+                        </p>
+                      </div>
+                      <div className="rounded-[14px] border border-border-subtle bg-surface-muted p-4">
+                        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+                          Section
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-on-surface">
+                          {selectedLesson.sectionTitle || 'Module Content'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {selectedLesson.type === 'PDF' && selectedLesson.resourceUrl ? (
+                      <iframe
+                        title={selectedLesson.title}
+                        src={selectedLesson.resourceUrl}
+                        className="h-[640px] w-full rounded-[16px] border border-border-subtle bg-surface"
+                      />
+                    ) : null}
+
+                    {selectedLesson.type === 'PDF' && !selectedLesson.resourceUrl ? (
+                      <div className="rounded-[16px] border border-warning/20 bg-warning/5 p-5 text-sm text-on-surface">
+                        No PDF file has been linked to this lesson yet.
+                      </div>
+                    ) : null}
+
+                    {selectedLesson.type === 'Reading' ? (
+                      <div className="rounded-[16px] border border-border-subtle bg-surface-muted p-6">
+                        <h4 className="font-display text-[20px] font-semibold text-on-surface">Reading Content</h4>
+                        <div className="mt-4 space-y-4 text-sm leading-7 text-on-surface-variant">
+                          {(selectedLesson.content || selectedLesson.note || 'No lesson text was configured yet.')
+                            .split('\n')
+                            .filter(Boolean)
+                            .map((paragraph) => (
+                              <p key={paragraph}>{paragraph}</p>
+                            ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {selectedLesson.type === 'Link' ? (
+                      <div className="rounded-[16px] border border-border-subtle bg-surface-muted p-6">
+                        <h4 className="font-display text-[20px] font-semibold text-on-surface">
+                          External Learning Resource
+                        </h4>
+                        <p className="mt-4 text-sm leading-7 text-on-surface-variant">
+                          {selectedLesson.content || selectedLesson.note || 'Open the configured link to continue this lesson.'}
+                        </p>
+                        {selectedLesson.resourceUrl ? (
+                          <div className="mt-4 rounded-[12px] border border-border-subtle bg-surface p-4 text-sm text-on-surface">
+                            {selectedLesson.resourceUrl}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="px-8 pb-8 flex gap-3">
+                    <Button
+                      className="flex-1 rounded-[14px] h-11"
+                      variant="secondary"
+                      disabled={!selectedLesson.resourceUrl}
+                      onClick={() => window.open(selectedLesson.resourceUrl || '#', '_blank')}
+                    >
+                      <IconFile className="size-4 mr-2" />
+                      {selectedLesson.type === 'PDF' ? 'Open PDF' : selectedLesson.type === 'Link' ? 'Open Link' : 'Open Resource'}
+                    </Button>
+                    <Button
+                      className="flex-1 rounded-[14px] h-11 bg-success hover:bg-success/90"
+                      disabled={completedLessons.has(selectedLesson.id)}
+                      onClick={() => {
+                        setCompletedLessons(new Set([...completedLessons, selectedLesson.id]));
+                        markStepComplete(currentModule.id, selectedLesson.id);
+                        advanceLearning(15);
+                      }}
+                    >
+                      <IconCheck className="size-4 mr-2" />
+                      {completedLessons.has(selectedLesson.id) ? 'Completed' : 'Mark as Complete'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {false && (selectedLesson.type === 'PDF' || selectedLesson.type === 'Reading' || selectedLesson.type === 'Link') && (
+                <div className="rounded-[20px] overflow-hidden border border-border-subtle bg-surface-muted space-y-6">
                   {/* Document Viewer */}
                   <div className="bg-surface rounded-[20px] p-8 space-y-6">
                     <div className="flex items-start gap-4">
@@ -594,7 +715,72 @@ export default function StudentLearningPage() {
                 </div>
               )}
 
-              {selectedLesson.type === 'Quiz' && quizQuestionSet.length === 0 && (
+              {selectedLesson.type === 'Quiz' && (
+                <div className="rounded-[20px] border border-border-subtle bg-surface-muted p-8">
+                  <div className="mb-6 flex items-center gap-4">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-[14px] bg-info/10 text-info">
+                      <IconCircleCheckFilled className="size-8" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-display text-[24px] font-bold text-on-surface">{selectedLesson.title}</h3>
+                      <p className="mt-1 text-on-surface-variant">{selectedLesson.note}</p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-[16px] border border-border-subtle bg-surface p-6 space-y-6">
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div className="rounded-[14px] border border-border-subtle bg-surface-muted p-4 md:col-span-2">
+                        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+                          Assessment Brief
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                          {selectedLesson.content || selectedLesson.note || 'Complete the configured module assessment to move forward.'}
+                        </p>
+                      </div>
+                      <div className="rounded-[14px] border border-border-subtle bg-surface-muted p-4">
+                        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+                          Section
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-on-surface">
+                          {selectedLesson.sectionTitle || 'Assessment'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div className="rounded-[14px] border border-border-subtle bg-surface p-4">
+                        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Assessment Type</p>
+                        <p className="mt-2 text-sm font-semibold text-on-surface">Configured module exam</p>
+                      </div>
+                      <div className="rounded-[14px] border border-border-subtle bg-surface p-4">
+                        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Duration</p>
+                        <p className="mt-2 text-sm font-semibold text-on-surface">{selectedLesson.duration}</p>
+                      </div>
+                      <div className="rounded-[14px] border border-border-subtle bg-surface p-4">
+                        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Status</p>
+                        <p className="mt-2 text-sm font-semibold text-on-surface">
+                          {completedLessons.has(selectedLesson.id) ? 'Completed' : 'Ready to launch'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Button
+                      className="h-11 w-full rounded-[14px] bg-success hover:bg-success/90"
+                      disabled={completedLessons.has(selectedLesson.id)}
+                      onClick={() => {
+                        setCompletedLessons(new Set([...completedLessons, selectedLesson.id]));
+                        markStepComplete(currentModule.id, selectedLesson.id);
+                        submitModuleExam();
+                        advanceLearning(30);
+                      }}
+                    >
+                      {completedLessons.has(selectedLesson.id) ? 'Assessment Completed' : 'Launch Assessment'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {false && selectedLesson.type === 'Quiz' && quizQuestionSet.length === 0 && (
                 <div className="rounded-[20px] border border-border-subtle bg-surface-muted p-8">
                   <div className="mb-6 flex items-center gap-4">
                     <div className="flex h-16 w-16 items-center justify-center rounded-[14px] bg-info/10 text-info">
@@ -645,12 +831,12 @@ export default function StudentLearningPage() {
                 </div>
               )}
 
-              {selectedLesson.type === 'Quiz' && quizQuestionSet.length > 0 && (
+              {false && selectedLesson.type === 'Quiz' && quizQuestionSet.length > 0 && (
                 <div className="rounded-[20px] border border-border-subtle bg-surface-muted p-8">
                   <div className="flex items-center gap-4 mb-6">
                     <div className={cn(
                       "flex h-16 w-16 items-center justify-center rounded-[14px]",
-                      quizSubmitted && quizScore >= 70 ? 'bg-success/10 text-success' : 'bg-info/10 text-info'
+                      quizSubmitted && quizScore >= quizPassingPercent ? 'bg-success/10 text-success' : 'bg-info/10 text-info'
                     )}>
                       <IconCircleCheckFilled className="size-8" />
                     </div>
@@ -666,42 +852,62 @@ export default function StudentLearningPage() {
                         <div>
                           <h4 className="font-semibold text-on-surface mb-4">Quiz Instructions</h4>
                           <p className="text-sm text-on-surface-variant leading-relaxed">
-                            Complete this assessment to verify your understanding. You must score at least 70% to move to the next lesson.
+                            Complete this assessment to verify your understanding. You must score at least {quizPassingPercent}% to pass.
                           </p>
                         </div>
 
                         <div className="space-y-4">
-                          {quizQuestions[selectedLesson.id as keyof typeof quizQuestions]?.map((q, idx) => (
+                          {quizQuestionSet.map((q, idx) => (
                             <div key={q.id} className="p-4 border border-border-subtle rounded-[12px] hover:bg-surface-low transition">
-                              <p className="font-semibold text-sm text-on-surface mb-3">Question {idx + 1}: {q.question}</p>
-                              <div className="space-y-2">
-                                {q.options.map(opt => (
-                                  <label key={opt} className="flex items-center gap-3 cursor-pointer">
-                                    <input
-                                      type="radio"
-                                      name={q.id}
-                                      value={opt.charAt(0)}
-                                      checked={quizAnswers[q.id] === opt.charAt(0)}
-                                      onChange={(e) => setQuizAnswers({...quizAnswers, [q.id]: e.target.value})}
-                                      className="w-4 h-4"
-                                    />
-                                    <span className="text-sm text-on-surface-variant">{opt}</span>
-                                  </label>
-                                ))}
-                              </div>
+                              <p className="font-semibold text-sm text-on-surface mb-3">Question {idx + 1}: {q.prompt}</p>
+                              {q.type === 'text' ? (
+                                <Input
+                                  value={quizAnswers[q.id] ?? ''}
+                                  onChange={(event) =>
+                                    setQuizAnswers({ ...quizAnswers, [q.id]: event.target.value })
+                                  }
+                                  placeholder={q.placeholder ?? 'Type your answer'}
+                                  className="h-11"
+                                />
+                              ) : (
+                                <div className="space-y-2">
+                                  {q.options.map((opt) => (
+                                    <label key={opt.value} className="flex items-center gap-3 cursor-pointer">
+                                      <input
+                                        type="radio"
+                                        name={q.id}
+                                        value={opt.value}
+                                        checked={quizAnswers[q.id] === opt.value}
+                                        onChange={(event) =>
+                                          setQuizAnswers({ ...quizAnswers, [q.id]: event.target.value })
+                                        }
+                                        className="w-4 h-4"
+                                      />
+                                      <span className="text-sm text-on-surface-variant">{opt.label}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
 
                         <Button className="w-full rounded-[14px] h-11 bg-success hover:bg-success/90" onClick={() => {
-                          const questions = quizQuestions[selectedLesson.id as keyof typeof quizQuestions] || [];
-                          const correct = questions.filter(q => quizAnswers[q.id] === q.correct).length;
-                          const score = Math.round((correct / questions.length) * 100);
+                          if (quizQuestionSet.length === 0) {
+                            return;
+                          }
+
+                          const correct = quizQuestionSet.filter((q) => {
+                            const answer = (quizAnswers[q.id] ?? '').trim().toLowerCase();
+                            return answer.length > 0 && answer === q.preferredAnswer.trim().toLowerCase();
+                          }).length;
+                          const score = Math.round((correct / quizQuestionSet.length) * 100);
                           setQuizScore(score);
                           setQuizSubmitted(true);
                           advanceLearning(30);
-                          if (score >= 70) {
+                          if (score >= quizPassingPercent) {
                             setCompletedLessons(new Set([...completedLessons, selectedLesson.id]));
+                            markStepComplete(currentModule.id, selectedLesson.id);
                           }
                         }}>
                           Submit Quiz
@@ -711,23 +917,23 @@ export default function StudentLearningPage() {
                       <>
                         <div className={cn(
                           "rounded-[16px] p-6 text-center",
-                          quizScore >= 70 ? 'bg-success/10 border border-success/30' : 'bg-warning/10 border border-warning/30'
+                          quizScore >= quizPassingPercent ? 'bg-success/10 border border-success/30' : 'bg-warning/10 border border-warning/30'
                         )}>
-                          <h4 className={cn("font-display text-[32px] font-bold", quizScore >= 70 ? 'text-success' : 'text-warning')}>
+                          <h4 className={cn("font-display text-[32px] font-bold", quizScore >= quizPassingPercent ? 'text-success' : 'text-warning')}>
                             {quizScore}%
                           </h4>
-                          <p className={cn("text-sm font-semibold mt-2", quizScore >= 70 ? 'text-success' : 'text-warning')}>
-                            {quizScore >= 70 ? '✓ PASSED - Great job!' : '✗ FAILED - Review and try again'}
+                          <p className={cn("text-sm font-semibold mt-2", quizScore >= quizPassingPercent ? 'text-success' : 'text-warning')}>
+                            {quizScore >= quizPassingPercent ? '✓ PASSED - Great job!' : '✗ FAILED - Review and try again'}
                           </p>
                           <p className="text-sm text-on-surface-variant mt-3">
-                            {quizScore >= 70
+                            {quizScore >= quizPassingPercent
                               ? 'You have mastered this content. Ready to proceed!'
-                              : 'You need 70% to pass. Review the material and retake the quiz.'}
+                              : `You need ${quizPassingPercent}% to pass. Review the material and retake the quiz.`}
                           </p>
                         </div>
 
                         <div className="space-y-3">
-                          {quizQuestions[selectedLesson.id as keyof typeof quizQuestions]?.map((q, idx) => {
+                          {quizQuestionSet.map((q, idx) => {
                             const isCorrect = quizAnswers[q.id] === q.correct;
                             return (
                               <div key={q.id} className={cn(
@@ -745,14 +951,14 @@ export default function StudentLearningPage() {
 
                         <Button
                           className="w-full rounded-[14px] h-11"
-                          disabled={quizScore >= 70}
+                          disabled={quizScore >= quizPassingPercent}
                           onClick={() => {
                             setQuizSubmitted(false);
                             setQuizAnswers({});
                             setQuizScore(0);
                           }}
                         >
-                          {quizScore >= 70 ? '✓ Lesson Complete - Continue' : 'Retake Quiz'}
+                          {quizScore >= quizPassingPercent ? '✓ Lesson Complete - Continue' : 'Retake Quiz'}
                         </Button>
                       </>
                     )}
@@ -761,6 +967,53 @@ export default function StudentLearningPage() {
               )}
 
               {selectedLesson.type === 'Skill Check' && (
+                <div className="rounded-[20px] border border-border-subtle bg-surface-muted p-8">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-[14px] bg-info/10 text-info">
+                      <IconUserCircle className="size-8" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-display text-[24px] font-bold text-on-surface">{selectedLesson.title}</h3>
+                      <p className="mt-1 text-on-surface-variant">{selectedLesson.note}</p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-[16px] border border-border-subtle bg-surface p-6 space-y-6">
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div className="rounded-[14px] border border-border-subtle bg-surface-muted p-4 md:col-span-2">
+                        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+                          Submission Guidance
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                          {selectedLesson.content || selectedLesson.note || 'Upload the required skill evidence for instructor review.'}
+                        </p>
+                      </div>
+                      <div className="rounded-[14px] border border-border-subtle bg-surface-muted p-4">
+                        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+                          Section
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-on-surface">
+                          {selectedLesson.sectionTitle || 'Skill Check'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Button
+                      className="w-full rounded-[14px] h-11 bg-success hover:bg-success/90"
+                      disabled={completedLessons.has(selectedLesson.id)}
+                      onClick={() => {
+                        setCompletedLessons(new Set([...completedLessons, selectedLesson.id]));
+                        markStepComplete(currentModule.id, selectedLesson.id);
+                        advanceLearning(20);
+                      }}
+                    >
+                      {completedLessons.has(selectedLesson.id) ? 'Submission Recorded' : 'Mark Submission Complete'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {false && selectedLesson.type === 'Skill Check' && (
                 <div className="rounded-[20px] border border-border-subtle bg-surface-muted p-8">
                   <div className="flex items-center gap-4 mb-6">
                     <div className="flex h-16 w-16 items-center justify-center rounded-[14px] bg-info/10 text-info">
