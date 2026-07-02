@@ -217,11 +217,21 @@ export class StudentPortalRepository {
           return {
             id: resource.id,
             title: resource.title,
-            type: resource.type === 'video' ? 'Video' : resource.type === 'pdf' ? 'PDF' : 'Link',
+            type:
+              resource.type === 'video'
+                ? 'Video'
+                : resource.type === 'pdf'
+                  ? 'PDF'
+                  : resource.type === 'text'
+                    ? 'Reading'
+                    : resource.type === 'exam'
+                      ? 'Quiz'
+                      : 'Link',
             duration: resource.duration,
             note: resource.description,
             complete: existingStep?.complete ?? false,
             resourceUrl: resource.url,
+            content: resource.content,
             sectionId: section.id,
             sectionTitle: section.title,
           };

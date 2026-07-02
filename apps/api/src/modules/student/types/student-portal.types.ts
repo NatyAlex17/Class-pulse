@@ -87,6 +87,7 @@ export interface LearningStep {
   note: string;
   complete: boolean;
   resourceUrl?: string;
+  content?: string;
   sectionId?: string;
   sectionTitle?: string;
 }
@@ -107,10 +108,13 @@ export interface CurriculumModule {
 export interface LearningResourceDefinition {
   id: string;
   title: string;
-  type: 'video' | 'pdf' | 'link';
+  type: 'video' | 'pdf' | 'link' | 'text' | 'exam';
   duration: string;
   description: string;
-  url: string;
+  url?: string;
+  content?: string;
+  questionCount?: number;
+  passingScore?: number;
 }
 
 export interface LearningSectionDefinition {

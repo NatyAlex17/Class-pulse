@@ -238,6 +238,9 @@ export default function StudentLearningPage() {
   const selectedLesson = lessons.find((lesson) => lesson.id === selectedLessonId) ?? lessons[0];
   const currentLessonIndex = selectedLesson ? lessons.findIndex((lesson) => lesson.id === selectedLesson.id) : -1;
   const nextLesson = currentLessonIndex >= 0 ? lessons[currentLessonIndex + 1] : undefined;
+  const quizQuestionSet = selectedLesson
+    ? quizQuestions[selectedLesson.id as keyof typeof quizQuestions] ?? []
+    : [];
   const nextModuleId = modules[modules.findIndex((module) => module.id === currentModule.id) + 1]?.id;
   const lessonSections = lessons.reduce<Array<{ title: string; lessons: typeof lessons }>>((sections, lesson) => {
     const title = lesson.sectionTitle || 'Module Content';
@@ -540,7 +543,7 @@ export default function StudentLearningPage() {
                             <div className="bg-surface p-4 rounded-[12px] border border-border-subtle space-y-3">
                               <h5 className="font-semibold text-on-surface">Core Concepts</h5>
                               <div className="space-y-2 text-sm text-on-surface-variant leading-relaxed">
-                                <p>{selectedLesson.note}</p>
+                                <p>{selectedLesson.content || selectedLesson.note}</p>
                                 <p>
                                   <strong>Student Action:</strong> Review the assigned resource and capture the key ideas before moving to the next lesson item.
                                 </p>
@@ -569,10 +572,11 @@ export default function StudentLearningPage() {
                     <Button
                       className="flex-1 rounded-[14px] h-11"
                       variant="secondary"
+                      disabled={!selectedLesson.resourceUrl}
                       onClick={() => window.open(selectedLesson.resourceUrl || '#', '_blank')}
                     >
                       <IconFile className="size-4 mr-2" />
-                      {selectedLesson.type === 'PDF' ? 'Open PDF' : 'Open Resource'}
+                      {selectedLesson.type === 'PDF' ? 'Open PDF' : selectedLesson.type === 'Link' ? 'Open Link' : 'Open Resource'}
                     </Button>
                     <Button
                       className="flex-1 rounded-[14px] h-11 bg-success hover:bg-success/90"
@@ -590,7 +594,58 @@ export default function StudentLearningPage() {
                 </div>
               )}
 
-              {selectedLesson.type === 'Quiz' && (
+              {selectedLesson.type === 'Quiz' && quizQuestionSet.length === 0 && (
+                <div className="rounded-[20px] border border-border-subtle bg-surface-muted p-8">
+                  <div className="mb-6 flex items-center gap-4">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-[14px] bg-info/10 text-info">
+                      <IconCircleCheckFilled className="size-8" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-display text-[24px] font-bold text-on-surface">{selectedLesson.title}</h3>
+                      <p className="mt-1 text-on-surface-variant">{selectedLesson.note}</p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-[16px] border border-border-subtle bg-surface p-6 space-y-6">
+                    <div className="rounded-[16px] border border-border-subtle bg-surface-muted p-5">
+                      <h4 className="font-semibold text-on-surface">Assessment Overview</h4>
+                      <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                        {selectedLesson.content || selectedLesson.note || 'Launch this assessment after reviewing the module materials.'}
+                      </p>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div className="rounded-[14px] border border-border-subtle bg-surface p-4">
+                        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Assessment Type</p>
+                        <p className="mt-2 text-sm font-semibold text-on-surface">Configured module exam</p>
+                      </div>
+                      <div className="rounded-[14px] border border-border-subtle bg-surface p-4">
+                        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Duration</p>
+                        <p className="mt-2 text-sm font-semibold text-on-surface">{selectedLesson.duration}</p>
+                      </div>
+                      <div className="rounded-[14px] border border-border-subtle bg-surface p-4">
+                        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Completion</p>
+                        <p className="mt-2 text-sm font-semibold text-on-surface">Marks this lesson complete</p>
+                      </div>
+                    </div>
+
+                    <Button
+                      className="h-11 w-full rounded-[14px] bg-success hover:bg-success/90"
+                      onClick={() => {
+                        setQuizScore(100);
+                        setQuizSubmitted(true);
+                        setCompletedLessons(new Set([...completedLessons, selectedLesson.id]));
+                        markStepComplete(currentModule.id, selectedLesson.id);
+                        advanceLearning(30);
+                      }}
+                    >
+                      Complete Assessment
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {selectedLesson.type === 'Quiz' && quizQuestionSet.length > 0 && (
                 <div className="rounded-[20px] border border-border-subtle bg-surface-muted p-8">
                   <div className="flex items-center gap-4 mb-6">
                     <div className={cn(

@@ -34,6 +34,7 @@ type LearningStep = {
   note: string;
   complete: boolean;
   resourceUrl?: string;
+  content?: string;
   sectionId?: string;
   sectionTitle?: string;
 };

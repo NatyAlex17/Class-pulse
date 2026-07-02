@@ -173,7 +173,7 @@ export function AdminShell({
                     <div className="mt-1 space-y-1 pl-4">
                       {(item.children ?? []).map((child) => (
                         <Link
-                          key={child.href}
+                          key={`${child.label}-${child.href ?? 'child'}`}
                           href={child.href || '#'}
                           className={cn(
                             'flex items-center gap-3 rounded-[12px] px-3 py-2 text-xs transition-colors',
@@ -194,7 +194,7 @@ export function AdminShell({
             const active = isActive(pathname, item.href || '');
             return (
               <Link
-                key={item.href}
+                key={`${item.label}-${item.href ?? 'item'}`}
                 href={item.href || '#'}
                 className={cn(
                   'flex items-center gap-3 rounded-[16px] px-3 py-2.5 text-sm transition-colors',
@@ -276,7 +276,7 @@ export function AdminShell({
                         <div className="mt-1 space-y-1 pl-6">
                           {(item.children ?? []).map((child) => (
                             <Link
-                              key={child.href}
+                              key={`${child.label}-${child.href ?? 'child'}`}
                               href={child.href || '#'}
                               onClick={() => setMobileMenuOpen(false)}
                               className={cn(
@@ -298,7 +298,7 @@ export function AdminShell({
                 const active = isActive(pathname, item.href || '');
                 return (
                   <Link
-                    key={item.href}
+                    key={`${item.label}-${item.href ?? 'item'}`}
                     href={item.href || '#'}
                     onClick={() => setMobileMenuOpen(false)}
                     className={cn(
