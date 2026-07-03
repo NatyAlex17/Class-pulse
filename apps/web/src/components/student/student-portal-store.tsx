@@ -26,6 +26,13 @@ type TaskItem = {
   urgent?: boolean;
 };
 
+type LearningStepExamQuestion = {
+  id: string;
+  prompt: string;
+  points: number;
+  options?: string[];
+};
+
 type LearningStep = {
   id: string;
   title: string;
@@ -37,7 +44,27 @@ type LearningStep = {
   content?: string;
   sectionId?: string;
   sectionTitle?: string;
+  sectionDescription?: string;
+  examFormat?: 'text' | 'multiple-choice';
+  passingScore?: number;
+  questionCount?: number;
+  questions?: LearningStepExamQuestion[];
 };
+
+type ModuleExamResult = {
+  graded: boolean;
+  passed: boolean;
+  scorePercent: number;
+  earnedPoints: number;
+  totalPoints: number;
+  passingScore: number;
+  correctCount: number;
+  totalQuestions: number;
+};
+
+type ModuleExamOutcome =
+  | { ok: true; result: ModuleExamResult }
+  | { ok: false; error: string };
 
 type ModuleItem = {
   id: string;
@@ -371,7 +398,10 @@ type StudentDemoContextValue = StudentDemoState & {
   toggleLearningSession: () => void;
   selectModule: (moduleId: string) => void;
   markStepComplete: (moduleId: string, stepId: string) => void;
-  submitModuleExam: () => void;
+  submitModuleExam: (payload?: {
+    stepId?: string;
+    answers?: Record<string, string>;
+  }) => Promise<ModuleExamOutcome>;
   issueTextbook: () => void;
   completeExitSurvey: () => void;
   makePayment: () => void;
@@ -1009,9 +1039,25 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
     mutate(`/learning/modules/${moduleId}/steps/${stepId}/toggle`, 'PATCH');
   }, [mutate]);
 
-  const submitModuleExam = React.useCallback(() => {
-    mutate(`/learning/modules/${state.activeModuleId}/exam`, 'POST');
-  }, [mutate, state.activeModuleId]);
+  const submitModuleExam = React.useCallback(
+    async (payload?: { stepId?: string; answers?: Record<string, string> }): Promise<ModuleExamOutcome> => {
+      try {
+        const response = await callStudentApi<{ module: ModuleItem; result: ModuleExamResult }>(
+          `/learning/modules/${state.activeModuleId}/exam`,
+          { method: 'POST', body: JSON.stringify(payload ?? {}) },
+        );
+        await refreshLearning().catch(() => undefined);
+        return { ok: true, result: response.result };
+      } catch (error) {
+        await refreshLearning().catch(() => undefined);
+        return {
+          ok: false,
+          error: error instanceof Error ? error.message : 'Module exam submission failed.',
+        };
+      }
+    },
+    [callStudentApi, refreshLearning, state.activeModuleId],
+  );
 
   const issueTextbook = React.useCallback(() => {
     mutate('/learning/textbook/open', 'POST');

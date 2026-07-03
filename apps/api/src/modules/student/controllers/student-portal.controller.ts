@@ -13,6 +13,7 @@ import type {
   ReportAbsenceDto,
   SelectModuleDto,
   SendStudentMessageDto,
+  SubmitModuleExamDto,
   SubmitSupportTicketDto,
   TextAnswerDto,
   UpdateCdphFormDto,
@@ -288,9 +289,13 @@ export class StudentPortalController {
   }
 
   @Post('learning/modules/:moduleId/exam')
-  submitModuleExam(@Param('studentId') studentId: string, @Param('moduleId') moduleId: string) {
+  submitModuleExam(
+    @Param('studentId') studentId: string,
+    @Param('moduleId') moduleId: string,
+    @Body() body: SubmitModuleExamDto,
+  ) {
     return createApiResponse(
-      this.studentPortalService.submitModuleExam(studentId, moduleId),
+      this.studentPortalService.submitModuleExam(studentId, moduleId, body),
       'Module exam submitted successfully.',
     );
   }

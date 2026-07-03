@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
+
+const DATA_DIR = path.join(process.cwd(), 'apps/api/.data');
+const CONFIG_FILE = path.join(DATA_DIR, 'enrollment-wizard-config.json');
 
 export interface EnrollmentWizardStep {
   id: string;
@@ -135,10 +140,45 @@ const defaultEnrollmentWizardConfig: EnrollmentWizardConfig = {
 };
 
 @Injectable()
-export class EnrollmentWizardConfigService {
+export class EnrollmentWizardConfigService implements OnModuleInit {
   private config: EnrollmentWizardConfig = JSON.parse(
     JSON.stringify(defaultEnrollmentWizardConfig),
   );
+
+  onModuleInit() {
+    this.loadConfig();
+  }
+
+  private ensureDataDir() {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+  }
+
+  private loadConfig() {
+    try {
+      this.ensureDataDir();
+      if (fs.existsSync(CONFIG_FILE)) {
+        const fileContent = fs.readFileSync(CONFIG_FILE, 'utf-8');
+        this.config = JSON.parse(fileContent);
+      } else {
+        this.config = JSON.parse(JSON.stringify(defaultEnrollmentWizardConfig));
+        this.persistConfig();
+      }
+    } catch (error) {
+      console.error('Error loading enrollment wizard config:', error);
+      this.config = JSON.parse(JSON.stringify(defaultEnrollmentWizardConfig));
+    }
+  }
+
+  private persistConfig() {
+    try {
+      this.ensureDataDir();
+      fs.writeFileSync(CONFIG_FILE, JSON.stringify(this.config, null, 2), 'utf-8');
+    } catch (error) {
+      console.error('Error persisting enrollment wizard config:', error);
+    }
+  }
 
   getConfig(): EnrollmentWizardConfig {
     return JSON.parse(JSON.stringify(this.config));
@@ -146,11 +186,13 @@ export class EnrollmentWizardConfigService {
 
   updateConfig(newConfig: EnrollmentWizardConfig): EnrollmentWizardConfig {
     this.config = JSON.parse(JSON.stringify(newConfig));
+    this.persistConfig();
     return this.getConfig();
   }
 
   resetToDefault(): EnrollmentWizardConfig {
     this.config = JSON.parse(JSON.stringify(defaultEnrollmentWizardConfig));
+    this.persistConfig();
     return this.getConfig();
   }
 }

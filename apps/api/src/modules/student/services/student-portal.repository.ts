@@ -285,6 +285,16 @@ export class StudentPortalRepository {
             content: resource.content,
             sectionId: section.id,
             sectionTitle: section.title,
+            sectionDescription: section.description,
+            examFormat: resource.examFormat,
+            passingScore: resource.passingScore,
+            questionCount: resource.questionCount,
+            questions: resource.questions?.map((question) => ({
+              id: question.id,
+              prompt: question.prompt,
+              points: question.points,
+              options: question.options ? [...question.options] : undefined,
+            })),
           };
         }),
       );

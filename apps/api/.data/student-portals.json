@@ -2795,7 +2795,7 @@
         "levelLabel": "Lvl 4 Student",
         "studentNumber": "CV-S-86749B"
       },
-      "workflowStage": "enrollment_wizard",
+      "workflowStage": "active",
       "intakeJourney": {
         "header": {
           "eyebrow": "Student Journey",
@@ -3397,7 +3397,7 @@
           "id": "entrance-survey",
           "title": "Finish onboarding intake survey",
           "detail": "Administrative review is waiting on your final response.",
-          "complete": false,
+          "complete": true,
           "urgent": true
         },
         {
@@ -3408,7 +3408,7 @@
         }
       ],
       "onboarding": {
-        "workflowStage": "enrollment_wizard",
+        "workflowStage": "active",
         "steps": [
           {
             "id": "profile",
@@ -3801,25 +3801,36 @@
         "submittedAt": "2026-07-02T20:11:48.182Z"
       },
       "enrollmentWizard": {
-        "step": 1,
+        "step": 5,
         "hhaAddon": true,
-        "scrubTop": "",
-        "scrubBottom": "",
-        "shipping": "pickup",
-        "wantsToTestAtDaisy": null,
+        "scrubTop": "S",
+        "scrubBottom": "S",
+        "shipping": "ship",
+        "wantsToTestAtDaisy": true,
         "agreements": {
-          "ip": false,
-          "refund": false,
-          "conduct": false,
-          "lateFee": false
+          "ip": true,
+          "refund": true,
+          "conduct": true,
+          "lateFee": true
         },
-        "signature": "",
-        "submitted": false
+        "signature": "Jikarex854",
+        "submitted": true
       },
       "entranceSurvey": {
-        "step": 1,
-        "answers": {},
-        "completed": false
+        "step": 5,
+        "answers": {
+          "healthcare_exp": "volunteer",
+          "motivation": "h",
+          "confidence": "very_confident",
+          "support_needs": "d",
+          "expectations": "d",
+          "success_definition": "d",
+          "post_grad_goals": "d",
+          "work_timeline": "immediately",
+          "instructor_support": "d",
+          "additional_info": "d"
+        },
+        "completed": true
       },
       "settings": {
         "email_updates": true,
@@ -3876,8 +3887,248 @@
       "learningSessionActive": false,
       "reflectionResponse": "",
       "questionOfDayAnswer": "",
-      "lastAction": "Enrollment wizard updated.",
+      "lastAction": "Workflow stage synchronized to active.",
       "auditTrail": [
+        {
+          "id": "audit-1783025057592-217",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.entrance-survey.submitted",
+          "target": "entrance-survey",
+          "occurredAt": "2026-07-02T20:44:17.592Z",
+          "details": {
+            "answers": 10
+          }
+        },
+        {
+          "id": "audit-1783025056151-479",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "additional_info",
+          "occurredAt": "2026-07-02T20:44:16.151Z",
+          "details": {
+            "questionId": "additional_info"
+          }
+        },
+        {
+          "id": "audit-1783025054896-366",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "instructor_support",
+          "occurredAt": "2026-07-02T20:44:14.896Z",
+          "details": {
+            "questionId": "instructor_support"
+          }
+        },
+        {
+          "id": "audit-1783025052917-158",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "work_timeline",
+          "occurredAt": "2026-07-02T20:44:12.917Z",
+          "details": {
+            "questionId": "work_timeline"
+          }
+        },
+        {
+          "id": "audit-1783025050993-325",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "post_grad_goals",
+          "occurredAt": "2026-07-02T20:44:10.993Z",
+          "details": {
+            "questionId": "post_grad_goals"
+          }
+        },
+        {
+          "id": "audit-1783025048787-124",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "success_definition",
+          "occurredAt": "2026-07-02T20:44:08.787Z",
+          "details": {
+            "questionId": "success_definition"
+          }
+        },
+        {
+          "id": "audit-1783025047510-50",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "expectations",
+          "occurredAt": "2026-07-02T20:44:07.510Z",
+          "details": {
+            "questionId": "expectations"
+          }
+        },
+        {
+          "id": "audit-1783025045169-70",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "support_needs",
+          "occurredAt": "2026-07-02T20:44:05.169Z",
+          "details": {
+            "questionId": "support_needs"
+          }
+        },
+        {
+          "id": "audit-1783025044454-894",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "support_needs",
+          "occurredAt": "2026-07-02T20:44:04.454Z",
+          "details": {
+            "questionId": "support_needs"
+          }
+        },
+        {
+          "id": "audit-1783025043603-266",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "confidence",
+          "occurredAt": "2026-07-02T20:44:03.603Z",
+          "details": {
+            "questionId": "confidence"
+          }
+        },
+        {
+          "id": "audit-1783025039677-866",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "motivation",
+          "occurredAt": "2026-07-02T20:43:59.677Z",
+          "details": {
+            "questionId": "motivation"
+          }
+        },
+        {
+          "id": "audit-1783025038738-713",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "healthcare_exp",
+          "occurredAt": "2026-07-02T20:43:58.738Z",
+          "details": {
+            "questionId": "healthcare_exp"
+          }
+        },
+        {
+          "id": "audit-1783025034694-718",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.enrollment-wizard.submitted",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-02T20:43:54.694Z",
+          "details": {
+            "submitted": true
+          }
+        },
+        {
+          "id": "audit-1783025028658-221",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.enrollment-wizard.updated",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-02T20:43:48.658Z",
+          "details": {
+            "signature": "Jikarex854 "
+          }
+        },
+        {
+          "id": "audit-1783025022181-546",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.enrollment-wizard.agreements.updated",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-02T20:43:42.181Z",
+          "details": {
+            "lateFee": true
+          }
+        },
+        {
+          "id": "audit-1783025021202-577",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.enrollment-wizard.agreements.updated",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-02T20:43:41.202Z",
+          "details": {
+            "conduct": true
+          }
+        },
+        {
+          "id": "audit-1783025020065-798",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.enrollment-wizard.agreements.updated",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-02T20:43:40.065Z",
+          "details": {
+            "refund": true
+          }
+        },
+        {
+          "id": "audit-1783025018782-229",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.enrollment-wizard.agreements.updated",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-02T20:43:38.782Z",
+          "details": {
+            "ip": true
+          }
+        },
+        {
+          "id": "audit-1783025013511-184",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.enrollment-wizard.updated",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-02T20:43:33.511Z",
+          "details": {
+            "wantsToTestAtDaisy": true
+          }
+        },
+        {
+          "id": "audit-1783025011658-681",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.enrollment-wizard.updated",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-02T20:43:31.658Z",
+          "details": {
+            "shipping": "ship"
+          }
+        },
+        {
+          "id": "audit-1783025009943-536",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.enrollment-wizard.updated",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-02T20:43:29.943Z",
+          "details": {
+            "shipping": "pickup"
+          }
+        },
+        {
+          "id": "audit-1783025008823-974",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.enrollment-wizard.updated",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-02T20:43:28.823Z",
+          "details": {
+            "scrubTop": "S"
+          }
+        },
+        {
+          "id": "audit-1783025007555-583",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.enrollment-wizard.updated",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-02T20:43:27.555Z",
+          "details": {
+            "scrubBottom": "S"
+          }
+        },
+        {
+          "id": "audit-1783025004331-959",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.intake.enrollment-wizard.updated",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-02T20:43:24.331Z",
+          "details": {
+            "hhaAddon": true
+          }
+        },
         {
           "id": "audit-1783023263208-237",
           "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
@@ -3997,6 +4248,1447 @@
           "action": "student.intake.entrance-exam.answer.updated",
           "target": "q1",
           "occurredAt": "2026-07-02T20:11:08.797Z",
+          "details": {
+            "questionId": "q1"
+          }
+        },
+        {
+          "id": "audit-1",
+          "actor": "system",
+          "action": "student.portal.seeded",
+          "target": "student-amara-singh",
+          "occurredAt": "2026-06-30T07:00:00.000Z",
+          "details": {
+            "source": "student-portal-seed"
+          }
+        }
+      ]
+    },
+    {
+      "profile": {
+        "id": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+        "fullName": "Dagim Assefa098",
+        "preferredName": "Dagim",
+        "email": "dagim.assefa098@gmail.com",
+        "phone": "(555) 010-2291",
+        "location": "San Francisco, CA",
+        "cohort": "CNA Cohort 12",
+        "levelLabel": "Lvl 4 Student",
+        "studentNumber": "CV-S-00B37E"
+      },
+      "workflowStage": "active",
+      "intakeJourney": {
+        "header": {
+          "eyebrow": "Student Journey",
+          "title": "Intake, Enrollment, and Orientation",
+          "description": "This mirrors the intended student intake flow, and each step now persists through the backend student workflow."
+        },
+        "stages": [
+          {
+            "id": "entrance_exam",
+            "label": "Entrance Exam"
+          },
+          {
+            "id": "enrollment_wizard",
+            "label": "Enrollment Wizard"
+          },
+          {
+            "id": "admin_review",
+            "label": "Admin Review"
+          },
+          {
+            "id": "orientation_survey",
+            "label": "Orientation Survey"
+          },
+          {
+            "id": "active",
+            "label": "Portal Active"
+          }
+        ],
+        "entranceExam": {
+          "intro": "Each question can include a preferred answer for reviewer guidance, but staff scoring is finalized during intake review.",
+          "passingScore": 5,
+          "questions": [
+            {
+              "id": "q1",
+              "prompt": "What must students do in the self-paced program?",
+              "type": "choice",
+              "preferredAnswer": "B. Read instructions and finish work",
+              "options": [
+                {
+                  "label": "A. Only watch videos",
+                  "value": "A. Only watch videos"
+                },
+                {
+                  "label": "B. Read instructions and finish work",
+                  "value": "B. Read instructions and finish work"
+                },
+                {
+                  "label": "C. Skip assignments",
+                  "value": "C. Skip assignments"
+                },
+                {
+                  "label": "D. Wait for instructors to do everything",
+                  "value": "D. Wait for instructors to do everything"
+                }
+              ]
+            },
+            {
+              "id": "q2",
+              "prompt": "Why is English important in this program?",
+              "type": "choice",
+              "preferredAnswer": "B. To understand lessons and exams",
+              "options": [
+                {
+                  "label": "A. Only for chatting",
+                  "value": "A. Only for chatting"
+                },
+                {
+                  "label": "B. To understand lessons and exams",
+                  "value": "B. To understand lessons and exams"
+                },
+                {
+                  "label": "C. To avoid clinical hours",
+                  "value": "C. To avoid clinical hours"
+                },
+                {
+                  "label": "D. Only for orientation day",
+                  "value": "D. Only for orientation day"
+                }
+              ]
+            },
+            {
+              "id": "q3",
+              "prompt": "When can students ask instructors questions?",
+              "type": "choice",
+              "preferredAnswer": "C. During scheduled support hours",
+              "options": [
+                {
+                  "label": "A. Never",
+                  "value": "A. Never"
+                },
+                {
+                  "label": "B. Only after graduation",
+                  "value": "B. Only after graduation"
+                },
+                {
+                  "label": "C. During scheduled support hours",
+                  "value": "C. During scheduled support hours"
+                },
+                {
+                  "label": "D. Only on weekends",
+                  "value": "D. Only on weekends"
+                }
+              ]
+            },
+            {
+              "id": "q4",
+              "prompt": "What can happen if a student does not understand instructions?",
+              "type": "choice",
+              "preferredAnswer": "B. They may fail assignments or exams",
+              "options": [
+                {
+                  "label": "A. Nothing changes",
+                  "value": "A. Nothing changes"
+                },
+                {
+                  "label": "B. They may fail assignments or exams",
+                  "value": "B. They may fail assignments or exams"
+                },
+                {
+                  "label": "C. They automatically pass",
+                  "value": "C. They automatically pass"
+                },
+                {
+                  "label": "D. The program pauses for everyone",
+                  "value": "D. The program pauses for everyone"
+                }
+              ]
+            },
+            {
+              "id": "q5",
+              "prompt": "What is the main point of the readiness passage?",
+              "type": "choice",
+              "preferredAnswer": "B. English comprehension is required to succeed",
+              "options": [
+                {
+                  "label": "A. Clinical practice is optional",
+                  "value": "A. Clinical practice is optional"
+                },
+                {
+                  "label": "B. English comprehension is required to succeed",
+                  "value": "B. English comprehension is required to succeed"
+                },
+                {
+                  "label": "C. Instructors complete the work",
+                  "value": "C. Instructors complete the work"
+                },
+                {
+                  "label": "D. Technology is never used",
+                  "value": "D. Technology is never used"
+                }
+              ]
+            },
+            {
+              "id": "q6",
+              "prompt": "Write one complete sentence explaining why following instructions matters in healthcare training.",
+              "type": "text",
+              "preferredAnswer": "Following instructions is crucial in healthcare to ensure patient safety and quality care.",
+              "placeholder": "Write one complete sentence...",
+              "options": []
+            }
+          ]
+        },
+        "enrollmentWizard": {
+          "steps": [
+            {
+              "step": 1,
+              "title": "Step 1: Career Boost",
+              "description": "Choose whether to add the Home Health Aide pathway to the program plan.",
+              "sections": [
+                {
+                  "id": "career-boost",
+                  "title": "Home Health Aide Add-On",
+                  "description": "Add a second certification track to the student journey.",
+                  "fields": [
+                    {
+                      "id": "hhaAddon",
+                      "label": "Would you like to add the Home Health Aide track?",
+                      "type": "choice",
+                      "options": [
+                        {
+                          "label": "Add HHA track",
+                          "value": "true",
+                          "badge": "+$500"
+                        },
+                        {
+                          "label": "Keep CNA only",
+                          "value": "false"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "step": 2,
+              "title": "Step 2: Gear Up",
+              "description": "Capture scrub sizes, delivery preference, and state exam testing preference.",
+              "sections": [
+                {
+                  "id": "uniforms",
+                  "title": "Scrub Sizing",
+                  "fields": [
+                    {
+                      "id": "scrubTop",
+                      "label": "Scrub top size",
+                      "type": "select",
+                      "options": [
+                        {
+                          "label": "XS",
+                          "value": "XS"
+                        },
+                        {
+                          "label": "S",
+                          "value": "S"
+                        },
+                        {
+                          "label": "M",
+                          "value": "M"
+                        },
+                        {
+                          "label": "L",
+                          "value": "L"
+                        },
+                        {
+                          "label": "XL",
+                          "value": "XL"
+                        },
+                        {
+                          "label": "2XL",
+                          "value": "2XL"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "scrubBottom",
+                      "label": "Scrub bottom size",
+                      "type": "select",
+                      "options": [
+                        {
+                          "label": "XS",
+                          "value": "XS"
+                        },
+                        {
+                          "label": "S",
+                          "value": "S"
+                        },
+                        {
+                          "label": "M",
+                          "value": "M"
+                        },
+                        {
+                          "label": "L",
+                          "value": "L"
+                        },
+                        {
+                          "label": "XL",
+                          "value": "XL"
+                        },
+                        {
+                          "label": "2XL",
+                          "value": "2XL"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "delivery",
+                  "title": "Delivery Preference",
+                  "fields": [
+                    {
+                      "id": "shipping",
+                      "label": "How should supplies be delivered?",
+                      "type": "choice",
+                      "options": [
+                        {
+                          "label": "Pick up at orientation",
+                          "value": "pickup"
+                        },
+                        {
+                          "label": "Ship to home (+$10)",
+                          "value": "ship"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "exam-preference",
+                  "title": "State Exam Preference",
+                  "fields": [
+                    {
+                      "id": "wantsToTestAtDaisy",
+                      "label": "Where would you like to test?",
+                      "type": "choice",
+                      "options": [
+                        {
+                          "label": "Yes, test at Daisy Medical Institute",
+                          "value": "true"
+                        },
+                        {
+                          "label": "No, use another regional testing site",
+                          "value": "false"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "step": 3,
+              "title": "Step 3: Orientation Briefing",
+              "description": "Record that the student reviewed the orientation and expectations briefing.",
+              "sections": [
+                {
+                  "id": "orientation-briefing",
+                  "title": "Program Orientation",
+                  "description": "This checkpoint represents the orientation briefing and records that the student completed the review stage.",
+                  "fields": []
+                }
+              ]
+            },
+            {
+              "step": 4,
+              "title": "Step 4: Terms of Agreement",
+              "description": "Collect acknowledgement of required policies before submission.",
+              "sections": [
+                {
+                  "id": "agreements",
+                  "title": "Program Agreements",
+                  "fields": [
+                    {
+                      "id": "ip",
+                      "label": "I understand curriculum and AI tools are proprietary.",
+                      "type": "choice",
+                      "options": [
+                        {
+                          "label": "Acknowledge",
+                          "value": "true"
+                        },
+                        {
+                          "label": "Not yet",
+                          "value": "false"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "refund",
+                      "label": "I understand the refund and withdrawal timeline.",
+                      "type": "choice",
+                      "options": [
+                        {
+                          "label": "Acknowledge",
+                          "value": "true"
+                        },
+                        {
+                          "label": "Not yet",
+                          "value": "false"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "conduct",
+                      "label": "I understand conduct standards can affect enrollment status.",
+                      "type": "choice",
+                      "options": [
+                        {
+                          "label": "Acknowledge",
+                          "value": "true"
+                        },
+                        {
+                          "label": "Not yet",
+                          "value": "false"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "lateFee",
+                      "label": "I understand installment timing and late-fee policy.",
+                      "type": "choice",
+                      "options": [
+                        {
+                          "label": "Acknowledge",
+                          "value": "true"
+                        },
+                        {
+                          "label": "Not yet",
+                          "value": "false"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "step": 5,
+              "title": "Step 5: Review & Sign",
+              "description": "Review the packet summary and provide the required signature.",
+              "sections": [
+                {
+                  "id": "signature",
+                  "title": "Program Signature",
+                  "description": "Type the required signature exactly to submit enrollment.",
+                  "fields": [
+                    {
+                      "id": "signature",
+                      "label": "Signature",
+                      "type": "text",
+                      "placeholder": "Type the required signature"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "signatureRequirement": {
+            "value": "Dagim Assefa098",
+            "hint": "Signature must match Dagim Assefa098 to continue."
+          },
+          "summaryItems": [
+            {
+              "id": "hhaAddon",
+              "label": "HHA add-on"
+            },
+            {
+              "id": "scrubs",
+              "label": "Scrubs"
+            },
+            {
+              "id": "shipping",
+              "label": "Delivery"
+            },
+            {
+              "id": "wantsToTestAtDaisy",
+              "label": "State exam preference"
+            }
+          ]
+        },
+        "adminReview": {
+          "badgeLabel": "Pending Review",
+          "title": "Admissions is reviewing the packet",
+          "description": "This stage mirrors the reference dashboard where the student sees a waiting state before the main portal is unlocked.",
+          "checklist": [
+            "Entrance exam passed and attached to admissions record",
+            "Enrollment selections captured for logistics and billing",
+            "Packet awaiting approval from student operations"
+          ]
+        },
+        "orientationSurvey": {
+          "sections": [
+            {
+              "id": "student-background",
+              "title": "Student Background",
+              "fields": [
+                {
+                  "id": "healthcare_exp",
+                  "label": "Have you worked in healthcare before?",
+                  "type": "select",
+                  "options": [
+                    {
+                      "label": "No, this is my first time",
+                      "value": "first_time"
+                    },
+                    {
+                      "label": "Yes, unpaid or volunteer",
+                      "value": "volunteer"
+                    },
+                    {
+                      "label": "Yes, paid experience",
+                      "value": "paid"
+                    }
+                  ]
+                },
+                {
+                  "id": "motivation",
+                  "label": "What motivated you to enroll?",
+                  "type": "textarea"
+                }
+              ]
+            },
+            {
+              "id": "confidence-readiness",
+              "title": "Confidence & Readiness",
+              "fields": [
+                {
+                  "id": "confidence",
+                  "label": "How confident do you feel starting the program?",
+                  "type": "select",
+                  "options": [
+                    {
+                      "label": "Very confident",
+                      "value": "very_confident"
+                    },
+                    {
+                      "label": "Somewhat confident",
+                      "value": "somewhat_confident"
+                    },
+                    {
+                      "label": "A little nervous",
+                      "value": "nervous"
+                    }
+                  ]
+                },
+                {
+                  "id": "support_needs",
+                  "label": "Where do you expect to need the most support?",
+                  "type": "textarea"
+                }
+              ]
+            },
+            {
+              "id": "expectations",
+              "title": "Expectations",
+              "fields": [
+                {
+                  "id": "expectations",
+                  "label": "What do you expect to gain from this program?",
+                  "type": "textarea"
+                },
+                {
+                  "id": "success_definition",
+                  "label": "What does a successful student experience look like to you?",
+                  "type": "textarea"
+                }
+              ]
+            },
+            {
+              "id": "goals-outcomes",
+              "title": "Goals & Outcomes",
+              "fields": [
+                {
+                  "id": "post_grad_goals",
+                  "label": "What are your goals after completing the program?",
+                  "type": "textarea"
+                },
+                {
+                  "id": "work_timeline",
+                  "label": "How soon do you hope to start working after certification?",
+                  "type": "select",
+                  "options": [
+                    {
+                      "label": "Immediately",
+                      "value": "immediately"
+                    },
+                    {
+                      "label": "Within 1-3 months",
+                      "value": "one_to_three_months"
+                    },
+                    {
+                      "label": "Not sure yet",
+                      "value": "not_sure"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "support-communication",
+              "title": "Support & Communication",
+              "fields": [
+                {
+                  "id": "instructor_support",
+                  "label": "What kind of support do you expect from instructors?",
+                  "type": "textarea"
+                },
+                {
+                  "id": "additional_info",
+                  "label": "Anything else you would like the team to know?",
+                  "type": "textarea"
+                }
+              ]
+            }
+          ]
+        },
+        "activation": {
+          "badgeLabel": "Portal Active",
+          "title": "Student flow fully unlocked",
+          "description": "The student can now move through learning, forms, documents, financials, and messaging through the live student portal workflow.",
+          "checklist": [
+            "Entrance exam stored",
+            "Enrollment package submitted",
+            "Orientation survey completed",
+            "Student tools available"
+          ]
+        }
+      },
+      "tasks": [
+        {
+          "id": "theory-hours",
+          "title": "Complete 2 theory hours",
+          "detail": "Required to unlock the Module 3 exam.",
+          "complete": false,
+          "urgent": true
+        },
+        {
+          "id": "entrance-survey",
+          "title": "Finish onboarding intake survey",
+          "detail": "Administrative review is waiting on your final response.",
+          "complete": true,
+          "urgent": true
+        },
+        {
+          "id": "clinical-log",
+          "title": "Submit Clinical Log #04",
+          "detail": "Skills lab follow-up needs one pending hour entry.",
+          "complete": false
+        }
+      ],
+      "onboarding": {
+        "workflowStage": "active",
+        "steps": [
+          {
+            "id": "profile",
+            "title": "Confirm student profile",
+            "description": "Review your legal name, emergency contact, and mailing details.",
+            "complete": false,
+            "actionLabel": "Reviewed"
+          },
+          {
+            "id": "documents",
+            "title": "Upload admissions documents",
+            "description": "Submit your ID, diploma, and health-clearance packet.",
+            "complete": false,
+            "actionLabel": "Open documents"
+          },
+          {
+            "id": "orientation",
+            "title": "Finish orientation checklist",
+            "description": "Acknowledge schedule, attendance policy, and online study readiness.",
+            "complete": false,
+            "actionLabel": "Finish now"
+          },
+          {
+            "id": "billing",
+            "title": "Set payment preference",
+            "description": "Confirm your installment plan and active card on file.",
+            "complete": false,
+            "actionLabel": "Review billing"
+          }
+        ],
+        "questions": [
+          {
+            "id": "motivation",
+            "prompt": "Why are you pursuing this healthcare training program right now?",
+            "answer": ""
+          },
+          {
+            "id": "schedule",
+            "prompt": "How will you protect time for theory study, labs, and clinical shifts each week?",
+            "answer": ""
+          },
+          {
+            "id": "support",
+            "prompt": "What kind of support will help you stay consistent through the program?",
+            "answer": ""
+          }
+        ],
+        "acknowledgements": {
+          "schedule": false,
+          "attendance": false,
+          "technology": false
+        },
+        "readinessUploads": {
+          "photoId": false,
+          "diploma": false,
+          "tbTest": false
+        },
+        "submitted": false
+      },
+      "modules": [
+        {
+          "id": "introduction",
+          "title": "Introduction",
+          "summary": "Introduction",
+          "status": "Complete",
+          "progressPercent": 67,
+          "requiredHours": 10,
+          "completedHours": 10,
+          "certificateUnlocked": false,
+          "steps": [
+            {
+              "id": "introduction-video",
+              "title": "Introduction video",
+              "type": "Video",
+              "duration": "15",
+              "note": "this is for introduction",
+              "complete": true,
+              "resourceUrl": "http://localhost:4000/uploads/learning-resources/1783050742765-compliance-platform.mp4",
+              "sectionId": "section-one",
+              "sectionTitle": "Section one",
+              "sectionDescription": "Section one"
+            },
+            {
+              "id": "pdf-introduction",
+              "title": "pdf introduction",
+              "type": "PDF",
+              "duration": "10",
+              "note": "",
+              "complete": true,
+              "resourceUrl": "http://localhost:4000/uploads/learning-resources/1783050819018-module-3-writing-ground-truth-solutions.pdf",
+              "sectionId": "section-one",
+              "sectionTitle": "Section one",
+              "sectionDescription": "Section one"
+            },
+            {
+              "id": "module-exam",
+              "title": "Module Exam",
+              "type": "Quiz",
+              "duration": "30",
+              "note": "this should be completed in order to finalize this course",
+              "complete": false,
+              "content": "this should be completed in order to finalize this course",
+              "sectionId": "section-one",
+              "sectionTitle": "Section one",
+              "sectionDescription": "Section one",
+              "examFormat": "multiple-choice",
+              "passingScore": 70,
+              "questionCount": 3,
+              "questions": [
+                {
+                  "id": "module-exam-q1",
+                  "prompt": "who is abebe",
+                  "points": 1,
+                  "options": [
+                    "kebede",
+                    "abebe",
+                    "chala",
+                    "chube"
+                  ]
+                },
+                {
+                  "id": "module-exam-q2",
+                  "prompt": "who is the developer of gta",
+                  "points": 1,
+                  "options": [
+                    "rockstar",
+                    "gameloft",
+                    "cd project",
+                    "none"
+                  ]
+                },
+                {
+                  "id": "module-exam-q3",
+                  "prompt": "is this an exam",
+                  "points": 1,
+                  "options": [
+                    "no",
+                    "yes",
+                    "maybe",
+                    "idk"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "activeModuleId": "introduction",
+      "threads": [
+        {
+          "id": "lisa-wong",
+          "recipientName": "Lisa Wong",
+          "recipientRole": "Senior Instructor",
+          "moduleId": "m3",
+          "moduleName": "Vital Signs & Monitoring",
+          "status": "Unread",
+          "preview": "Great progress on your vital signs drill. I've left feedback on your charting.",
+          "time": "2026-06-30T10:45:00.000Z",
+          "unread": true,
+          "messages": [
+            {
+              "id": "lw-1",
+              "sender": "staff",
+              "text": "Great progress on your vital signs drill. I've left feedback on your charting.",
+              "time": "2026-06-30T10:45:00.000Z"
+            },
+            {
+              "id": "lw-2",
+              "sender": "student",
+              "text": "Thank you. I'm reviewing the charting notes before I upload the skill check.",
+              "time": "2026-06-30T11:02:00.000Z"
+            }
+          ]
+        },
+        {
+          "id": "james-miller",
+          "recipientName": "James Miller",
+          "recipientRole": "Clinical Supervisor",
+          "moduleId": "m4",
+          "moduleName": "Clinical Readiness",
+          "status": "New",
+          "preview": "Bring your printed checklist to Thursday lab so we can verify your skills signoff.",
+          "time": "2026-06-29T15:00:00.000Z",
+          "unread": true,
+          "messages": [
+            {
+              "id": "jm-1",
+              "sender": "staff",
+              "text": "Bring your printed checklist to Thursday lab so we can verify your skills signoff.",
+              "time": "2026-06-29T15:00:00.000Z"
+            }
+          ]
+        }
+      ],
+      "activeThreadId": "lisa-wong",
+      "clinicalSessions": [
+        {
+          "id": "session-1",
+          "title": "Skills Lab: Vitals Rotation",
+          "date": "2026-07-01T14:00:00.000Z",
+          "location": "Skills Lab B",
+          "instructor": "James Miller",
+          "type": "Clinical",
+          "status": "Scheduled"
+        },
+        {
+          "id": "session-2",
+          "title": "Theory Review Live Session",
+          "date": "2026-07-03T09:00:00.000Z",
+          "location": "Virtual Classroom",
+          "instructor": "Lisa Wong",
+          "type": "Theory",
+          "status": "Scheduled"
+        }
+      ],
+      "clinicalLogs": [],
+      "financials": {
+        "totalTuition": 3500,
+        "amountPaid": 1750,
+        "balance": 1750,
+        "depositRequired": 500,
+        "depositPaid": true,
+        "status": "Current",
+        "paymentPlan": [
+          {
+            "id": "pay-1",
+            "date": "2026-01-15",
+            "amount": 875,
+            "status": "Completed",
+            "method": "Visa ....4242"
+          },
+          {
+            "id": "pay-2",
+            "date": "2026-04-15",
+            "amount": 875,
+            "status": "Completed",
+            "method": "Visa ....4242"
+          },
+          {
+            "id": "pay-3",
+            "date": "2026-07-15",
+            "amount": 875,
+            "status": "Upcoming",
+            "method": "Visa ....4242"
+          },
+          {
+            "id": "pay-4",
+            "date": "2026-10-15",
+            "amount": 875,
+            "status": "Upcoming",
+            "method": "Visa ....4242"
+          }
+        ]
+      },
+      "documents": [
+        {
+          "id": "photo-id",
+          "title": "Photo ID",
+          "category": "admissions",
+          "subtitle": "California driver's license",
+          "status": "Verified",
+          "submittedAt": "2026-03-12",
+          "required": true,
+          "fileName": "amara-singh-photo-id.pdf"
+        },
+        {
+          "id": "diploma",
+          "title": "High School Diploma",
+          "category": "admissions",
+          "subtitle": "Education eligibility proof",
+          "status": "Verified",
+          "submittedAt": "2026-02-28",
+          "required": true,
+          "fileName": "amara-singh-diploma.pdf"
+        },
+        {
+          "id": "tb-clearance",
+          "title": "Physical + TB Clearance",
+          "category": "clinical",
+          "subtitle": "Clinical health-compliance packet",
+          "status": "Pending Review",
+          "submittedAt": "2026-06-11",
+          "required": true,
+          "fileName": "amara-singh-tb-clearance.pdf"
+        }
+      ],
+      "forms": [
+        {
+          "id": "cdph-283b",
+          "title": "CDPH 283B Application",
+          "status": "Pending Signature",
+          "description": "State application package required before certification scheduling.",
+          "lastUpdated": "2026-06-28T13:00:00.000Z",
+          "actionLabel": "Complete form"
+        },
+        {
+          "id": "attendance-policy",
+          "title": "Attendance Policy Acknowledgement",
+          "status": "Submitted",
+          "description": "Program attendance and absence accountability policy.",
+          "lastUpdated": "2026-06-12T08:30:00.000Z",
+          "actionLabel": "View form"
+        }
+      ],
+      "entranceExam": {
+        "answers": {
+          "q1": "A. Only watch videos",
+          "q2": "B. To understand lessons and exams",
+          "q3": "C. During scheduled support hours",
+          "q4": "D. The program pauses for everyone",
+          "q5": "A. Clinical practice is optional",
+          "q6": "test"
+        },
+        "score": 6,
+        "totalQuestions": 6,
+        "rank": "A",
+        "taken": true,
+        "passed": true,
+        "submittedAt": "2026-07-03T14:21:15.821Z"
+      },
+      "enrollmentWizard": {
+        "step": 5,
+        "hhaAddon": false,
+        "scrubTop": "XS",
+        "scrubBottom": "S",
+        "shipping": "pickup",
+        "wantsToTestAtDaisy": true,
+        "agreements": {
+          "ip": true,
+          "refund": true,
+          "conduct": true,
+          "lateFee": true
+        },
+        "signature": "Dagim Assefa098",
+        "submitted": true
+      },
+      "entranceSurvey": {
+        "step": 5,
+        "answers": {
+          "healthcare_exp": "volunteer",
+          "motivation": "s",
+          "confidence": "somewhat_confident",
+          "support_needs": "ss",
+          "expectations": "s",
+          "success_definition": "s",
+          "post_grad_goals": "s",
+          "work_timeline": "immediately",
+          "instructor_support": "s",
+          "additional_info": "s"
+        },
+        "completed": true
+      },
+      "settings": {
+        "email_updates": true,
+        "sms_alerts": false,
+        "remember_device": true
+      },
+      "attendanceRecords": [],
+      "assignments": [
+        {
+          "id": "assign-1",
+          "title": "Charting practice sheet",
+          "due": "Jul 02",
+          "detail": "Upload one completed set of sample vital-sign notes.",
+          "moduleId": "m3",
+          "status": "Pending"
+        },
+        {
+          "id": "assign-2",
+          "title": "Hand hygiene checklist",
+          "due": "Jul 05",
+          "detail": "Review the PDF and confirm each compliance step.",
+          "moduleId": "m4",
+          "status": "Pending"
+        }
+      ],
+      "supportTickets": [
+        {
+          "id": "ticket-001",
+          "subject": "Clinical schedule clarification",
+          "category": "Scheduling",
+          "message": "Need confirmation on the arrival time for Thursday skills lab.",
+          "status": "In Review",
+          "createdAt": "2026-06-30T08:14:00.000Z"
+        }
+      ],
+      "cdphForm": {
+        "lastName": "Singh",
+        "firstName": "Amara",
+        "dob": "",
+        "phone": "(555) 010-2291",
+        "email": "amara.singh@classpulse.edu",
+        "city": "San Francisco",
+        "zip": "94110",
+        "conviction": false,
+        "convictionDetails": ""
+      },
+      "cdphSigned": false,
+      "liveScanGenerated": false,
+      "liveScanUploaded": false,
+      "textbookIssued": false,
+      "textbookOpened": false,
+      "exitSurveyComplete": false,
+      "learningMinutes": 25,
+      "learningSessionActive": false,
+      "reflectionResponse": "",
+      "questionOfDayAnswer": "",
+      "lastAction": "Introduction exam attempted — score below the passing threshold.",
+      "auditTrail": [
+        {
+          "id": "audit-1783089196994-560",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.module-exam.failed",
+          "target": "introduction",
+          "occurredAt": "2026-07-03T14:33:16.994Z",
+          "details": {
+            "scorePercent": 67,
+            "passingScore": 70
+          }
+        },
+        {
+          "id": "audit-1783088833410-653",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.step.toggled",
+          "target": "introduction-video",
+          "occurredAt": "2026-07-03T14:27:13.410Z",
+          "details": {
+            "moduleId": "introduction"
+          }
+        },
+        {
+          "id": "audit-1783088833402-863",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "introduction",
+          "occurredAt": "2026-07-03T14:27:13.402Z",
+          "details": {
+            "minutes": 10
+          }
+        },
+        {
+          "id": "audit-1783088828143-419",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.step.toggled",
+          "target": "pdf-introduction",
+          "occurredAt": "2026-07-03T14:27:08.143Z",
+          "details": {
+            "moduleId": "introduction"
+          }
+        },
+        {
+          "id": "audit-1783088828074-917",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "introduction",
+          "occurredAt": "2026-07-03T14:27:08.074Z",
+          "details": {
+            "minutes": 15
+          }
+        },
+        {
+          "id": "audit-1783088607715-504",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-survey.submitted",
+          "target": "entrance-survey",
+          "occurredAt": "2026-07-03T14:23:27.715Z",
+          "details": {
+            "answers": 10
+          }
+        },
+        {
+          "id": "audit-1783088606485-256",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "additional_info",
+          "occurredAt": "2026-07-03T14:23:26.485Z",
+          "details": {
+            "questionId": "additional_info"
+          }
+        },
+        {
+          "id": "audit-1783088605068-677",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "instructor_support",
+          "occurredAt": "2026-07-03T14:23:25.068Z",
+          "details": {
+            "questionId": "instructor_support"
+          }
+        },
+        {
+          "id": "audit-1783088602072-899",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "work_timeline",
+          "occurredAt": "2026-07-03T14:23:22.072Z",
+          "details": {
+            "questionId": "work_timeline"
+          }
+        },
+        {
+          "id": "audit-1783088600089-644",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "post_grad_goals",
+          "occurredAt": "2026-07-03T14:23:20.089Z",
+          "details": {
+            "questionId": "post_grad_goals"
+          }
+        },
+        {
+          "id": "audit-1783088597374-810",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "success_definition",
+          "occurredAt": "2026-07-03T14:23:17.374Z",
+          "details": {
+            "questionId": "success_definition"
+          }
+        },
+        {
+          "id": "audit-1783088595937-560",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "expectations",
+          "occurredAt": "2026-07-03T14:23:15.937Z",
+          "details": {
+            "questionId": "expectations"
+          }
+        },
+        {
+          "id": "audit-1783088593583-69",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "support_needs",
+          "occurredAt": "2026-07-03T14:23:13.583Z",
+          "details": {
+            "questionId": "support_needs"
+          }
+        },
+        {
+          "id": "audit-1783088592463-24",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "support_needs",
+          "occurredAt": "2026-07-03T14:23:12.463Z",
+          "details": {
+            "questionId": "support_needs"
+          }
+        },
+        {
+          "id": "audit-1783088591845-844",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "confidence",
+          "occurredAt": "2026-07-03T14:23:11.845Z",
+          "details": {
+            "questionId": "confidence"
+          }
+        },
+        {
+          "id": "audit-1783088587826-89",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "motivation",
+          "occurredAt": "2026-07-03T14:23:07.826Z",
+          "details": {
+            "questionId": "motivation"
+          }
+        },
+        {
+          "id": "audit-1783088587443-814",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-survey.answer.updated",
+          "target": "healthcare_exp",
+          "occurredAt": "2026-07-03T14:23:07.443Z",
+          "details": {
+            "questionId": "healthcare_exp"
+          }
+        },
+        {
+          "id": "audit-1783088583655-113",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.enrollment-wizard.submitted",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-03T14:23:03.655Z",
+          "details": {
+            "submitted": true
+          }
+        },
+        {
+          "id": "audit-1783088582700-285",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.enrollment-wizard.updated",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-03T14:23:02.700Z",
+          "details": {
+            "signature": "Dagim Assefa098"
+          }
+        },
+        {
+          "id": "audit-1783088574124-4",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.enrollment-wizard.agreements.updated",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-03T14:22:54.124Z",
+          "details": {
+            "lateFee": true
+          }
+        },
+        {
+          "id": "audit-1783088573307-221",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.enrollment-wizard.agreements.updated",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-03T14:22:53.307Z",
+          "details": {
+            "conduct": true
+          }
+        },
+        {
+          "id": "audit-1783088571978-941",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.enrollment-wizard.agreements.updated",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-03T14:22:51.978Z",
+          "details": {
+            "refund": true
+          }
+        },
+        {
+          "id": "audit-1783088571160-940",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.enrollment-wizard.agreements.updated",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-03T14:22:51.161Z",
+          "details": {
+            "ip": true
+          }
+        },
+        {
+          "id": "audit-1783088541459-822",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.enrollment-wizard.updated",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-03T14:22:21.459Z",
+          "details": {
+            "wantsToTestAtDaisy": true
+          }
+        },
+        {
+          "id": "audit-1783088540218-133",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.enrollment-wizard.updated",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-03T14:22:20.218Z",
+          "details": {
+            "wantsToTestAtDaisy": true
+          }
+        },
+        {
+          "id": "audit-1783088539416-338",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.enrollment-wizard.updated",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-03T14:22:19.416Z",
+          "details": {
+            "scrubBottom": "S"
+          }
+        },
+        {
+          "id": "audit-1783088538085-500",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.enrollment-wizard.updated",
+          "target": "enrollment-wizard",
+          "occurredAt": "2026-07-03T14:22:18.085Z",
+          "details": {
+            "scrubTop": "XS"
+          }
+        },
+        {
+          "id": "audit-1783088521355-863",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.approved",
+          "target": "entrance-exam",
+          "occurredAt": "2026-07-03T14:22:01.355Z",
+          "details": {
+            "approved": true,
+            "score": 6,
+            "passed": true
+          }
+        },
+        {
+          "id": "audit-1783088475824-750",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-exam.submitted",
+          "target": "entrance-exam",
+          "occurredAt": "2026-07-03T14:21:15.824Z",
+          "details": {
+            "reviewed": false,
+            "totalQuestions": 6
+          }
+        },
+        {
+          "id": "audit-1783088474629-96",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-exam.answer.updated",
+          "target": "q6",
+          "occurredAt": "2026-07-03T14:21:14.629Z",
+          "details": {
+            "questionId": "q6"
+          }
+        },
+        {
+          "id": "audit-1783088474443-774",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-exam.answer.updated",
+          "target": "q6",
+          "occurredAt": "2026-07-03T14:21:14.443Z",
+          "details": {
+            "questionId": "q6"
+          }
+        },
+        {
+          "id": "audit-1783088474351-622",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-exam.answer.updated",
+          "target": "q6",
+          "occurredAt": "2026-07-03T14:21:14.351Z",
+          "details": {
+            "questionId": "q6"
+          }
+        },
+        {
+          "id": "audit-1783088474000-319",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-exam.answer.updated",
+          "target": "q6",
+          "occurredAt": "2026-07-03T14:21:14.000Z",
+          "details": {
+            "questionId": "q6"
+          }
+        },
+        {
+          "id": "audit-1783088471421-260",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-exam.answer.updated",
+          "target": "q5",
+          "occurredAt": "2026-07-03T14:21:11.421Z",
+          "details": {
+            "questionId": "q5"
+          }
+        },
+        {
+          "id": "audit-1783088469976-993",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-exam.answer.updated",
+          "target": "q4",
+          "occurredAt": "2026-07-03T14:21:09.976Z",
+          "details": {
+            "questionId": "q4"
+          }
+        },
+        {
+          "id": "audit-1783088467929-955",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-exam.answer.updated",
+          "target": "q3",
+          "occurredAt": "2026-07-03T14:21:07.929Z",
+          "details": {
+            "questionId": "q3"
+          }
+        },
+        {
+          "id": "audit-1783088466197-561",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-exam.answer.updated",
+          "target": "q2",
+          "occurredAt": "2026-07-03T14:21:06.197Z",
+          "details": {
+            "questionId": "q2"
+          }
+        },
+        {
+          "id": "audit-1783088464355-339",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-exam.answer.updated",
+          "target": "q2",
+          "occurredAt": "2026-07-03T14:21:04.355Z",
+          "details": {
+            "questionId": "q2"
+          }
+        },
+        {
+          "id": "audit-1783088463380-805",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.intake.entrance-exam.answer.updated",
+          "target": "q1",
+          "occurredAt": "2026-07-03T14:21:03.380Z",
           "details": {
             "questionId": "q1"
           }

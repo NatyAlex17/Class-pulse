@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
+
+const DATA_DIR = path.join(process.cwd(), 'apps/api/.data');
+const CONFIG_FILE = path.join(DATA_DIR, 'orientation-survey-config.json');
 
 export interface SurveyQuestion {
   id: string;
@@ -59,10 +64,45 @@ const defaultOrientationSurveyConfig: OrientationSurveyConfig = {
 };
 
 @Injectable()
-export class OrientationSurveyConfigService {
+export class OrientationSurveyConfigService implements OnModuleInit {
   private config: OrientationSurveyConfig = JSON.parse(
     JSON.stringify(defaultOrientationSurveyConfig),
   );
+
+  onModuleInit() {
+    this.loadConfig();
+  }
+
+  private ensureDataDir() {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+  }
+
+  private loadConfig() {
+    try {
+      this.ensureDataDir();
+      if (fs.existsSync(CONFIG_FILE)) {
+        const fileContent = fs.readFileSync(CONFIG_FILE, 'utf-8');
+        this.config = JSON.parse(fileContent);
+      } else {
+        this.config = JSON.parse(JSON.stringify(defaultOrientationSurveyConfig));
+        this.persistConfig();
+      }
+    } catch (error) {
+      console.error('Error loading orientation survey config:', error);
+      this.config = JSON.parse(JSON.stringify(defaultOrientationSurveyConfig));
+    }
+  }
+
+  private persistConfig() {
+    try {
+      this.ensureDataDir();
+      fs.writeFileSync(CONFIG_FILE, JSON.stringify(this.config, null, 2), 'utf-8');
+    } catch (error) {
+      console.error('Error persisting orientation survey config:', error);
+    }
+  }
 
   getConfig(): OrientationSurveyConfig {
     return JSON.parse(JSON.stringify(this.config));
@@ -70,11 +110,13 @@ export class OrientationSurveyConfigService {
 
   updateConfig(newConfig: OrientationSurveyConfig): OrientationSurveyConfig {
     this.config = JSON.parse(JSON.stringify(newConfig));
+    this.persistConfig();
     return this.getConfig();
   }
 
   resetToDefault(): OrientationSurveyConfig {
     this.config = JSON.parse(JSON.stringify(defaultOrientationSurveyConfig));
+    this.persistConfig();
     return this.getConfig();
   }
 }

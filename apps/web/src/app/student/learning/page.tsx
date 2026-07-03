@@ -6,17 +6,17 @@ import {
   IconArrowRight,
   IconBell,
   IconBolt,
+  IconBook2,
   IconBrain,
+  IconCheck,
   IconCircleCheckFilled,
   IconClockHour4,
+  IconFile,
   IconLock,
+  IconMenu2,
   IconPlayerPlayFilled,
   IconSend2,
   IconUserCircle,
-  IconBook2,
-  IconFile,
-  IconCheck,
-  IconMenu2,
   IconX,
 } from '@tabler/icons-react';
 import { useStudentDemo } from '@/components/student/student-portal-store';
@@ -26,158 +26,15 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
-// Quiz questions with answers
-const quizQuestions = {
-  'lesson-3': [
-    { id: 'q1', question: 'What is the primary goal of patient care?', options: ['A) Profit', 'B) Patient wellbeing and safety', 'C) Efficiency', 'D) Documentation'], correct: 'B' },
-    { id: 'q2', question: 'What does FERPA protect?', options: ['A) Medical records', 'B) Student educational records', 'C) Financial info', 'D) Employment'], correct: 'B' },
-    { id: 'q3', question: 'What is the first step in infection control?', options: ['A) Glove up', 'B) Hand hygiene', 'C) PPE', 'D) Disinfect'], correct: 'B' },
-  ],
-  'lesson-6': [
-    { id: 'q1', question: 'The circulatory system includes:', options: ['A) Heart and lungs', 'B) Heart and blood vessels', 'C) Lungs and kidneys', 'D) Brain and nerves'], correct: 'B' },
-    { id: 'q2', question: 'How many chambers does the heart have?', options: ['A) 2', 'B) 3', 'C) 4', 'D) 5'], correct: 'C' },
-    { id: 'q3', question: 'What is the function of hemoglobin?', options: ['A) Carry oxygen', 'B) Fight infection', 'C) Clot blood', 'D) Regulate pH'], correct: 'A' },
-  ],
-  'lesson-11': [
-    { id: 'q1', question: 'Normal body temperature is:', options: ['A) 96.8°F', 'B) 98.6°F', 'C) 100°F', 'D) 102°F'], correct: 'B' },
-    { id: 'q2', question: 'Normal resting heart rate for adults:', options: ['A) 40-60 bpm', 'B) 60-100 bpm', 'C) 100-120 bpm', 'D) 120-140 bpm'], correct: 'B' },
-    { id: 'q3', question: 'Normal respiratory rate:', options: ['A) 8-12 breaths/min', 'B) 12-16 breaths/min', 'C) 16-20 breaths/min', 'D) 20-24 breaths/min'], correct: 'C' },
-  ],
-};
-
-// Enhanced module content with video and document support
-const moduleContent = {
-  m1: {
-    id: 'm1',
-    title: 'Foundation of Patient Care',
-    lessons: [
-      {
-        id: 'lesson-1',
-        title: 'Intro lecture',
-        type: 'Video' as const,
-        duration: '18 min',
-        content: 'Core ethics, workflow, and patient communication fundamentals',
-        videoUrl: 'https://www.youtube.com/embed/gUWJ-6nL5-8?si=NgKzHrDWZAnCynR5',
-      },
-      {
-        id: 'lesson-2',
-        title: 'Handbook packet',
-        type: 'PDF' as const,
-        duration: '6 pages',
-        content: 'FERPA and attendance policy overview',
-        documentUrl: '#',
-      },
-      {
-        id: 'lesson-3',
-        title: 'Readiness checkpoint',
-        type: 'Quiz' as const,
-        duration: '10 questions',
-        content: 'Test your knowledge of core concepts',
-      },
-    ],
-  },
-  m2: {
-    id: 'm2',
-    title: 'Anatomy & Physiology',
-    lessons: [
-      {
-        id: 'lesson-4',
-        title: 'Body systems overview',
-        type: 'Video' as const,
-        duration: '22 min',
-        content: 'Complete overview of major body systems',
-        videoUrl: 'https://www.youtube.com/embed/gUWJ-6nL5-8?si=NgKzHrDWZAnCynR5',
-      },
-      {
-        id: 'lesson-5',
-        title: 'System terminology notes',
-        type: 'Reading' as const,
-        duration: '12 min',
-        content: 'Essential medical terminology and concepts',
-        documentUrl: '#',
-      },
-      {
-        id: 'lesson-6',
-        title: 'Module assessment',
-        type: 'Quiz' as const,
-        duration: '15 questions',
-        content: 'Assessment of anatomy knowledge',
-      },
-    ],
-  },
-  m3: {
-    id: 'm3',
-    title: 'Vital Signs & Monitoring',
-    lessons: [
-      {
-        id: 'lesson-7',
-        title: 'Vital signs lecture',
-        type: 'Video' as const,
-        duration: '24 min',
-        content: 'Learn how to measure and interpret vital signs',
-        videoUrl: 'https://www.youtube.com/embed/gUWJ-6nL5-8?si=NgKzHrDWZAnCynR5',
-      },
-      {
-        id: 'lesson-8',
-        title: 'Procedure PDF',
-        type: 'PDF' as const,
-        duration: '8 pages',
-        content: 'Printable bedside checklist and procedures',
-        documentUrl: '#',
-      },
-      {
-        id: 'lesson-9',
-        title: 'Clinical reading notes',
-        type: 'Reading' as const,
-        duration: '14 min',
-        content: 'Reference ranges and documentation standards',
-        documentUrl: '#',
-      },
-      {
-        id: 'lesson-10',
-        title: 'Skill demonstration',
-        type: 'Skill Check' as const,
-        duration: '1 upload',
-        content: 'Submit your practical demonstration',
-      },
-      {
-        id: 'lesson-11',
-        title: 'Module exam',
-        type: 'Quiz' as const,
-        duration: '20 questions',
-        content: 'Final assessment for module completion',
-      },
-    ],
-  },
-  m4: {
-    id: 'm4',
-    title: 'Clinical Readiness',
-    lessons: [
-      {
-        id: 'lesson-12',
-        title: 'Simulation briefing',
-        type: 'Video' as const,
-        duration: '20 min',
-        content: 'Preparation for clinical simulation',
-        videoUrl: 'https://www.youtube.com/embed/gUWJ-6nL5-8?si=NgKzHrDWZAnCynR5',
-      },
-      {
-        id: 'lesson-13',
-        title: 'Clinical packet',
-        type: 'PDF' as const,
-        duration: '5 pages',
-        content: 'Lab expectations and supply checklist',
-        documentUrl: '#',
-      },
-      {
-        id: 'lesson-14',
-        title: 'Final module exam',
-        type: 'Quiz' as const,
-        duration: '25 questions',
-        content: 'Completion assessment',
-      },
-    ],
-  },
+type ModuleExamResult = {
+  graded: boolean;
+  passed: boolean;
+  scorePercent: number;
+  earnedPoints: number;
+  totalPoints: number;
+  passingScore: number;
+  correctCount: number;
+  totalQuestions: number;
 };
 
 const suggestionQuestions = [
@@ -211,7 +68,6 @@ export default function StudentLearningPage() {
     examUnlocked,
     portalUnlocked,
     workflowStage,
-    intakeJourney,
     currentModule,
     modules,
     advanceLearning,
@@ -228,10 +84,11 @@ export default function StudentLearningPage() {
   const [workflowOpen, setWorkflowOpen] = React.useState(false);
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
   const [selectedLessonId, setSelectedLessonId] = React.useState<string>('');
-  const [viewMode, setViewMode] = React.useState<'lesson' | 'module'>('lesson');
+  const [viewMode, setViewMode] = React.useState<'module' | 'lesson'>('module');
   const [quizAnswers, setQuizAnswers] = React.useState<Record<string, string>>({});
-  const [quizSubmitted, setQuizSubmitted] = React.useState(false);
-  const [quizScore, setQuizScore] = React.useState(0);
+  const [examResult, setExamResult] = React.useState<ModuleExamResult | null>(null);
+  const [examError, setExamError] = React.useState<string | null>(null);
+  const [examSubmitting, setExamSubmitting] = React.useState(false);
   const [completedLessons, setCompletedLessons] = React.useState<Set<string>>(new Set());
   const remainingMinutes = Math.max(480 - learningMinutes, 0);
   const engagementPercent = Math.round((learningMinutes / 480) * 100);
@@ -240,28 +97,34 @@ export default function StudentLearningPage() {
   const selectedLesson = lessons.find((lesson) => lesson.id === selectedLessonId) ?? lessons[0];
   const currentLessonIndex = selectedLesson ? lessons.findIndex((lesson) => lesson.id === selectedLesson.id) : -1;
   const nextLesson = currentLessonIndex >= 0 ? lessons[currentLessonIndex + 1] : undefined;
-  const quizQuestionSet = selectedLesson?.type === 'Quiz'
-    ? (intakeJourney?.entranceExam.questions ?? []).map((question) => ({
-        ...question,
-        question: question.prompt,
-        correct: question.preferredAnswer,
-      }))
-    : [];
-  const quizPassingScoreCount = intakeJourney?.entranceExam.passingScore ?? quizQuestionSet.length;
-  const quizPassingPercent =
-    quizQuestionSet.length > 0 ? Math.round((quizPassingScoreCount / quizQuestionSet.length) * 100) : 70;
   const nextModuleId = modules[modules.findIndex((module) => module.id === currentModule.id) + 1]?.id;
-  const lessonSections = lessons.reduce<Array<{ title: string; lessons: typeof lessons }>>((sections, lesson) => {
-    const title = lesson.sectionTitle || 'Module Content';
-    const existing = sections.find((section) => section.title === title);
+  const quizStep = lessons.find((lesson) => lesson.type === 'Quiz');
+  const lessonSections = lessons.reduce<
+    Array<{ id: string; title: string; description?: string; lessons: typeof lessons }>
+  >((sections, lesson) => {
+    const id = lesson.sectionId || 'module-content';
+    const existing = sections.find((section) => section.id === id);
 
     if (existing) {
       existing.lessons.push(lesson);
       return sections;
     }
 
-    return [...sections, { title, lessons: [lesson] }];
+    return [
+      ...sections,
+      {
+        id,
+        title: lesson.sectionTitle || 'Module Content',
+        description: lesson.sectionDescription,
+        lessons: [lesson],
+      },
+    ];
   }, []);
+  const quizQuestionSet = selectedLesson?.type === 'Quiz' ? (selectedLesson.questions ?? []) : [];
+  const quizPassingPercent = selectedLesson?.passingScore ?? 70;
+  const unansweredCount = quizQuestionSet.filter(
+    (question) => !(quizAnswers[question.id] ?? '').trim(),
+  ).length;
 
   React.useEffect(() => {
     void refreshLearning();
@@ -272,6 +135,10 @@ export default function StudentLearningPage() {
       setWorkflowOpen(true);
     }
   }, [portalUnlocked]);
+
+  React.useEffect(() => {
+    setViewMode('module');
+  }, [currentModule.id]);
 
   React.useEffect(() => {
     setSelectedLessonId((current) => {
@@ -291,9 +158,61 @@ export default function StudentLearningPage() {
 
   React.useEffect(() => {
     setQuizAnswers({});
-    setQuizSubmitted(false);
-    setQuizScore(0);
+    setExamError(null);
   }, [selectedLessonId]);
+
+  const isLessonComplete = (lessonId: string) =>
+    completedLessons.has(lessonId) || lessons.find((lesson) => lesson.id === lessonId)?.complete === true;
+
+  const openLesson = (lessonId: string) => {
+    setSelectedLessonId(lessonId);
+    setViewMode('lesson');
+  };
+
+  const openSection = (sectionId: string) => {
+    const section = lessonSections.find((item) => item.id === sectionId);
+    if (!section) {
+      return;
+    }
+
+    const target = section.lessons.find((lesson) => !isLessonComplete(lesson.id)) ?? section.lessons[0];
+    if (target) {
+      openLesson(target.id);
+    }
+  };
+
+  const handleSubmitExam = async (answers?: Record<string, string>) => {
+    if (!selectedLesson) {
+      return;
+    }
+
+    setExamSubmitting(true);
+    setExamError(null);
+    const outcome = await submitModuleExam({ stepId: selectedLesson.id, answers });
+    setExamSubmitting(false);
+
+    if (outcome.ok) {
+      setExamResult(outcome.result);
+      if (outcome.result.passed) {
+        advanceLearning(30);
+      }
+    } else {
+      setExamError(outcome.error);
+    }
+  };
+
+  const handleCompleteModuleWithoutExam = async () => {
+    setExamSubmitting(true);
+    setExamError(null);
+    const outcome = await submitModuleExam();
+    setExamSubmitting(false);
+
+    if (outcome.ok) {
+      setExamResult(outcome.result);
+    } else {
+      setExamError(outcome.error);
+    }
+  };
 
   return (
     <main className="h-screen overflow-hidden bg-background text-on-surface">
@@ -379,25 +298,33 @@ export default function StudentLearningPage() {
           {sidebarOpen && (
             <div className="p-4 space-y-6">
               <div>
-                <h3 className="font-display text-[18px] font-semibold text-on-surface mb-4">
-                  {currentModule.title}
-                </h3>
+                <button
+                  onClick={() => setViewMode('module')}
+                  className={cn(
+                    'mb-4 flex w-full items-center gap-2 rounded-[14px] border p-3 text-left transition',
+                    viewMode === 'module'
+                      ? 'border-primary/30 bg-primary/10'
+                      : 'border-border-subtle bg-surface hover:border-primary/20',
+                  )}
+                >
+                  <IconBook2 className="size-4 shrink-0 text-primary" />
+                  <span className="font-display text-[15px] font-semibold text-on-surface">
+                    {currentModule.title}
+                  </span>
+                </button>
                 <div className="space-y-2">
                   {lessonSections.map((section) => (
-                    <div key={section.title} className="space-y-2">
+                    <div key={section.id} className="space-y-2">
                       <p className="px-2 font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
                         {section.title}
                       </p>
                       {section.lessons.map((lesson, index) => {
-                        const isSelected = lesson.id === selectedLessonId;
-                        const isComplete = currentModule.steps.find((step) => step.id === lesson.id)?.complete || false;
+                        const isSelected = viewMode === 'lesson' && lesson.id === selectedLessonId;
+                        const isComplete = isLessonComplete(lesson.id);
                         return (
                           <button
                             key={lesson.id}
-                            onClick={() => {
-                              setSelectedLessonId(lesson.id);
-                              setViewMode('lesson');
-                            }}
+                            onClick={() => openLesson(lesson.id)}
                             className={cn(
                               'w-full text-left rounded-[14px] border p-3 text-sm transition',
                               isSelected
@@ -426,26 +353,47 @@ export default function StudentLearningPage() {
 
               {/* Module Navigation */}
               <div className="pt-4 border-t border-border-subtle space-y-3">
-                {modules.filter(m => m.status !== 'Locked').map(mod => (
-                  <button
-                    key={mod.id}
-                    onClick={() => {
-                      selectModule(mod.id);
-                      setSelectedLessonId(mod.steps[0]?.id ?? '');
-                    }}
-                    className={cn(
-                      'w-full text-left rounded-[14px] border p-3 text-sm transition',
-                      currentModule.id === mod.id
-                        ? 'border-primary/30 bg-primary/10'
-                        : 'border-border-subtle bg-surface hover:border-primary/20'
-                    )}
-                  >
-                    <p className="font-semibold text-on-surface text-[12px]">{mod.title}</p>
-                    <p className="text-[11px] text-on-surface-variant mt-1">
-                      {mod.completedHours}/{mod.requiredHours} hours
-                    </p>
-                  </button>
-                ))}
+                <p className="px-2 font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+                  All Modules
+                </p>
+                {modules.map((mod, index) => {
+                  const locked = mod.status === 'Locked';
+                  return (
+                    <button
+                      key={mod.id}
+                      disabled={locked}
+                      onClick={() => {
+                        selectModule(mod.id);
+                        setViewMode('module');
+                        setSelectedLessonId(mod.steps[0]?.id ?? '');
+                      }}
+                      className={cn(
+                        'w-full text-left rounded-[14px] border p-3 text-sm transition',
+                        locked
+                          ? 'border-border-subtle bg-surface-container opacity-60 cursor-not-allowed'
+                          : currentModule.id === mod.id
+                            ? 'border-primary/30 bg-primary/10'
+                            : 'border-border-subtle bg-surface hover:border-primary/20',
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold text-on-surface text-[12px]">
+                          {index + 1}. {mod.title}
+                        </p>
+                        {locked ? (
+                          <IconLock className="size-4 shrink-0 text-on-surface-variant" />
+                        ) : mod.status === 'Complete' ? (
+                          <IconCircleCheckFilled className="size-4 shrink-0 text-success" />
+                        ) : null}
+                      </div>
+                      <p className="text-[11px] text-on-surface-variant mt-1">
+                        {locked
+                          ? 'Unlocks after the previous module'
+                          : `${mod.completedHours}/${mod.requiredHours} hours • ${mod.progressPercent}%`}
+                      </p>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -465,9 +413,226 @@ export default function StudentLearningPage() {
                 </Button>
               </div>
             </div>
-          ) : viewMode === 'lesson' && selectedLesson ? (
+          ) : examResult ? (
+            <div className="p-8">
+              <div className="mx-auto max-w-2xl rounded-[20px] border border-border-subtle bg-surface-muted p-8">
+                <div
+                  className={cn(
+                    'rounded-[16px] p-8 text-center',
+                    examResult.passed
+                      ? 'bg-success/10 border border-success/30'
+                      : 'bg-warning/10 border border-warning/30',
+                  )}
+                >
+                  {examResult.graded ? (
+                    <>
+                      <h4
+                        className={cn(
+                          'font-display text-[42px] font-bold',
+                          examResult.passed ? 'text-success' : 'text-warning',
+                        )}
+                      >
+                        {examResult.scorePercent}%
+                      </h4>
+                      <p
+                        className={cn(
+                          'text-sm font-semibold mt-2',
+                          examResult.passed ? 'text-success' : 'text-warning',
+                        )}
+                      >
+                        {examResult.passed ? '✓ PASSED — Great job!' : '✗ Not passed yet'}
+                      </p>
+                      <p className="text-sm text-on-surface-variant mt-3">
+                        {examResult.correctCount}/{examResult.totalQuestions} questions correct •{' '}
+                        {examResult.earnedPoints}/{examResult.totalPoints} points • passing score{' '}
+                        {examResult.passingScore}%
+                      </p>
+                      <p className="text-sm text-on-surface-variant mt-2">
+                        {examResult.passed
+                          ? nextModuleId
+                            ? 'The next module is now unlocked. Keep going!'
+                            : 'You have completed the final module of this program.'
+                          : 'Review the module materials and retake the assessment when you are ready.'}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h4 className="font-display text-[32px] font-bold text-success">Module Complete</h4>
+                      <p className="text-sm text-on-surface-variant mt-3">
+                        This module&apos;s checkpoint was recorded.{' '}
+                        {nextModuleId ? 'The next module is now unlocked.' : 'You have finished the program modules.'}
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                <Button
+                  className="mt-6 h-11 w-full rounded-[14px]"
+                  onClick={() => {
+                    setExamResult(null);
+                    setQuizAnswers({});
+                    setViewMode('module');
+                  }}
+                >
+                  {examResult.passed ? 'Continue' : 'Review & Retake'}
+                  <IconArrowRight className="size-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          ) : viewMode === 'module' ? (
             <div className="p-8 space-y-6">
-              {/* Video or Document Viewer */}
+              {/* Module Header */}
+              <div className="rounded-[20px] border border-border-subtle bg-surface-muted p-8">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="max-w-2xl">
+                    <p className="font-mono text-[12px] uppercase tracking-[0.12em] text-primary">
+                      Module {String(modules.findIndex((module) => module.id === currentModule.id) + 1).padStart(2, '0')}
+                    </p>
+                    <h2 className="mt-2 font-display text-[32px] font-bold tracking-[-0.02em] text-on-surface">
+                      {currentModule.title}
+                    </h2>
+                    <p className="mt-2 text-base leading-7 text-on-surface-variant">{currentModule.summary}</p>
+                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                      <Badge
+                        variant={
+                          currentModule.status === 'Complete'
+                            ? 'success'
+                            : currentModule.status === 'In Progress'
+                              ? 'info'
+                              : 'neutral'
+                        }
+                      >
+                        {currentModule.status}
+                      </Badge>
+                      <span className="text-sm text-on-surface-variant">
+                        {lessonSections.length} section{lessonSections.length === 1 ? '' : 's'} • {lessons.length}{' '}
+                        lesson{lessons.length === 1 ? '' : 's'}
+                      </span>
+                      <span className="text-sm text-on-surface-variant">
+                        {currentModule.completedHours}/{currentModule.requiredHours} hours
+                      </span>
+                      {currentModule.examScore ? (
+                        <span className="font-mono text-sm text-success">Exam {currentModule.examScore}</span>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="min-w-[220px] rounded-[16px] border border-primary/15 bg-primary/5 p-5">
+                    <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+                      Module Progress
+                    </p>
+                    <p className="mt-2 font-display text-[36px] font-bold text-primary">
+                      {currentModule.progressPercent}%
+                    </p>
+                    <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-surface">
+                      <div
+                        className="h-full rounded-full bg-primary"
+                        style={{ width: `${currentModule.progressPercent}%` }}
+                      />
+                    </div>
+                    <Button
+                      className="mt-4 h-10 w-full rounded-[12px]"
+                      onClick={() => {
+                        const target = lessons.find((lesson) => !isLessonComplete(lesson.id)) ?? lessons[0];
+                        if (target) {
+                          openLesson(target.id);
+                        }
+                      }}
+                      disabled={lessons.length === 0}
+                    >
+                      <IconPlayerPlayFilled className="size-4 mr-2" />
+                      {currentModule.progressPercent > 0 ? 'Continue Learning' : 'Start Learning'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sections List */}
+              <div className="space-y-4">
+                <p className="font-mono text-[12px] uppercase tracking-[0.12em] text-on-surface-variant">
+                  Sections in this module
+                </p>
+                {lessonSections.length === 0 ? (
+                  <div className="rounded-[18px] border border-warning/20 bg-warning/5 p-5 text-sm text-on-surface">
+                    No learning content has been configured for this module yet. Check back soon.
+                  </div>
+                ) : (
+                  lessonSections.map((section, sectionIndex) => {
+                    const sectionComplete = section.lessons.filter((lesson) => isLessonComplete(lesson.id)).length;
+                    const allDone = sectionComplete === section.lessons.length;
+
+                    return (
+                      <div
+                        key={section.id}
+                        className="rounded-[20px] border border-border-subtle bg-surface p-6 transition hover:border-primary/30"
+                      >
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="flex gap-4">
+                            <div
+                              className={cn(
+                                'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold',
+                                allDone ? 'bg-success text-white' : 'bg-primary/10 text-primary',
+                              )}
+                            >
+                              {allDone ? <IconCheck className="size-5" /> : sectionIndex + 1}
+                            </div>
+                            <div>
+                              <h3 className="font-display text-[20px] font-semibold text-on-surface">
+                                {section.title}
+                              </h3>
+                              {section.description ? (
+                                <p className="mt-1 text-sm leading-6 text-on-surface-variant">{section.description}</p>
+                              ) : null}
+                              <p className="mt-2 text-sm text-on-surface-variant">
+                                {sectionComplete}/{section.lessons.length} lessons complete
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            variant={allDone ? 'secondary' : 'default'}
+                            className="rounded-[12px] shrink-0"
+                            onClick={() => openSection(section.id)}
+                          >
+                            {allDone ? 'Review Section' : sectionComplete > 0 ? 'Continue Section' : 'Start Section'}
+                            <IconArrowRight className="size-4 ml-2" />
+                          </Button>
+                        </div>
+
+                        <div className="mt-4 grid gap-2 md:grid-cols-2">
+                          {section.lessons.map((lesson) => {
+                            const isComplete = isLessonComplete(lesson.id);
+                            return (
+                              <button
+                                key={lesson.id}
+                                onClick={() => openLesson(lesson.id)}
+                                className="flex items-center gap-3 rounded-[14px] border border-border-subtle bg-surface-muted p-3 text-left transition hover:border-primary/30 hover:bg-primary/5"
+                              >
+                                <div
+                                  className={cn(
+                                    'flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
+                                    isComplete ? 'bg-success text-white' : 'bg-primary/10 text-primary',
+                                  )}
+                                >
+                                  {isComplete ? <IconCheck className="size-4" /> : <IconPlayerPlayFilled className="size-3" />}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-sm font-semibold text-on-surface">{lesson.title}</p>
+                                  <p className="text-[11px] text-on-surface-variant">
+                                    {lesson.type} • {lesson.duration}
+                                  </p>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          ) : selectedLesson ? (
+            <div className="p-8 space-y-6">
+              {/* Video Viewer */}
               {selectedLesson.type === 'Video' && (
                 <div className="space-y-4">
                   <div className="rounded-[20px] overflow-hidden shadow-lg">
@@ -606,115 +771,6 @@ export default function StudentLearningPage() {
                 </div>
               )}
 
-              {false && (selectedLesson.type === 'PDF' || selectedLesson.type === 'Reading' || selectedLesson.type === 'Link') && (
-                <div className="rounded-[20px] overflow-hidden border border-border-subtle bg-surface-muted space-y-6">
-                  {/* Document Viewer */}
-                  <div className="bg-surface rounded-[20px] p-8 space-y-6">
-                    <div className="flex items-start gap-4">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-[14px] bg-primary/10 text-primary shrink-0">
-                        <IconFile className="size-8" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-display text-[24px] font-bold text-on-surface">{selectedLesson.title}</h3>
-                        <p className="mt-1 text-on-surface-variant">{selectedLesson.note}</p>
-                      </div>
-                    </div>
-
-                    {/* Document Content */}
-                    <div className="rounded-[16px] bg-surface-muted p-8 border border-border-subtle space-y-6 max-h-[600px] overflow-y-auto">
-                      <div className="space-y-4">
-                        <h4 className="font-display text-[20px] font-semibold text-on-surface">
-                          {selectedLesson.type === 'PDF'
-                            ? 'Clinical Procedures & Checklists'
-                            : selectedLesson.type === 'Link'
-                              ? 'External Learning Resource'
-                              : 'Learning Module'}
-                        </h4>
-
-                        {selectedLesson.type === 'PDF' && (
-                          <div className="space-y-4">
-                            <div className="bg-surface p-4 rounded-[12px] border border-border-subtle space-y-3">
-                              <h5 className="font-semibold text-on-surface">Vital Signs Assessment Checklist</h5>
-                              <div className="space-y-2 text-sm text-on-surface-variant">
-                                <label className="flex items-center gap-2"><input type="checkbox" /> Patient identification and consent</label>
-                                <label className="flex items-center gap-2"><input type="checkbox" /> Wash hands and gather equipment</label>
-                                <label className="flex items-center gap-2"><input type="checkbox" /> Measure temperature (axillary/oral)</label>
-                                <label className="flex items-center gap-2"><input type="checkbox" /> Assess pulse rate and rhythm</label>
-                                <label className="flex items-center gap-2"><input type="checkbox" /> Count respiration rate for 60 seconds</label>
-                                <label className="flex items-center gap-2"><input type="checkbox" /> Measure blood pressure bilaterally</label>
-                                <label className="flex items-center gap-2"><input type="checkbox" /> Document findings accurately</label>
-                                <label className="flex items-center gap-2"><input type="checkbox" /> Report abnormalities to supervisor</label>
-                              </div>
-                            </div>
-
-                            <div className="bg-info/5 p-4 rounded-[12px] border border-info/20 space-y-3">
-                              <h5 className="font-semibold text-info">Normal Values Reference</h5>
-                              <div className="grid grid-cols-2 gap-3 text-sm text-on-surface-variant">
-                                <div><strong>Temperature:</strong> 98.6°F (37°C)</div>
-                                <div><strong>Pulse:</strong> 60-100 bpm</div>
-                                <div><strong>Respiration:</strong> 12-20 breaths/min</div>
-                                <div><strong>BP:</strong> &lt;120/&lt;80 mmHg</div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {(selectedLesson.type === 'Reading' || selectedLesson.type === 'Link') && (
-                          <div className="space-y-4">
-                            <div className="bg-surface p-4 rounded-[12px] border border-border-subtle space-y-3">
-                              <h5 className="font-semibold text-on-surface">Core Concepts</h5>
-                              <div className="space-y-2 text-sm text-on-surface-variant leading-relaxed">
-                                <p>{selectedLesson.content || selectedLesson.note}</p>
-                                <p>
-                                  <strong>Student Action:</strong> Review the assigned resource and capture the key ideas before moving to the next lesson item.
-                                </p>
-                                <p>
-                                  <strong>Completion Rule:</strong> Mark the lesson complete only after you have opened the material and reviewed it fully.
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="bg-primary/5 p-4 rounded-[12px] border border-primary/20 space-y-3">
-                              <h5 className="font-semibold text-primary">Key Concepts to Remember</h5>
-                              <ul className="space-y-2 text-sm text-on-surface-variant">
-                                <li>• Resources are grouped by section to mimic a modern course curriculum.</li>
-                                <li>• Videos, PDFs, and links can all be used as trackable lesson items.</li>
-                                <li>• Use the instructor panel if a linked reference needs clarification.</li>
-                              </ul>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="px-8 pb-8 flex gap-3">
-                    <Button
-                      className="flex-1 rounded-[14px] h-11"
-                      variant="secondary"
-                      disabled={!selectedLesson.resourceUrl}
-                      onClick={() => window.open(selectedLesson.resourceUrl || '#', '_blank')}
-                    >
-                      <IconFile className="size-4 mr-2" />
-                      {selectedLesson.type === 'PDF' ? 'Open PDF' : selectedLesson.type === 'Link' ? 'Open Link' : 'Open Resource'}
-                    </Button>
-                    <Button
-                      className="flex-1 rounded-[14px] h-11 bg-success hover:bg-success/90"
-                      disabled={completedLessons.has(selectedLesson.id)}
-                      onClick={() => {
-                        setCompletedLessons(new Set([...completedLessons, selectedLesson.id]));
-                        markStepComplete(currentModule.id, selectedLesson.id);
-                        advanceLearning(15);
-                      }}
-                    >
-                      <IconCheck className="size-4 mr-2" />
-                      {completedLessons.has(selectedLesson.id) ? 'Completed ✓' : 'Mark as Complete'}
-                    </Button>
-                  </div>
-                </div>
-              )}
-
               {selectedLesson.type === 'Quiz' && (
                 <div className="rounded-[20px] border border-border-subtle bg-surface-muted p-8">
                   <div className="mb-6 flex items-center gap-4">
@@ -739,226 +795,102 @@ export default function StudentLearningPage() {
                       </div>
                       <div className="rounded-[14px] border border-border-subtle bg-surface-muted p-4">
                         <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
-                          Section
+                          Passing Score
                         </p>
                         <p className="mt-2 text-sm font-semibold text-on-surface">
-                          {selectedLesson.sectionTitle || 'Assessment'}
+                          {quizQuestionSet.length > 0 ? `${quizPassingPercent}%` : 'Completion checkpoint'}
+                        </p>
+                        <p className="mt-1 text-[11px] text-on-surface-variant">
+                          {quizQuestionSet.length > 0
+                            ? `${quizQuestionSet.length} question${quizQuestionSet.length === 1 ? '' : 's'} • ${selectedLesson.duration}`
+                            : selectedLesson.duration}
                         </p>
                       </div>
                     </div>
 
-                    <div className="grid gap-4 md:grid-cols-3">
-                      <div className="rounded-[14px] border border-border-subtle bg-surface p-4">
-                        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Assessment Type</p>
-                        <p className="mt-2 text-sm font-semibold text-on-surface">Configured module exam</p>
+                    {completedLessons.has(selectedLesson.id) ? (
+                      <div className="rounded-[16px] border border-success/30 bg-success/10 p-5 text-center">
+                        <p className="text-sm font-semibold text-success">✓ Assessment completed</p>
+                        {currentModule.examScore ? (
+                          <p className="mt-1 text-sm text-on-surface-variant">Score: {currentModule.examScore}</p>
+                        ) : null}
                       </div>
-                      <div className="rounded-[14px] border border-border-subtle bg-surface p-4">
-                        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Duration</p>
-                        <p className="mt-2 text-sm font-semibold text-on-surface">{selectedLesson.duration}</p>
-                      </div>
-                      <div className="rounded-[14px] border border-border-subtle bg-surface p-4">
-                        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Status</p>
-                        <p className="mt-2 text-sm font-semibold text-on-surface">
-                          {completedLessons.has(selectedLesson.id) ? 'Completed' : 'Ready to launch'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <Button
-                      className="h-11 w-full rounded-[14px] bg-success hover:bg-success/90"
-                      disabled={completedLessons.has(selectedLesson.id)}
-                      onClick={() => {
-                        setCompletedLessons(new Set([...completedLessons, selectedLesson.id]));
-                        markStepComplete(currentModule.id, selectedLesson.id);
-                        submitModuleExam();
-                        advanceLearning(30);
-                      }}
-                    >
-                      {completedLessons.has(selectedLesson.id) ? 'Assessment Completed' : 'Launch Assessment'}
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {false && selectedLesson.type === 'Quiz' && quizQuestionSet.length === 0 && (
-                <div className="rounded-[20px] border border-border-subtle bg-surface-muted p-8">
-                  <div className="mb-6 flex items-center gap-4">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-[14px] bg-info/10 text-info">
-                      <IconCircleCheckFilled className="size-8" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-display text-[24px] font-bold text-on-surface">{selectedLesson.title}</h3>
-                      <p className="mt-1 text-on-surface-variant">{selectedLesson.note}</p>
-                    </div>
-                  </div>
-
-                  <div className="rounded-[16px] border border-border-subtle bg-surface p-6 space-y-6">
-                    <div className="rounded-[16px] border border-border-subtle bg-surface-muted p-5">
-                      <h4 className="font-semibold text-on-surface">Assessment Overview</h4>
-                      <p className="mt-2 text-sm leading-6 text-on-surface-variant">
-                        {selectedLesson.content || selectedLesson.note || 'Launch this assessment after reviewing the module materials.'}
-                      </p>
-                    </div>
-
-                    <div className="grid gap-4 md:grid-cols-3">
-                      <div className="rounded-[14px] border border-border-subtle bg-surface p-4">
-                        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Assessment Type</p>
-                        <p className="mt-2 text-sm font-semibold text-on-surface">Configured module exam</p>
-                      </div>
-                      <div className="rounded-[14px] border border-border-subtle bg-surface p-4">
-                        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Duration</p>
-                        <p className="mt-2 text-sm font-semibold text-on-surface">{selectedLesson.duration}</p>
-                      </div>
-                      <div className="rounded-[14px] border border-border-subtle bg-surface p-4">
-                        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Completion</p>
-                        <p className="mt-2 text-sm font-semibold text-on-surface">Marks this lesson complete</p>
-                      </div>
-                    </div>
-
-                    <Button
-                      className="h-11 w-full rounded-[14px] bg-success hover:bg-success/90"
-                      onClick={() => {
-                        setQuizScore(100);
-                        setQuizSubmitted(true);
-                        setCompletedLessons(new Set([...completedLessons, selectedLesson.id]));
-                        markStepComplete(currentModule.id, selectedLesson.id);
-                        advanceLearning(30);
-                      }}
-                    >
-                      Complete Assessment
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {false && selectedLesson.type === 'Quiz' && quizQuestionSet.length > 0 && (
-                <div className="rounded-[20px] border border-border-subtle bg-surface-muted p-8">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className={cn(
-                      "flex h-16 w-16 items-center justify-center rounded-[14px]",
-                      quizSubmitted && quizScore >= quizPassingPercent ? 'bg-success/10 text-success' : 'bg-info/10 text-info'
-                    )}>
-                      <IconCircleCheckFilled className="size-8" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-display text-[24px] font-bold text-on-surface">{selectedLesson.title}</h3>
-                      <p className="mt-1 text-on-surface-variant">{selectedLesson.note}</p>
-                    </div>
-                  </div>
-
-                  <div className="rounded-[16px] border border-border-subtle bg-surface p-6 space-y-6">
-                    {!quizSubmitted ? (
+                    ) : quizQuestionSet.length > 0 ? (
                       <>
-                        <div>
-                          <h4 className="font-semibold text-on-surface mb-4">Quiz Instructions</h4>
-                          <p className="text-sm text-on-surface-variant leading-relaxed">
-                            Complete this assessment to verify your understanding. You must score at least {quizPassingPercent}% to pass.
-                          </p>
-                        </div>
-
                         <div className="space-y-4">
-                          {quizQuestionSet.map((q, idx) => (
-                            <div key={q.id} className="p-4 border border-border-subtle rounded-[12px] hover:bg-surface-low transition">
-                              <p className="font-semibold text-sm text-on-surface mb-3">Question {idx + 1}: {q.prompt}</p>
-                              {q.type === 'text' ? (
-                                <Input
-                                  value={quizAnswers[q.id] ?? ''}
-                                  onChange={(event) =>
-                                    setQuizAnswers({ ...quizAnswers, [q.id]: event.target.value })
-                                  }
-                                  placeholder={q.placeholder ?? 'Type your answer'}
-                                  className="h-11"
-                                />
-                              ) : (
+                          {quizQuestionSet.map((question, index) => (
+                            <div key={question.id} className="p-4 border border-border-subtle rounded-[12px] hover:bg-surface-low transition">
+                              <div className="mb-3 flex items-start justify-between gap-3">
+                                <p className="font-semibold text-sm text-on-surface">
+                                  Question {index + 1}: {question.prompt}
+                                </p>
+                                <span className="shrink-0 font-mono text-[11px] text-on-surface-variant">
+                                  {question.points} pt{question.points === 1 ? '' : 's'}
+                                </span>
+                              </div>
+                              {question.options && question.options.length > 0 ? (
                                 <div className="space-y-2">
-                                  {q.options.map((opt) => (
-                                    <label key={opt.value} className="flex items-center gap-3 cursor-pointer">
+                                  {question.options.map((option, optionIndex) => (
+                                    <label key={`${question.id}-${optionIndex}`} className="flex items-center gap-3 cursor-pointer">
                                       <input
                                         type="radio"
-                                        name={q.id}
-                                        value={opt.value}
-                                        checked={quizAnswers[q.id] === opt.value}
+                                        name={question.id}
+                                        value={String(optionIndex)}
+                                        checked={quizAnswers[question.id] === String(optionIndex)}
                                         onChange={(event) =>
-                                          setQuizAnswers({ ...quizAnswers, [q.id]: event.target.value })
+                                          setQuizAnswers({ ...quizAnswers, [question.id]: event.target.value })
                                         }
                                         className="w-4 h-4"
                                       />
-                                      <span className="text-sm text-on-surface-variant">{opt.label}</span>
+                                      <span className="text-sm text-on-surface-variant">{option}</span>
                                     </label>
                                   ))}
                                 </div>
+                              ) : (
+                                <Input
+                                  value={quizAnswers[question.id] ?? ''}
+                                  onChange={(event) =>
+                                    setQuizAnswers({ ...quizAnswers, [question.id]: event.target.value })
+                                  }
+                                  placeholder="Type your answer"
+                                  className="h-11"
+                                />
                               )}
                             </div>
                           ))}
                         </div>
 
-                        <Button className="w-full rounded-[14px] h-11 bg-success hover:bg-success/90" onClick={() => {
-                          if (quizQuestionSet.length === 0) {
-                            return;
-                          }
+                        {examError ? (
+                          <div className="rounded-[12px] border border-error/20 bg-error/5 p-4 text-sm text-error">
+                            {examError}
+                          </div>
+                        ) : null}
 
-                          const correct = quizQuestionSet.filter((q) => {
-                            const answer = (quizAnswers[q.id] ?? '').trim().toLowerCase();
-                            return answer.length > 0 && answer === q.preferredAnswer.trim().toLowerCase();
-                          }).length;
-                          const score = Math.round((correct / quizQuestionSet.length) * 100);
-                          setQuizScore(score);
-                          setQuizSubmitted(true);
-                          advanceLearning(30);
-                          if (score >= quizPassingPercent) {
-                            setCompletedLessons(new Set([...completedLessons, selectedLesson.id]));
-                            markStepComplete(currentModule.id, selectedLesson.id);
-                          }
-                        }}>
-                          Submit Quiz
+                        <Button
+                          className="h-11 w-full rounded-[14px] bg-success hover:bg-success/90"
+                          disabled={examSubmitting || unansweredCount > 0}
+                          onClick={() => void handleSubmitExam(quizAnswers)}
+                        >
+                          {examSubmitting
+                            ? 'Submitting…'
+                            : unansweredCount > 0
+                              ? `Answer ${unansweredCount} more question${unansweredCount === 1 ? '' : 's'}`
+                              : 'Submit Assessment'}
                         </Button>
                       </>
                     ) : (
                       <>
-                        <div className={cn(
-                          "rounded-[16px] p-6 text-center",
-                          quizScore >= quizPassingPercent ? 'bg-success/10 border border-success/30' : 'bg-warning/10 border border-warning/30'
-                        )}>
-                          <h4 className={cn("font-display text-[32px] font-bold", quizScore >= quizPassingPercent ? 'text-success' : 'text-warning')}>
-                            {quizScore}%
-                          </h4>
-                          <p className={cn("text-sm font-semibold mt-2", quizScore >= quizPassingPercent ? 'text-success' : 'text-warning')}>
-                            {quizScore >= quizPassingPercent ? '✓ PASSED - Great job!' : '✗ FAILED - Review and try again'}
-                          </p>
-                          <p className="text-sm text-on-surface-variant mt-3">
-                            {quizScore >= quizPassingPercent
-                              ? 'You have mastered this content. Ready to proceed!'
-                              : `You need ${quizPassingPercent}% to pass. Review the material and retake the quiz.`}
-                          </p>
-                        </div>
-
-                        <div className="space-y-3">
-                          {quizQuestionSet.map((q, idx) => {
-                            const isCorrect = quizAnswers[q.id] === q.correct;
-                            return (
-                              <div key={q.id} className={cn(
-                                "p-3 rounded-[12px] border",
-                                isCorrect ? 'bg-success/5 border-success/20' : 'bg-error/5 border-error/20'
-                              )}>
-                                <p className="text-sm font-semibold text-on-surface">Q{idx + 1}: {q.question}</p>
-                                <p className={cn("text-sm mt-2", isCorrect ? 'text-success font-semibold' : 'text-error font-semibold')}>
-                                  {isCorrect ? '✓ Correct' : '✗ Incorrect'} - Your answer: {quizAnswers[q.id]}
-                                </p>
-                              </div>
-                            );
-                          })}
-                        </div>
-
+                        {examError ? (
+                          <div className="rounded-[12px] border border-error/20 bg-error/5 p-4 text-sm text-error">
+                            {examError}
+                          </div>
+                        ) : null}
                         <Button
-                          className="w-full rounded-[14px] h-11"
-                          disabled={quizScore >= quizPassingPercent}
-                          onClick={() => {
-                            setQuizSubmitted(false);
-                            setQuizAnswers({});
-                            setQuizScore(0);
-                          }}
+                          className="h-11 w-full rounded-[14px] bg-success hover:bg-success/90"
+                          disabled={examSubmitting}
+                          onClick={() => void handleSubmitExam()}
                         >
-                          {quizScore >= quizPassingPercent ? '✓ Lesson Complete - Continue' : 'Retake Quiz'}
+                          {examSubmitting ? 'Submitting…' : 'Launch Assessment'}
                         </Button>
                       </>
                     )}
@@ -1013,47 +945,17 @@ export default function StudentLearningPage() {
                 </div>
               )}
 
-              {false && selectedLesson.type === 'Skill Check' && (
-                <div className="rounded-[20px] border border-border-subtle bg-surface-muted p-8">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-[14px] bg-info/10 text-info">
-                      <IconUserCircle className="size-8" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-display text-[24px] font-bold text-on-surface">{selectedLesson.title}</h3>
-                      <p className="mt-1 text-on-surface-variant">Demonstrate your practical skills</p>
-                    </div>
-                  </div>
-
-                  <div className="rounded-[16px] border border-border-subtle bg-surface p-6">
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="font-semibold text-on-surface mb-2">Skill Demonstration Requirements</h4>
-                        <ul className="space-y-2 text-sm text-on-surface-variant">
-                          <li>✓ Demonstrate proper technique</li>
-                          <li>✓ Record clear video evidence (1-2 minutes)</li>
-                          <li>✓ Show all key procedural steps</li>
-                          <li>✓ Include brief explanation</li>
-                        </ul>
-                      </div>
-
-                      <div className="p-4 bg-primary/5 border border-primary/20 rounded-[12px]">
-                        <p className="text-sm text-on-surface-variant">
-                          Upload your demonstration video to show mastery of this skill.
-                          Your instructor will review and provide feedback within 24 hours.
-                        </p>
-                      </div>
-
-                      <Button className="w-full rounded-[14px] h-11">
-                        Upload Demonstration
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* Navigation */}
               <div className="flex gap-4 pt-4 border-t border-border-subtle">
+                <Button
+                  variant="secondary"
+                  className="rounded-[14px]"
+                  onClick={() => setViewMode('module')}
+                >
+                  <IconBook2 className="size-4 mr-2" />
+                  Sections
+                </Button>
+
                 {currentLessonIndex > 0 && (
                   <Button
                     variant="secondary"
@@ -1076,30 +978,41 @@ export default function StudentLearningPage() {
                     Next Lesson
                     <IconArrowRight className="size-4 ml-2" />
                   </Button>
-                ) : nextModuleId ? (
+                ) : quizStep && quizStep.id !== selectedLesson.id && !isLessonComplete(quizStep.id) ? (
+                  <Button
+                    className="rounded-[14px] ml-auto"
+                    onClick={() => openLesson(quizStep.id)}
+                  >
+                    Go to Assessment
+                    <IconPlayerPlayFilled className="size-4 ml-2" />
+                  </Button>
+                ) : currentModule.status === 'Complete' && nextModuleId ? (
                   <Button
                     className="rounded-[14px] ml-auto bg-success hover:bg-success/90"
                     onClick={() => {
                       selectModule(nextModuleId);
                       setViewMode('module');
-                      advanceLearning(30);
-                      submitModuleExam();
                     }}
                   >
                     Next Module
                     <IconArrowRight className="size-4 ml-2" />
                   </Button>
-                ) : (
+                ) : !quizStep && currentModule.status !== 'Complete' ? (
                   <Button
-                    className="rounded-[14px] ml-auto"
-                    disabled={!examUnlocked}
-                    onClick={submitModuleExam}
+                    className="rounded-[14px] ml-auto bg-success hover:bg-success/90"
+                    disabled={examSubmitting}
+                    onClick={() => void handleCompleteModuleWithoutExam()}
                   >
-                    Take Final Exam
-                    <IconPlayerPlayFilled className="size-4 ml-2" />
+                    {examSubmitting ? 'Completing…' : 'Complete Module'}
+                    <IconCheck className="size-4 ml-2" />
                   </Button>
-                )}
+                ) : null}
               </div>
+              {examError && selectedLesson.type !== 'Quiz' ? (
+                <div className="rounded-[12px] border border-error/20 bg-error/5 p-4 text-sm text-error">
+                  {examError}
+                </div>
+              ) : null}
             </div>
           ) : null}
         </section>

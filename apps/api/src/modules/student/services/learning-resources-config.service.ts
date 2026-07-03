@@ -1,6 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
 
 import type {
+  ExamQuestionDefinition,
   LearningModuleDefinition,
   LearningResourceDefinition,
   LearningSectionDefinition,
@@ -8,173 +11,64 @@ import type {
 
 export interface LearningResourcesConfig {
   modules: LearningModuleDefinition[];
+  globalSettings?: {
+    minimumHoursForCertification?: number;
+  };
 }
 
 const defaultLearningResourcesConfig: LearningResourcesConfig = {
-  modules: [
-    {
-      id: 'm1',
-      title: 'Foundation of Patient Care',
-      summary: 'Program kickoff, communication basics, safety expectations, and first readiness check.',
-      requiredHours: 20,
-      sections: [
-        {
-          id: 'm1-welcome',
-          title: 'Welcome and Orientation',
-          description: 'Start the course exactly like a modern LMS with overview media and downloadable handbooks.',
-          resources: [
-            {
-              id: 'm1-video',
-              title: 'Program welcome lecture',
-              type: 'video',
-              duration: '18 min',
-              description: 'Recorded orientation-style lecture introducing expectations and navigation.',
-              url: 'https://www.youtube.com/watch?v=gUWJ-6nL5-8',
-            },
-            {
-              id: 'm1-pdf',
-              title: 'Student handbook packet',
-              type: 'pdf',
-              duration: '6 pages',
-              description: 'Attendance, FERPA, professionalism, and escalation guidance.',
-              url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-            },
-            {
-              id: 'm1-text',
-              title: 'How to succeed in self-paced study',
-              type: 'text',
-              duration: '12 min',
-              description: 'Instructor-authored lesson text for study habits and accountability.',
-              content:
-                'Successful students check the module roadmap before starting, take notes during each lesson, and complete every section in sequence. Treat each section as a required checkpoint, not just optional reading.',
-            },
-          ],
-        },
-        {
-          id: 'm1-readiness',
-          title: 'Readiness Check',
-          description: 'End the opening module with a checkpoint before students move deeper into the curriculum.',
-          resources: [
-            {
-              id: 'm1-exam',
-              title: 'Patient care readiness checkpoint',
-              type: 'exam',
-              duration: '10 questions',
-              description: 'Gate assessment covering orientation, communication, and policy understanding.',
-              content: 'Students must score at least 70% before progressing to the next module.',
-              questionCount: 10,
-              passingScore: 70,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 'm2',
-      title: 'Anatomy and Physiology',
-      summary: 'Major body systems, healthcare terminology, and learner-guided reference materials.',
-      requiredHours: 15,
-      sections: [
-        {
-          id: 'm2-systems',
-          title: 'Systems Overview',
-          description: 'Blend lecture, text lessons, and curated reference links.',
-          resources: [
-            {
-              id: 'm2-video',
-              title: 'Body systems overview',
-              type: 'video',
-              duration: '22 min',
-              description: 'Module recording introducing the major systems and their functions.',
-              url: 'https://www.youtube.com/watch?v=gUWJ-6nL5-8',
-            },
-            {
-              id: 'm2-text',
-              title: 'Medical terminology fundamentals',
-              type: 'text',
-              duration: '15 min',
-              description: 'Text lesson covering prefixes, suffixes, and charting language.',
-              content:
-                'Terminology should be learned in patterns. Focus on prefixes for location and quantity, roots for structure or function, and suffixes for procedures or conditions.',
-            },
-            {
-              id: 'm2-link',
-              title: 'External anatomy reference',
-              type: 'link',
-              duration: '12 min',
-              description: 'Self-paced reference material for body-system review.',
-              url: 'https://medlineplus.gov/anatomy.html',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 'm3',
-      title: 'Vital Signs and Monitoring',
-      summary: 'Temperature, pulse, respiration, blood pressure, charting, and skill validation.',
-      requiredHours: 25,
-      sections: [
-        {
-          id: 'm3-theory',
-          title: 'Theory and Demonstration',
-          description: 'Students review lecture content, procedures, and reference material before assessment.',
-          resources: [
-            {
-              id: 'm3-video',
-              title: 'Vital signs lecture',
-              type: 'video',
-              duration: '24 min',
-              description: 'Core lecture on obtaining and documenting vital signs correctly.',
-              url: 'https://www.youtube.com/watch?v=gUWJ-6nL5-8',
-            },
-            {
-              id: 'm3-pdf',
-              title: 'Procedure checklist PDF',
-              type: 'pdf',
-              duration: '8 pages',
-              description: 'Printable bedside checklist and validation standard.',
-              url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-            },
-            {
-              id: 'm3-link',
-              title: 'Clinical reference link',
-              type: 'link',
-              duration: '14 min',
-              description: 'Reference ranges and documentation standards.',
-              url: 'https://medlineplus.gov/vitalsigns.html',
-            },
-          ],
-        },
-        {
-          id: 'm3-assessment',
-          title: 'Assessment and Signoff',
-          description: 'Students complete the knowledge check before the next module unlocks.',
-          resources: [
-            {
-              id: 'm3-exam',
-              title: 'Vital signs module exam',
-              type: 'exam',
-              duration: '20 questions',
-              description: 'Final assessment for the vital-signs module.',
-              content: 'Review the checklist and notes before launching this exam.',
-              questionCount: 20,
-              passingScore: 70,
-            },
-          ],
-        },
-      ],
-    },
-  ],
+  modules: [],
+  globalSettings: {
+    minimumHoursForCertification: 0,
+  },
 };
 
 const supportedResourceTypes = ['video', 'pdf', 'link', 'text', 'exam'] as const;
 const urlRequiredTypes = new Set(['video', 'pdf', 'link']);
 const contentFriendlyTypes = new Set(['text', 'exam']);
 
+const DATA_DIR = path.join(process.cwd(), 'apps/api/.data');
+const CONFIG_FILE = path.join(DATA_DIR, 'learning-resources-config.json');
+
 @Injectable()
-export class LearningResourcesConfigService {
+export class LearningResourcesConfigService implements OnModuleInit {
   private config: LearningResourcesConfig = JSON.parse(JSON.stringify(defaultLearningResourcesConfig));
+
+  onModuleInit() {
+    this.loadConfig();
+  }
+
+  private ensureDataDir() {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+  }
+
+  private loadConfig() {
+    try {
+      this.ensureDataDir();
+      if (fs.existsSync(CONFIG_FILE)) {
+        const fileContent = fs.readFileSync(CONFIG_FILE, 'utf-8');
+        const loadedConfig = JSON.parse(fileContent);
+        this.config = this.validateConfig(loadedConfig);
+      } else {
+        this.config = JSON.parse(JSON.stringify(defaultLearningResourcesConfig));
+        this.persistConfig();
+      }
+    } catch (error) {
+      console.error('Error loading learning resources config:', error);
+      this.config = JSON.parse(JSON.stringify(defaultLearningResourcesConfig));
+    }
+  }
+
+  private persistConfig() {
+    try {
+      this.ensureDataDir();
+      fs.writeFileSync(CONFIG_FILE, JSON.stringify(this.config, null, 2), 'utf-8');
+    } catch (error) {
+      console.error('Error persisting learning resources config:', error);
+    }
+  }
 
   getConfig(): LearningResourcesConfig {
     return JSON.parse(JSON.stringify(this.config));
@@ -182,20 +76,20 @@ export class LearningResourcesConfigService {
 
   updateConfig(newConfig: LearningResourcesConfig): LearningResourcesConfig {
     this.config = this.validateConfig(newConfig);
+    this.persistConfig();
     return this.getConfig();
   }
 
   resetToDefault(): LearningResourcesConfig {
     this.config = JSON.parse(JSON.stringify(defaultLearningResourcesConfig));
+    this.persistConfig();
     return this.getConfig();
   }
 
   private validateConfig(config: LearningResourcesConfig): LearningResourcesConfig {
+    // Empty configs and partially-built modules/sections are allowed so admins
+    // can author incrementally (module first, then sections, then items).
     const modules = (config.modules ?? []).map((module) => this.normalizeModule(module));
-
-    if (modules.length === 0) {
-      throw new BadRequestException('At least one learning module is required.');
-    }
 
     const moduleIds = new Set<string>();
 
@@ -213,8 +107,17 @@ export class LearningResourcesConfigService {
         throw new BadRequestException(`Module "${module.title}" must include required hours greater than zero.`);
       }
 
-      if (module.sections.length === 0) {
-        throw new BadRequestException(`Module "${module.title}" must include at least one section.`);
+      if (!Number.isFinite(module.order)) {
+        throw new BadRequestException(`Module "${module.title}" must include an order number.`);
+      }
+
+      if (
+        module.minimumHoursForCertification !== undefined &&
+        (!Number.isFinite(module.minimumHoursForCertification) || module.minimumHoursForCertification < 0)
+      ) {
+        throw new BadRequestException(
+          `Module "${module.title}" minimum hours for certification must be a non-negative number.`,
+        );
       }
 
       const sectionIds = new Set<string>();
@@ -232,10 +135,6 @@ export class LearningResourcesConfigService {
         }
         sectionIds.add(section.id);
 
-        if (section.resources.length === 0) {
-          throw new BadRequestException(`Section "${section.title}" in module "${module.title}" must include resources.`);
-        }
-
         section.resources.forEach((resource) => {
           if (resourceIds.has(resource.id)) {
             throw new BadRequestException(
@@ -247,24 +146,39 @@ export class LearningResourcesConfigService {
       });
     });
 
-    return { modules };
+    const globalSettings = config.globalSettings
+      ? {
+          minimumHoursForCertification:
+            config.globalSettings.minimumHoursForCertification === undefined ||
+            config.globalSettings.minimumHoursForCertification === null
+              ? undefined
+              : Number(config.globalSettings.minimumHoursForCertification),
+        }
+      : undefined;
+
+    return { modules, globalSettings };
   }
 
   private normalizeModule(module: LearningModuleDefinition): LearningModuleDefinition {
     return {
-      id: module.id.trim(),
-      title: module.title.trim(),
-      summary: module.summary.trim(),
+      id: (module.id ?? '').trim(),
+      title: (module.title ?? '').trim(),
+      summary: (module.summary ?? '').trim(),
       requiredHours: Number(module.requiredHours),
+      order: Number(module.order ?? 0),
+      minimumHoursForCertification:
+        module.minimumHoursForCertification === undefined || module.minimumHoursForCertification === null
+          ? undefined
+          : Number(module.minimumHoursForCertification),
       sections: (module.sections ?? []).map((section) => this.normalizeSection(section)),
     };
   }
 
   private normalizeSection(section: LearningSectionDefinition): LearningSectionDefinition {
     return {
-      id: section.id.trim(),
-      title: section.title.trim(),
-      description: section.description.trim(),
+      id: (section.id ?? '').trim(),
+      title: (section.title ?? '').trim(),
+      description: (section.description ?? '').trim(),
       resources: (section.resources ?? []).map((resource) => this.normalizeResource(resource)),
     };
   }
@@ -272,11 +186,11 @@ export class LearningResourcesConfigService {
   private normalizeResource(resource: LearningResourceDefinition): LearningResourceDefinition {
     const normalized: LearningResourceDefinition = {
       ...resource,
-      id: resource.id.trim(),
-      title: resource.title.trim(),
+      id: (resource.id ?? '').trim(),
+      title: (resource.title ?? '').trim(),
       type: resource.type,
-      duration: resource.duration.trim(),
-      description: resource.description.trim(),
+      duration: (resource.duration ?? '').trim(),
+      description: (resource.description ?? '').trim(),
       url: resource.url?.trim() || undefined,
       content: resource.content?.trim() || undefined,
       questionCount:
@@ -297,7 +211,9 @@ export class LearningResourcesConfigService {
       throw new BadRequestException(`Learning resource "${normalized.title}" has an unsupported type.`);
     }
 
-    if (urlRequiredTypes.has(normalized.type) && !normalized.url) {
+    // Only links hard-require a URL; video/pdf items can be drafted first and
+    // have their media URL attached later from the item editor.
+    if (normalized.type === 'link' && !normalized.url) {
       throw new BadRequestException(`Learning resource "${normalized.title}" must include a URL.`);
     }
 
@@ -312,6 +228,16 @@ export class LearningResourcesConfigService {
     }
 
     if (normalized.type === 'exam') {
+      // Questions are normalized leniently: the admin builder auto-saves while
+      // questions are still being written, so incomplete entries are kept as-is
+      // instead of rejected. The builder enforces completeness on item creation.
+      const questions = this.normalizeExamQuestions(resource);
+      normalized.questions = questions.length > 0 ? questions : undefined;
+
+      if (questions.length > 0) {
+        normalized.questionCount = questions.length;
+      }
+
       if (!normalized.questionCount || normalized.questionCount <= 0) {
         throw new BadRequestException(`Exam "${normalized.title}" must include a question count greater than zero.`);
       }
@@ -325,8 +251,39 @@ export class LearningResourcesConfigService {
     } else {
       normalized.questionCount = undefined;
       normalized.passingScore = undefined;
+      normalized.questions = undefined;
     }
 
     return normalized;
+  }
+
+  private normalizeExamQuestions(resource: LearningResourceDefinition): ExamQuestionDefinition[] {
+    const isMultipleChoice = resource.examFormat === 'multiple-choice';
+
+    return (resource.questions ?? []).map((question, index) => {
+      const points = Number(question.points);
+      // Option positions are preserved (empty entries included) so that
+      // correctOption indexes stay valid while the admin is still editing.
+      const options = isMultipleChoice
+        ? (question.options ?? []).map((option) => (option ?? '').trim())
+        : undefined;
+      const correctOptionRaw = Number(question.correctOption);
+      const correctOption =
+        options !== undefined &&
+        Number.isInteger(correctOptionRaw) &&
+        correctOptionRaw >= 0 &&
+        correctOptionRaw < options.length
+          ? correctOptionRaw
+          : undefined;
+
+      return {
+        id: (question.id ?? '').trim() || `q${index + 1}`,
+        prompt: (question.prompt ?? '').trim(),
+        points: Number.isFinite(points) && points > 0 ? points : 1,
+        expectedAnswer: question.expectedAnswer?.trim() || undefined,
+        options,
+        correctOption,
+      };
+    });
   }
 }

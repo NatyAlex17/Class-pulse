@@ -30,6 +30,7 @@ describe('StudentPortalService', () => {
       new StudentPortalRepository(examConfigService, learningResourcesConfigService),
       examConfigService,
       intakeSubmissionService,
+      learningResourcesConfigService,
     );
   });
 
@@ -276,11 +277,13 @@ describe('StudentPortalService', () => {
     service.submitEntranceSurvey('student-amara-singh');
 
     const reloadedExamConfigService = new ExamConfigService();
+    const reloadedLearningResourcesConfigService = new LearningResourcesConfigService();
     const reloadedIntakeSubmissionService = new IntakeSubmissionService();
     const reloadedService = new StudentPortalService(
-      new StudentPortalRepository(reloadedExamConfigService, new LearningResourcesConfigService()),
+      new StudentPortalRepository(reloadedExamConfigService, reloadedLearningResourcesConfigService),
       reloadedExamConfigService,
       reloadedIntakeSubmissionService,
+      reloadedLearningResourcesConfigService,
     );
     const reloadedPortal = reloadedService.getPortal('student-amara-singh');
 

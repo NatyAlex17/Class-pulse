@@ -24,6 +24,8 @@ import type {
   StudentLearningSnapshot,
   StudentPortalState,
   StudentThread,
+  SubmitModuleExamDto,
+  SubmitModuleExamResponse,
   SubmitSupportTicketDto,
   TextAnswerDto,
   UpdateCdphFormDto,
@@ -38,6 +40,7 @@ import type {
 } from '../types/student-portal.types';
 import { ExamConfigService } from './exam-config.service';
 import { IntakeSubmissionService } from './intake-submission.service';
+import { LearningResourcesConfigService } from './learning-resources-config.service';
 import { StudentPortalRepository } from './student-portal.repository';
 
 const CLINICAL_HOURS_REQUIRED = 40;
@@ -49,6 +52,7 @@ export class StudentPortalService {
     private readonly repository: StudentPortalRepository,
     private readonly examConfigService: ExamConfigService,
     private readonly intakeSubmissionService: IntakeSubmissionService,
+    private readonly learningResourcesConfigService: LearningResourcesConfigService,
   ) {}
 
   ensurePortalForLocalUser(localUser: LocalUserRecord) {
@@ -477,11 +481,6 @@ export class StudentPortalService {
       throw new BadRequestException('Active learning module was not found.');
     }
 
-    const nextIncompleteStep = activeModule.steps.find((step) => !step.complete && step.type !== 'Quiz');
-    if (nextIncompleteStep) {
-      nextIncompleteStep.complete = true;
-    }
-
     portal.modules[activeIndex] = this.recalculateModule({
       ...activeModule,
       steps: [...activeModule.steps],
@@ -490,16 +489,6 @@ export class StudentPortalService {
     if (portal.learningMinutes >= EXAM_UNLOCK_MINUTES) {
       portal.tasks = portal.tasks.map((task) =>
         task.id === 'theory-hours' ? { ...task, complete: true } : task,
-      );
-      portal.modules = portal.modules.map((module) =>
-        module.id === portal.activeModuleId
-          ? {
-              ...module,
-              steps: module.steps.map((step) =>
-                step.type === 'Quiz' ? { ...step, note: 'Assessment ready to launch' } : step,
-              ),
-            }
-          : module,
       );
     }
 
@@ -559,7 +548,7 @@ export class StudentPortalService {
     return this.repository.save(portal).modules.find((module) => module.id === moduleId);
   }
 
-  submitModuleExam(studentId: string, moduleId: string) {
+  submitModuleExam(studentId: string, moduleId: string, payload?: SubmitModuleExamDto): SubmitModuleExamResponse {
     const portal = this.repository.findByStudentId(studentId);
     const activeIndex = portal.modules.findIndex((module) => module.id === moduleId);
 
@@ -581,11 +570,21 @@ export class StudentPortalService {
       throw new BadRequestException('Complete all module learning steps before submitting the exam.');
     }
 
-    const score = moduleId === 'm3' ? '94/100' : '91/100';
+    const result = this.gradeModuleExam(moduleId, payload);
+
+    if (!result.passed) {
+      portal.lastAction = `${activeModule.title} exam attempted — score below the passing threshold.`;
+      this.recordAudit(portal, 'student.learning.module-exam.failed', moduleId, {
+        scorePercent: result.scorePercent,
+        passingScore: result.passingScore,
+      });
+      return { module: this.repository.save(portal).modules[activeIndex], result };
+    }
+
     portal.modules[activeIndex] = this.recalculateModule({
       ...activeModule,
       status: 'Complete',
-      examScore: score,
+      examScore: `${result.scorePercent}/100`,
       certificateUnlocked: true,
       steps: activeModule.steps.map((step) => ({ ...step, complete: true })),
     });
@@ -595,15 +594,79 @@ export class StudentPortalService {
       portal.modules[activeIndex + 1] = {
         ...nextModule,
         status: 'In Progress',
-        progressPercent: 10,
-        completedHours: 2,
       };
       portal.activeModuleId = nextModule.id;
     }
 
-    portal.lastAction = `${activeModule.title} exam submitted and certificate unlocked.`;
-    this.recordAudit(portal, 'student.learning.module-exam.submitted', moduleId, { score });
-    return this.repository.save(portal).modules[activeIndex];
+    portal.lastAction = `${activeModule.title} exam passed and certificate unlocked.`;
+    this.recordAudit(portal, 'student.learning.module-exam.submitted', moduleId, {
+      scorePercent: result.scorePercent,
+    });
+    return { module: this.repository.save(portal).modules[activeIndex], result };
+  }
+
+  private gradeModuleExam(moduleId: string, payload?: SubmitModuleExamDto) {
+    const configuredModule = this.learningResourcesConfigService
+      .getConfig()
+      .modules.find((module) => module.id === moduleId);
+    const examResources = (configuredModule?.sections ?? [])
+      .flatMap((section) => section.resources)
+      .filter((resource) => resource.type === 'exam');
+    const examResource = payload?.stepId
+      ? examResources.find((resource) => resource.id === payload.stepId)
+      : examResources[0];
+    const questions = examResource?.questions ?? [];
+
+    if (questions.length === 0) {
+      // No authored questions — treat the assessment as a simple completion checkpoint.
+      return {
+        graded: false,
+        passed: true,
+        scorePercent: 100,
+        earnedPoints: 0,
+        totalPoints: 0,
+        passingScore: examResource?.passingScore ?? 0,
+        correctCount: 0,
+        totalQuestions: 0,
+      };
+    }
+
+    const answers = payload?.answers ?? {};
+    let earnedPoints = 0;
+    let totalPoints = 0;
+    let correctCount = 0;
+
+    questions.forEach((question) => {
+      const points = question.points > 0 ? question.points : 1;
+      totalPoints += points;
+      const answer = (answers[question.id] ?? '').trim();
+
+      const isCorrect =
+        question.options && question.options.length > 0 && typeof question.correctOption === 'number'
+          ? Number(answer) === question.correctOption
+          : question.expectedAnswer
+            ? answer.toLowerCase() === question.expectedAnswer.trim().toLowerCase()
+            : answer.length > 0;
+
+      if (isCorrect) {
+        earnedPoints += points;
+        correctCount += 1;
+      }
+    });
+
+    const scorePercent = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0;
+    const passingScore = examResource?.passingScore ?? 70;
+
+    return {
+      graded: true,
+      passed: scorePercent >= passingScore,
+      scorePercent,
+      earnedPoints,
+      totalPoints,
+      passingScore,
+      correctCount,
+      totalQuestions: questions.length,
+    };
   }
 
   openTextbook(studentId: string) {

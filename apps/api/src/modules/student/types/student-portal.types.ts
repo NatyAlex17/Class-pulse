@@ -79,6 +79,14 @@ export interface OnboardingState {
 
 export type LearningStepType = 'Video' | 'PDF' | 'Link' | 'Reading' | 'Skill Check' | 'Quiz';
 
+/** Exam question as exposed to the student — correct answers stay server-side. */
+export interface LearningStepExamQuestion {
+  id: string;
+  prompt: string;
+  points: number;
+  options?: string[];
+}
+
 export interface LearningStep {
   id: string;
   title: string;
@@ -90,6 +98,11 @@ export interface LearningStep {
   content?: string;
   sectionId?: string;
   sectionTitle?: string;
+  sectionDescription?: string;
+  examFormat?: 'text' | 'multiple-choice';
+  passingScore?: number;
+  questionCount?: number;
+  questions?: LearningStepExamQuestion[];
 }
 
 export interface CurriculumModule {
@@ -105,6 +118,18 @@ export interface CurriculumModule {
   steps: LearningStep[];
 }
 
+export interface ExamQuestionDefinition {
+  id: string;
+  prompt: string;
+  points: number;
+  /** Optional reference answer shown to graders for open-ended questions. */
+  expectedAnswer?: string;
+  /** Multiple-choice only. */
+  options?: string[];
+  /** Index into options identifying the correct answer. Multiple-choice only. */
+  correctOption?: number;
+}
+
 export interface LearningResourceDefinition {
   id: string;
   title: string;
@@ -115,6 +140,8 @@ export interface LearningResourceDefinition {
   content?: string;
   questionCount?: number;
   passingScore?: number;
+  examFormat?: 'text' | 'multiple-choice';
+  questions?: ExamQuestionDefinition[];
 }
 
 export interface LearningSectionDefinition {
@@ -129,6 +156,8 @@ export interface LearningModuleDefinition {
   title: string;
   summary: string;
   requiredHours: number;
+  order: number;
+  minimumHoursForCertification?: number;
   sections: LearningSectionDefinition[];
 }
 
@@ -598,6 +627,29 @@ export interface AdvanceLearningDto {
 
 export interface SelectModuleDto {
   moduleId: string;
+}
+
+export interface SubmitModuleExamDto {
+  /** Quiz step the answers belong to. */
+  stepId?: string;
+  /** questionId → answer. Multiple-choice answers are the selected option index as a string. */
+  answers?: Record<string, string>;
+}
+
+export interface ModuleExamResult {
+  graded: boolean;
+  passed: boolean;
+  scorePercent: number;
+  earnedPoints: number;
+  totalPoints: number;
+  passingScore: number;
+  correctCount: number;
+  totalQuestions: number;
+}
+
+export interface SubmitModuleExamResponse {
+  module: CurriculumModule;
+  result: ModuleExamResult;
 }
 
 export interface AttendanceCheckInDto {

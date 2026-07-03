@@ -4,11 +4,14 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
+  IconAlertCircle,
   IconArrowLeft,
   IconBook2,
   IconCheck,
   IconChevronRight,
   IconClipboardText,
+  IconEdit,
+  IconEye,
   IconHierarchy3,
   IconPlus,
   IconRefresh,
@@ -28,6 +31,17 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 type ResourceType = 'video' | 'pdf' | 'link' | 'text' | 'exam';
 
+type ExamFormat = 'text' | 'multiple-choice';
+
+type ExamQuestion = {
+  id: string;
+  prompt: string;
+  points: number;
+  expectedAnswer?: string;
+  options?: string[];
+  correctOption?: number;
+};
+
 type LearningResource = {
   id: string;
   title: string;
@@ -38,6 +52,8 @@ type LearningResource = {
   content?: string;
   questionCount?: number;
   passingScore?: number;
+  examFormat?: ExamFormat;
+  questions?: ExamQuestion[];
 };
 
 type LearningSection = {
@@ -52,11 +68,16 @@ type LearningModule = {
   title: string;
   summary: string;
   requiredHours: number;
+  order: number;
+  minimumHoursForCertification?: number;
   sections: LearningSection[];
 };
 
 type LearningResourcesConfig = {
   modules: LearningModule[];
+  globalSettings?: {
+    minimumHoursForCertification?: number;
+  };
 };
 
 type BuilderView = 'modules' | 'module-detail' | 'section-detail';
@@ -105,6 +126,49 @@ const resourceTypeLabels: Record<ResourceType, string> = {
   exam: 'Exam',
 };
 
+const fileInputClassName =
+  'block w-full cursor-pointer text-sm text-on-surface-variant file:mr-4 file:cursor-pointer file:rounded-[10px] file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20';
+
+const sourceModeOptions = [
+  { label: 'Paste a link (URL)', value: 'url' },
+  { label: 'Upload from this computer', value: 'upload' },
+];
+
+function createBlankExamQuestion(format: ExamFormat): ExamQuestion {
+  return {
+    id: `q-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+    prompt: '',
+    points: 1,
+    options: format === 'multiple-choice' ? ['', '', '', ''] : undefined,
+    correctOption: undefined,
+  };
+}
+
+function resizeExamQuestions(current: ExamQuestion[], count: number, format: ExamFormat): ExamQuestion[] {
+  if (count <= current.length) {
+    return current.slice(0, count);
+  }
+  return [
+    ...current,
+    ...Array.from({ length: count - current.length }, () => createBlankExamQuestion(format)),
+  ];
+}
+
+function applyFormatToQuestions(questions: ExamQuestion[], format: ExamFormat): ExamQuestion[] {
+  return questions.map((question) =>
+    format === 'multiple-choice'
+      ? { ...question, options: question.options?.length ? question.options : ['', '', '', ''] }
+      : { ...question, options: undefined, correctOption: undefined },
+  );
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes >= 1024 * 1024) {
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
 function slugify(value: string) {
   const slug = value
     .trim()
@@ -135,6 +199,10 @@ function useLearningResourcesConfig() {
   const [resetting, setResetting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
+  // Snapshot of the config as last persisted to the API. The auto-save effect
+  // compares against this so it only saves genuine local mutations (and never
+  // re-saves data that just arrived from the server).
+  const lastSavedRef = React.useRef<string | null>(null);
 
   const adminId = React.useMemo(() => syncedUser?.localUserId || 'admin-001', [syncedUser?.localUserId]);
 
@@ -149,6 +217,7 @@ function useLearningResourcesConfig() {
       setLoading(true);
       setError(null);
       const response = await fetch(`${API_BASE_URL}/admins/${adminId}/learning-resources-config`, {
+        method: 'GET',
         headers: {
           Authorization: `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
@@ -157,13 +226,23 @@ function useLearningResourcesConfig() {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to load configuration (${response.status}).`);
+        if (response.status === 404 || response.status === 401) {
+          // Initialize with empty config if not found
+          const emptyConfig = { modules: [], globalSettings: { minimumHoursForCertification: 0 } };
+          lastSavedRef.current = JSON.stringify(emptyConfig);
+          setConfig(emptyConfig);
+        } else {
+          throw new Error(`Failed to load configuration (${response.status}).`);
+        }
+        return;
       }
 
       const payload = await response.json();
-      setConfig(payload.data);
+      const data = payload.data || { modules: [], globalSettings: { minimumHoursForCertification: 0 } };
+      lastSavedRef.current = JSON.stringify(data);
+      setConfig(data);
     } catch (fetchError) {
-      setConfig(null);
+      console.error('Fetch error:', fetchError);
       setError(
         fetchError instanceof Error ? fetchError.message : 'Failed to load learning resources configuration.',
       );
@@ -199,6 +278,7 @@ function useLearningResourcesConfig() {
       }
 
       const payload = await response.json();
+      lastSavedRef.current = JSON.stringify(payload.data);
       setConfig(payload.data);
       setSuccess('Learning management configuration saved.');
       setTimeout(() => setSuccess(null), 3000);
@@ -208,6 +288,97 @@ function useLearningResourcesConfig() {
       setSaving(false);
     }
   }, [adminId, config, session?.access_token]);
+
+  // Persist a config to the API immediately (fire-and-forget). Marks the
+  // snapshot as saved up front so the debounced effect doesn't double-save;
+  // on failure it clears the snapshot so the next change (or manual Save) retries.
+  const autoSaveConfig = React.useCallback(
+    (newConfig: LearningResourcesConfig) => {
+      if (!session?.access_token) {
+        setError('Sign in to save learning resources.');
+        return;
+      }
+
+      const snapshot = JSON.stringify(newConfig);
+      lastSavedRef.current = snapshot;
+
+      void (async () => {
+        try {
+          const response = await fetch(`${API_BASE_URL}/admins/${adminId}/learning-resources-config`, {
+            method: 'PATCH',
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: snapshot,
+          });
+
+          if (!response.ok) {
+            const payload = await response.json().catch(() => null);
+            throw new Error(payload?.error?.message ?? `Failed to save configuration (${response.status}).`);
+          }
+        } catch (saveError) {
+          if (lastSavedRef.current === snapshot) {
+            lastSavedRef.current = null;
+          }
+          setError(saveError instanceof Error ? saveError.message : 'Failed to save learning resources.');
+        }
+      })();
+    },
+    [adminId, session?.access_token],
+  );
+
+  // Auto-save any local mutation to the API (debounced). Deleting the last
+  // module or section is a mutation too, so empty configs are saved as well.
+  React.useEffect(() => {
+    if (!config) {
+      return;
+    }
+
+    if (JSON.stringify(config) === lastSavedRef.current) {
+      return; // Already persisted (e.g. data that just arrived from the server).
+    }
+
+    const timer = setTimeout(() => {
+      autoSaveConfig(config);
+    }, 500); // Debounce for 500ms to avoid too many API calls
+
+    return () => clearTimeout(timer);
+  }, [config, autoSaveConfig]);
+
+  const uploadFile = React.useCallback(
+    async (file: File): Promise<string> => {
+      if (!session?.access_token) {
+        throw new Error('Sign in to upload files.');
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`${API_BASE_URL}/admins/${adminId}/learning-resources-config/upload`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error?.message ?? `Failed to upload file (${response.status}).`);
+      }
+
+      const payload = await response.json();
+      const url = payload?.data?.url;
+
+      if (typeof url !== 'string' || !url) {
+        throw new Error('Upload succeeded but no file URL was returned.');
+      }
+
+      return url;
+    },
+    [adminId, session?.access_token],
+  );
 
   const resetConfig = React.useCallback(async () => {
     if (!session?.access_token) {
@@ -230,6 +401,7 @@ function useLearningResourcesConfig() {
       }
 
       const payload = await response.json();
+      lastSavedRef.current = JSON.stringify(payload.data);
       setConfig(payload.data);
       setSuccess('Learning management configuration reset to default.');
       setTimeout(() => setSuccess(null), 3000);
@@ -249,10 +421,98 @@ function useLearningResourcesConfig() {
     error,
     success,
     setError,
+    setSuccess,
     fetchConfig,
     saveConfig,
     resetConfig,
+    autoSaveConfig,
+    uploadFile,
   };
+}
+
+type DeleteConfirmState = {
+  title: string;
+  description: string;
+  confirmLabel: string;
+  onConfirm: () => void;
+};
+
+function DeleteConfirmModal({
+  state,
+  onCancel,
+}: {
+  state: DeleteConfirmState | null;
+  onCancel: () => void;
+}) {
+  if (!state) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="mx-4 max-w-md space-y-4 rounded-2xl border border-border-subtle bg-surface p-6 shadow-2xl animate-in fade-in zoom-in duration-300">
+        <div className="flex items-start gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-error/10">
+            <IconAlertCircle className="size-6 text-error" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-on-surface">{state.title}</h3>
+            <p className="mt-1 text-sm text-on-surface-variant">This action cannot be undone.</p>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-border-subtle bg-surface-muted p-3">
+          <p className="break-words text-sm font-medium text-on-surface">{state.description}</p>
+        </div>
+
+        <div className="flex justify-end gap-3 pt-2">
+          <Button variant="secondary" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={() => {
+              state.onConfirm();
+              onCancel();
+            }}
+          >
+            {state.confirmLabel}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RowIconButton({
+  title,
+  destructive,
+  active,
+  onClick,
+  children,
+}: {
+  title: string;
+  destructive?: boolean;
+  active?: boolean;
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      title={title}
+      onClick={onClick}
+      className={`rounded-[8px] p-2 transition ${
+        destructive
+          ? 'text-on-surface-variant hover:bg-error/10 hover:text-error'
+          : active
+            ? 'bg-primary/10 text-primary'
+            : 'text-on-surface-variant hover:bg-surface hover:text-primary'
+      }`}
+    >
+      {children}
+    </button>
+  );
 }
 
 function ConfigBanner({ error, success }: { error: string | null; success: string | null }) {
@@ -300,12 +560,181 @@ function PageToolbar({
   );
 }
 
+function ExamQuestionsEditor({
+  format,
+  questions,
+  onChange,
+}: {
+  format: ExamFormat;
+  questions: ExamQuestion[];
+  onChange: (questions: ExamQuestion[]) => void;
+}) {
+  const updateQuestion = (index: number, updater: (question: ExamQuestion) => ExamQuestion) => {
+    onChange(questions.map((question, i) => (i === index ? updater(question) : question)));
+  };
+
+  return (
+    <div className="mt-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <label className="block text-sm font-semibold text-on-surface">
+          Question Configuration ({questions.length})
+        </label>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => onChange([...questions, createBlankExamQuestion(format)])}
+        >
+          <IconPlus className="size-4" />
+          Add Question
+        </Button>
+      </div>
+
+      {questions.length === 0 ? (
+        <div className="rounded-[14px] border border-dashed border-border-subtle p-6 text-center text-sm text-on-surface-variant">
+          No questions yet. Set the number of questions above or click Add Question.
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {questions.map((question, index) => (
+            <div key={question.id} className="rounded-[14px] border border-border-subtle bg-background p-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <Badge variant="primary">Question {index + 1}</Badge>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-semibold text-on-surface">Marks</label>
+                    <Input
+                      type="number"
+                      min={1}
+                      className="w-20"
+                      value={question.points}
+                      onChange={(event) =>
+                        updateQuestion(index, (q) => ({
+                          ...q,
+                          points: Number(event.target.value || 0),
+                        }))
+                      }
+                    />
+                  </div>
+                  <RowIconButton
+                    title="Remove question"
+                    destructive
+                    onClick={() => onChange(questions.filter((_, i) => i !== index))}
+                  >
+                    <IconTrash className="size-4" />
+                  </RowIconButton>
+                </div>
+              </div>
+
+              <Textarea
+                className="min-h-16"
+                value={question.prompt}
+                onChange={(event) =>
+                  updateQuestion(index, (q) => ({ ...q, prompt: event.target.value }))
+                }
+                placeholder={`Write question ${index + 1} here...`}
+              />
+
+              {format === 'multiple-choice' ? (
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs font-semibold text-on-surface">
+                    Options <span className="font-normal text-on-surface-variant">(select the correct answer)</span>
+                  </p>
+                  {(question.options ?? []).map((option, optionIndex) => (
+                    <div key={optionIndex} className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name={`correct-${question.id}`}
+                        className="size-4 shrink-0 accent-primary"
+                        title="Mark as correct answer"
+                        checked={question.correctOption === optionIndex}
+                        onChange={() =>
+                          updateQuestion(index, (q) => ({ ...q, correctOption: optionIndex }))
+                        }
+                      />
+                      <Input
+                        value={option}
+                        placeholder={`Option ${optionIndex + 1}`}
+                        onChange={(event) =>
+                          updateQuestion(index, (q) => ({
+                            ...q,
+                            options: (q.options ?? []).map((o, i) =>
+                              i === optionIndex ? event.target.value : o,
+                            ),
+                          }))
+                        }
+                      />
+                      <RowIconButton
+                        title="Remove option"
+                        destructive
+                        onClick={() =>
+                          updateQuestion(index, (q) => {
+                            const options = (q.options ?? []).filter((_, i) => i !== optionIndex);
+                            let correctOption = q.correctOption;
+                            if (correctOption !== undefined) {
+                              if (correctOption === optionIndex) {
+                                correctOption = undefined;
+                              } else if (correctOption > optionIndex) {
+                                correctOption -= 1;
+                              }
+                            }
+                            return { ...q, options, correctOption };
+                          })
+                        }
+                      >
+                        <IconTrash className="size-4" />
+                      </RowIconButton>
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() =>
+                        updateQuestion(index, (q) => ({ ...q, options: [...(q.options ?? []), ''] }))
+                      }
+                    >
+                      <IconPlus className="size-4" />
+                      Add Option
+                    </Button>
+                    {question.correctOption === undefined ? (
+                      <span className="text-xs text-warning">Select the correct answer.</span>
+                    ) : null}
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-3">
+                  <label className="mb-1 block text-xs font-semibold text-on-surface">
+                    Expected Answer <span className="font-normal text-on-surface-variant">(optional, shown to graders)</span>
+                  </label>
+                  <Textarea
+                    className="min-h-16"
+                    value={question.expectedAnswer ?? ''}
+                    onChange={(event) =>
+                      updateQuestion(index, (q) => ({
+                        ...q,
+                        expectedAnswer: event.target.value || undefined,
+                      }))
+                    }
+                    placeholder="Key points a good answer should cover."
+                  />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SectionItemEditor({
   item,
   moduleId,
   sectionId,
   updateResource,
   removeResource,
+  onUploadFile,
+  onError,
 }: {
   item: LearningResource;
   moduleId: string;
@@ -317,14 +746,40 @@ function SectionItemEditor({
     updater: (resource: LearningResource) => LearningResource,
   ) => void;
   removeResource: (resourceId: string) => void;
+  onUploadFile: (file: File) => Promise<string>;
+  onError: (message: string | null) => void;
 }) {
+  const typeLabel = resourceTypeLabels[item.type];
+  const [uploading, setUploading] = React.useState(false);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const input = event.target;
+    const file = input.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      setUploading(true);
+      onError(null);
+      const url = await onUploadFile(file);
+      updateResource(moduleId, sectionId, item.id, (resource) => ({ ...resource, url }));
+    } catch (uploadError) {
+      onError(uploadError instanceof Error ? uploadError.message : 'Failed to upload file.');
+    } finally {
+      setUploading(false);
+      input.value = '';
+    }
+  };
+
   return (
     <div className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
       <div className="mb-5 flex items-start justify-between gap-3">
         <div>
-          <h2 className="font-display text-[22px] font-semibold text-on-surface">Item Editor</h2>
+          <h2 className="font-display text-[22px] font-semibold text-on-surface">Edit {typeLabel}</h2>
           <p className="mt-1 text-sm text-on-surface-variant">
-            Update the selected lesson, reading, file, link, or exam here.
+            Update the details for this {typeLabel.toLowerCase()} content.
           </p>
         </div>
         <Button variant="destructive" size="sm" onClick={() => removeResource(item.id)}>
@@ -347,6 +802,20 @@ function SectionItemEditor({
           />
         </div>
         <div>
+          <label className="mb-2 block text-sm font-semibold text-on-surface">Item ID</label>
+          <Input value={item.id} disabled />
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <div>
+          <label className="mb-2 block text-sm font-semibold text-on-surface">Type</label>
+          <div className="flex items-center gap-2">
+            <Badge variant="info">{typeLabel}</Badge>
+            <span className="text-xs text-on-surface-variant">(Fixed)</span>
+          </div>
+        </div>
+        <div>
           <label className="mb-2 block text-sm font-semibold text-on-surface">Duration</label>
           <Input
             value={item.duration}
@@ -357,23 +826,6 @@ function SectionItemEditor({
               }))
             }
           />
-        </div>
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-on-surface">Type</label>
-          <Select
-            value={item.type}
-            onChange={(event) =>
-              updateResource(moduleId, sectionId, item.id, (resource) => ({
-                ...resource,
-                type: event.target.value as ResourceType,
-              }))
-            }
-            options={resourceTypeOptions}
-          />
-        </div>
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-on-surface">Item ID</label>
-          <Input value={item.id} disabled />
         </div>
       </div>
 
@@ -388,12 +840,14 @@ function SectionItemEditor({
               description: event.target.value,
             }))
           }
+          placeholder="Summarize what this content covers."
         />
       </div>
 
-      {['video', 'pdf', 'link'].includes(item.type) ? (
+      {/* Video-specific fields */}
+      {item.type === 'video' && (
         <div className="mt-4">
-          <label className="mb-2 block text-sm font-semibold text-on-surface">Launch URL</label>
+          <label className="mb-2 block text-sm font-semibold text-on-surface">Video URL</label>
           <Input
             value={item.url ?? ''}
             onChange={(event) =>
@@ -402,15 +856,65 @@ function SectionItemEditor({
                 url: event.target.value,
               }))
             }
+            placeholder="YouTube, Vimeo URL, or video file URL"
+          />
+          <div className="mt-2 flex items-center gap-3">
+            <input type="file" accept="video/*" disabled={uploading} onChange={handleFileUpload} className={fileInputClassName} />
+            {uploading ? <span className="shrink-0 text-xs text-on-surface-variant">Uploading...</span> : null}
+          </div>
+          <p className="mt-1 text-xs text-on-surface-variant">
+            Paste a link above, or upload a video file to replace it.
+          </p>
+        </div>
+      )}
+
+      {/* PDF-specific fields */}
+      {item.type === 'pdf' && (
+        <div className="mt-4">
+          <label className="mb-2 block text-sm font-semibold text-on-surface">PDF URL or File</label>
+          <Input
+            value={item.url ?? ''}
+            onChange={(event) =>
+              updateResource(moduleId, sectionId, item.id, (resource) => ({
+                ...resource,
+                url: event.target.value,
+              }))
+            }
+            placeholder="Link to PDF document"
+          />
+          <div className="mt-2 flex items-center gap-3">
+            <input type="file" accept="application/pdf,.pdf" disabled={uploading} onChange={handleFileUpload} className={fileInputClassName} />
+            {uploading ? <span className="shrink-0 text-xs text-on-surface-variant">Uploading...</span> : null}
+          </div>
+          <p className="mt-1 text-xs text-on-surface-variant">
+            Paste a link above, or upload a PDF document to replace it.
+          </p>
+        </div>
+      )}
+
+      {/* Link-specific fields */}
+      {item.type === 'link' && (
+        <div className="mt-4">
+          <label className="mb-2 block text-sm font-semibold text-on-surface">External URL</label>
+          <Input
+            value={item.url ?? ''}
+            onChange={(event) =>
+              updateResource(moduleId, sectionId, item.id, (resource) => ({
+                ...resource,
+                url: event.target.value,
+              }))
+            }
+            placeholder="Full URL to external resource"
           />
         </div>
-      ) : null}
+      )}
 
-      {['text', 'exam'].includes(item.type) ? (
+      {/* Text-specific fields */}
+      {item.type === 'text' && (
         <div className="mt-4">
-          <label className="mb-2 block text-sm font-semibold text-on-surface">Content</label>
+          <label className="mb-2 block text-sm font-semibold text-on-surface">Lesson Content</label>
           <Textarea
-            className="min-h-32"
+            className="min-h-40"
             value={item.content ?? ''}
             onChange={(event) =>
               updateResource(moduleId, sectionId, item.id, (resource) => ({
@@ -418,43 +922,101 @@ function SectionItemEditor({
                 content: event.target.value,
               }))
             }
+            placeholder="Write the full lesson content here."
           />
         </div>
-      ) : null}
+      )}
 
-      {item.type === 'exam' ? (
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-on-surface">Question Count</label>
-            <Input
-              type="number"
-              min={1}
-              value={item.questionCount ?? 0}
+      {/* Exam-specific fields */}
+      {item.type === 'exam' && (
+        <>
+          <div className="mt-4">
+            <label className="mb-2 block text-sm font-semibold text-on-surface">Exam Format</label>
+            <Select
+              value={item.examFormat ?? 'text'}
+              onChange={(event) => {
+                const examFormat = event.target.value as ExamFormat;
+                updateResource(moduleId, sectionId, item.id, (resource) => ({
+                  ...resource,
+                  examFormat,
+                  questions: resource.questions
+                    ? applyFormatToQuestions(resource.questions, examFormat)
+                    : resource.questions,
+                }));
+              }}
+              options={[
+                { label: 'Text-Based (Short Answer)', value: 'text' },
+                { label: 'Multiple Choice', value: 'multiple-choice' },
+              ]}
+            />
+          </div>
+
+          <div className="mt-4">
+            <label className="mb-2 block text-sm font-semibold text-on-surface">Exam Instructions</label>
+            <Textarea
+              className="min-h-32"
+              value={item.content ?? ''}
               onChange={(event) =>
                 updateResource(moduleId, sectionId, item.id, (resource) => ({
                   ...resource,
-                  questionCount: Number(event.target.value || 0),
+                  content: event.target.value,
                 }))
               }
+              placeholder="Explain the exam rules, time limits, and instructions."
             />
           </div>
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-on-surface">Passing Score %</label>
-            <Input
-              type="number"
-              min={0}
-              max={100}
-              value={item.passingScore ?? 0}
-              onChange={(event) =>
-                updateResource(moduleId, sectionId, item.id, (resource) => ({
-                  ...resource,
-                  passingScore: Number(event.target.value || 0),
-                }))
-              }
-            />
+
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-on-surface">Number of Questions</label>
+              <Input
+                type="number"
+                min={1}
+                value={item.questions?.length ? item.questions.length : (item.questionCount ?? 0)}
+                disabled={Boolean(item.questions?.length)}
+                onChange={(event) =>
+                  updateResource(moduleId, sectionId, item.id, (resource) => ({
+                    ...resource,
+                    questionCount: Number(event.target.value || 0),
+                  }))
+                }
+              />
+              {item.questions?.length ? (
+                <p className="mt-1 text-xs text-on-surface-variant">
+                  Managed by the question configuration below.
+                </p>
+              ) : null}
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-on-surface">Passing Score (%)</label>
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                value={item.passingScore ?? 0}
+                onChange={(event) =>
+                  updateResource(moduleId, sectionId, item.id, (resource) => ({
+                    ...resource,
+                    passingScore: Number(event.target.value || 0),
+                  }))
+                }
+              />
+            </div>
           </div>
-        </div>
-      ) : null}
+
+          <ExamQuestionsEditor
+            format={item.examFormat ?? 'text'}
+            questions={item.questions ?? []}
+            onChange={(questions) =>
+              updateResource(moduleId, sectionId, item.id, (resource) => ({
+                ...resource,
+                questions: questions.length > 0 ? questions : undefined,
+                questionCount: questions.length > 0 ? questions.length : resource.questionCount,
+              }))
+            }
+          />
+        </>
+      )}
     </div>
   );
 }
@@ -470,15 +1032,25 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
     error,
     success,
     setError,
+    setSuccess,
     fetchConfig,
     saveConfig,
     resetConfig,
+    autoSaveConfig,
+    uploadFile,
   } = useLearningResourcesConfig();
 
   const [showModuleForm, setShowModuleForm] = React.useState(false);
+  const [editingModuleId, setEditingModuleId] = React.useState<string | null>(null);
   const [showSectionForm, setShowSectionForm] = React.useState(false);
+  const [editingSectionId, setEditingSectionId] = React.useState<string | null>(null);
   const [showItemForm, setShowItemForm] = React.useState(false);
-  const [moduleDraft, setModuleDraft] = React.useState({ title: '', summary: '', requiredHours: '10' });
+  const [moduleDraft, setModuleDraft] = React.useState({
+    title: '',
+    summary: '',
+    requiredHours: '10',
+    minimumHoursForCertification: '',
+  });
   const [sectionDraft, setSectionDraft] = React.useState({ title: '', description: '' });
   const [itemDraft, setItemDraft] = React.useState({
     title: '',
@@ -489,8 +1061,14 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
     content: '',
     questionCount: '10',
     passingScore: '70',
+    examFormat: 'text' as 'text' | 'multiple-choice',
   });
   const [selectedItemId, setSelectedItemId] = React.useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = React.useState<DeleteConfirmState | null>(null);
+  const [itemSource, setItemSource] = React.useState<'url' | 'upload'>('url');
+  const [itemFile, setItemFile] = React.useState<File | null>(null);
+  const [uploadingItem, setUploadingItem] = React.useState(false);
+  const [examQuestions, setExamQuestions] = React.useState<ExamQuestion[]>([]);
 
   const selectedModule = config?.modules.find((module) => module.id === moduleId) ?? null;
   const selectedSection = selectedModule?.sections.find((section) => section.id === sectionId) ?? null;
@@ -622,7 +1200,9 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
   }
 
   if (view === 'modules') {
-    const rows: ModuleRow[] = config.modules.map((module) => ({
+    const sortedModules = [...config.modules].sort((a, b) => a.order - b.order);
+
+    const rows: ModuleRow[] = sortedModules.map((module) => ({
       id: module.id,
       title: module.title,
       requiredHours: module.requiredHours,
@@ -659,6 +1239,7 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
       >
         <div className="space-y-6">
           <ConfigBanner error={error} success={success} />
+          <DeleteConfirmModal state={deleteConfirm} onCancel={() => setDeleteConfirm(null)} />
 
           <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft">
@@ -692,28 +1273,41 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
             <div className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
               <div className="mb-5 flex items-center justify-between gap-3">
                 <div>
-                  <h2 className="font-display text-[22px] font-semibold text-on-surface">Create Module</h2>
+                  <h2 className="font-display text-[22px] font-semibold text-on-surface">
+                    {editingModuleId ? 'Edit Module' : 'Create Module'}
+                  </h2>
                   <p className="mt-1 text-sm text-on-surface-variant">
-                    Add the module first, then open it to create sections inside it.
+                    {editingModuleId
+                      ? 'Update module details, order, and certification requirements.'
+                      : 'Add the module first, then open it to create sections inside it.'}
                   </p>
                 </div>
-                <Button variant="secondary" size="sm" onClick={() => setShowModuleForm(false)}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setShowModuleForm(false);
+                    setEditingModuleId(null);
+                    setModuleDraft({ title: '', summary: '', requiredHours: '10', minimumHoursForCertification: '' });
+                  }}
+                >
                   Close
                 </Button>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-on-surface">Module Title</label>
+                  <label className="mb-2 block text-sm font-semibold text-on-surface">Module Title *</label>
                   <Input
                     value={moduleDraft.title}
                     onChange={(event) =>
                       setModuleDraft((current) => ({ ...current, title: event.target.value }))
                     }
+                    placeholder="e.g., Foundation of Patient Care"
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-on-surface">Required Hours</label>
+                  <label className="mb-2 block text-sm font-semibold text-on-surface">Required Hours *</label>
                   <Input
                     type="number"
                     min={1}
@@ -721,18 +1315,55 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
                     onChange={(event) =>
                       setModuleDraft((current) => ({ ...current, requiredHours: event.target.value }))
                     }
+                    placeholder="e.g., 20"
                   />
                 </div>
               </div>
 
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-on-surface">Module Order</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={
+                      editingModuleId
+                        ? (config?.modules.find((m) => m.id === editingModuleId)?.order ?? 0)
+                        : config?.modules.length ?? 0
+                    }
+                    disabled
+                  />
+                  <p className="mt-1 text-xs text-on-surface-variant">Auto-assigned based on creation order</p>
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-on-surface">
+                    Min Hours for Certification
+                  </label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={moduleDraft.minimumHoursForCertification}
+                    onChange={(event) =>
+                      setModuleDraft((current) => ({
+                        ...current,
+                        minimumHoursForCertification: event.target.value,
+                      }))
+                    }
+                    placeholder="Leave blank if no requirement"
+                  />
+                  <p className="mt-1 text-xs text-on-surface-variant">Hours before certification is unlocked</p>
+                </div>
+              </div>
+
               <div className="mt-4">
-                <label className="mb-2 block text-sm font-semibold text-on-surface">Summary</label>
+                <label className="mb-2 block text-sm font-semibold text-on-surface">Summary *</label>
                 <Textarea
                   className="min-h-24"
                   value={moduleDraft.summary}
                   onChange={(event) =>
                     setModuleDraft((current) => ({ ...current, summary: event.target.value }))
                   }
+                  placeholder="Describe what students will learn in this module"
                 />
               </div>
 
@@ -742,36 +1373,70 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
                     const title = moduleDraft.title.trim();
                     const summary = moduleDraft.summary.trim();
                     const requiredHours = Number(moduleDraft.requiredHours);
-                    const id = slugify(title);
+                    const minimumHours = moduleDraft.minimumHoursForCertification
+                      ? Number(moduleDraft.minimumHoursForCertification)
+                      : undefined;
 
                     if (!title || !summary || requiredHours <= 0) {
                       setError('Module title, summary, and required hours are required.');
                       return;
                     }
 
-                    if (config.modules.some((module) => module.id === id)) {
-                      setError('A module with this title already exists. Please use a different title.');
-                      return;
-                    }
+                    if (editingModuleId) {
+                      const updatedConfig = {
+                        ...config,
+                        modules: config.modules.map((m) =>
+                          m.id === editingModuleId
+                            ? {
+                                ...m,
+                                title,
+                                summary,
+                                requiredHours,
+                                minimumHoursForCertification: minimumHours,
+                              }
+                            : m,
+                        ),
+                      };
 
-                    setConfig((current) =>
-                      current
-                        ? {
-                            ...current,
-                            modules: [
-                              ...current.modules,
-                              { id, title, summary, requiredHours, sections: [] },
-                            ],
-                          }
-                        : current,
-                    );
-                    setModuleDraft({ title: '', summary: '', requiredHours: '10' });
+                      setConfig(updatedConfig);
+                      autoSaveConfig(updatedConfig);
+                      setEditingModuleId(null);
+                    } else {
+                      const id = slugify(title);
+
+                      if (config.modules.some((module) => module.id === id)) {
+                        setError('A module with this title already exists. Please use a different title.');
+                        return;
+                      }
+
+                      const nextOrder = Math.max(...config.modules.map((m) => m.order), -1) + 1;
+
+                      const updatedConfig = {
+                        ...config,
+                        modules: [
+                          ...config.modules,
+                          {
+                            id,
+                            title,
+                            summary,
+                            requiredHours,
+                            order: nextOrder,
+                            minimumHoursForCertification: minimumHours,
+                            sections: [],
+                          },
+                        ],
+                      };
+
+                      setConfig(updatedConfig);
+                      autoSaveConfig(updatedConfig);
+                    }
+                    setModuleDraft({ title: '', summary: '', requiredHours: '10', minimumHoursForCertification: '' });
                     setShowModuleForm(false);
                     setError(null);
                   }}
                 >
                   <IconPlus className="size-4" />
-                  Create Module
+                  {editingModuleId ? 'Update Module' : 'Create Module'}
                 </Button>
               </div>
             </div>
@@ -792,14 +1457,63 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
               onRowClick={(row) => router.push(getModuleHref(row.id))}
               mobileCardTitle={(row) => row.title}
               mobileCardSubtitle={(row) => `${row.sections} sections • ${row.items} items`}
-              rowActions={(row) => (
-                <Link href={getModuleHref(row.id)}>
-                  <Button variant="secondary" size="sm">
-                    Open
-                    <IconChevronRight className="size-4" />
-                  </Button>
-                </Link>
-              )}
+              rowActions={(row) => {
+                const module = config.modules.find((m) => m.id === row.id);
+                return (
+                  <div className="flex items-center gap-1">
+                    <RowIconButton
+                      title="Edit"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (module) {
+                          setModuleDraft({
+                            title: module.title,
+                            summary: module.summary,
+                            requiredHours: String(module.requiredHours),
+                            minimumHoursForCertification: String(
+                              module.minimumHoursForCertification ?? '',
+                            ),
+                          });
+                          setEditingModuleId(module.id);
+                          setShowModuleForm(true);
+                        }
+                      }}
+                    >
+                      <IconEdit className="size-4" />
+                    </RowIconButton>
+                    <Link href={getModuleHref(row.id)} onClick={(e) => e.stopPropagation()}>
+                      <RowIconButton title="Open">
+                        <IconEye className="size-4" />
+                      </RowIconButton>
+                    </Link>
+                    <RowIconButton
+                      title="Delete"
+                      destructive
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteConfirm({
+                          title: 'Delete Module?',
+                          description: `"${row.title}" and all its sections will be permanently removed.`,
+                          confirmLabel: 'Delete Module',
+                          onConfirm: () => {
+                            const updatedConfig = {
+                              ...config,
+                              modules: config.modules
+                                .filter((m) => m.id !== row.id)
+                                .sort((a, b) => a.order - b.order)
+                                .map((m, index) => ({ ...m, order: index })),
+                            };
+                            setConfig(updatedConfig);
+                            autoSaveConfig(updatedConfig);
+                          },
+                        });
+                      }}
+                    >
+                      <IconTrash className="size-4" />
+                    </RowIconButton>
+                  </div>
+                );
+              }}
             />
           </div>
         </div>
@@ -843,6 +1557,7 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
       >
         <div className="space-y-6">
           <ConfigBanner error={error} success={success} />
+          <DeleteConfirmModal state={deleteConfirm} onCancel={() => setDeleteConfirm(null)} />
 
           <div className="flex items-center gap-2 text-sm text-on-surface-variant">
             <Link href="/admin/configurations/learning-resources" className="hover:text-primary">
@@ -864,15 +1579,23 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
                 variant="destructive"
                 size="sm"
                 onClick={() => {
-                  setConfig((current) =>
-                    current
-                      ? {
-                          ...current,
-                          modules: current.modules.filter((module) => module.id !== selectedModule.id),
-                        }
-                      : current,
-                  );
-                  router.push('/admin/configurations/learning-resources');
+                  setDeleteConfirm({
+                    title: 'Delete Module?',
+                    description: `"${selectedModule.title}" and all its sections will be permanently removed.`,
+                    confirmLabel: 'Delete Module',
+                    onConfirm: () => {
+                      const updatedConfig = {
+                        ...config,
+                        modules: config.modules
+                          .filter((module) => module.id !== selectedModule.id)
+                          .sort((a, b) => a.order - b.order)
+                          .map((m, index) => ({ ...m, order: index })),
+                      };
+                      setConfig(updatedConfig);
+                      autoSaveConfig(updatedConfig);
+                      router.push('/admin/configurations/learning-resources');
+                    },
+                  });
                 }}
               >
                 <IconTrash className="size-4" />
@@ -905,6 +1628,79 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
                       requiredHours: Number(event.target.value || 0),
                     }))
                   }
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-on-surface">Module Order</label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={selectedModule.order}
+                    disabled
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={selectedModule.order === 0}
+                    onClick={() => {
+                      const previousModule = config.modules.find((m) => m.order === selectedModule.order - 1);
+                      if (previousModule) {
+                        updateModule(selectedModule.id, (m) => ({
+                          ...m,
+                          order: m.order - 1,
+                        }));
+                        updateModule(previousModule.id, (m) => ({
+                          ...m,
+                          order: m.order + 1,
+                        }));
+                      }
+                    }}
+                  >
+                    ↑
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={selectedModule.order === config.modules.length - 1}
+                    onClick={() => {
+                      const nextModule = config.modules.find((m) => m.order === selectedModule.order + 1);
+                      if (nextModule) {
+                        updateModule(selectedModule.id, (m) => ({
+                          ...m,
+                          order: m.order + 1,
+                        }));
+                        updateModule(nextModule.id, (m) => ({
+                          ...m,
+                          order: m.order - 1,
+                        }));
+                      }
+                    }}
+                  >
+                    ↓
+                  </Button>
+                </div>
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-on-surface">
+                  Min Hours for Certification
+                </label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={selectedModule.minimumHoursForCertification ?? ''}
+                  onChange={(event) =>
+                    updateModule(selectedModule.id, (module) => ({
+                      ...module,
+                      minimumHoursForCertification: event.target.value
+                        ? Number(event.target.value)
+                        : undefined,
+                    }))
+                  }
+                  placeholder="Leave blank if no requirement"
                 />
               </div>
             </div>
@@ -976,30 +1772,64 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
                       return;
                     }
 
-                    if (selectedModule.sections.some((section) => section.id === id)) {
-                      setError('A section with this title already exists in this module.');
-                      return;
-                    }
+                    if (editingSectionId) {
+                      const updatedConfig = {
+                        ...config,
+                        modules: config.modules.map((m) =>
+                          m.id === selectedModule.id
+                            ? {
+                                ...m,
+                                sections: m.sections.map((s) =>
+                                  s.id === editingSectionId
+                                    ? {
+                                        ...s,
+                                        title,
+                                        description: sectionDraft.description.trim(),
+                                      }
+                                    : s,
+                                ),
+                              }
+                            : m,
+                        ),
+                      };
+                      setConfig(updatedConfig);
+                      autoSaveConfig(updatedConfig);
+                      setEditingSectionId(null);
+                    } else {
+                      if (selectedModule.sections.some((section) => section.id === id)) {
+                        setError('A section with this title already exists in this module.');
+                        return;
+                      }
 
-                    updateModule(selectedModule.id, (module) => ({
-                      ...module,
-                      sections: [
-                        ...module.sections,
-                        {
-                          id,
-                          title,
-                          description: sectionDraft.description.trim(),
-                          resources: [],
-                        },
-                      ],
-                    }));
+                      const updatedConfig = {
+                        ...config,
+                        modules: config.modules.map((m) =>
+                          m.id === selectedModule.id
+                            ? {
+                                ...m,
+                                sections: [
+                                  ...m.sections,
+                                  {
+                                    id,
+                                    title,
+                                    description: sectionDraft.description.trim(),
+                                    resources: [],
+                                  },
+                                ],
+                              }
+                            : m,
+                        ),
+                      };
+                      setConfig(updatedConfig);
+                      autoSaveConfig(updatedConfig);
+                    }
                     setSectionDraft({ title: '', description: '' });
                     setShowSectionForm(false);
                     setError(null);
                   }}
                 >
                   <IconPlus className="size-4" />
-                  Create Section
+                  {editingSectionId ? 'Update Section' : 'Create Section'}
                 </Button>
               </div>
             </div>
@@ -1023,14 +1853,54 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
               onRowClick={(row) => router.push(getSectionHref(selectedModule.id, row.id))}
               mobileCardTitle={(row) => row.title}
               mobileCardSubtitle={(row) => `${row.items} items`}
-              rowActions={(row) => (
-                <Link href={getSectionHref(selectedModule.id, row.id)}>
-                  <Button variant="secondary" size="sm">
-                    Open
-                    <IconChevronRight className="size-4" />
-                  </Button>
-                </Link>
-              )}
+              rowActions={(row) => {
+                const section = selectedModule.sections.find((s) => s.id === row.id);
+                return (
+                  <div className="flex items-center gap-1">
+                    <RowIconButton
+                      title="Edit"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (section) {
+                          setSectionDraft({
+                            title: section.title,
+                            description: section.description,
+                          });
+                          setEditingSectionId(section.id);
+                          setShowSectionForm(true);
+                        }
+                      }}
+                    >
+                      <IconEdit className="size-4" />
+                    </RowIconButton>
+                    <Link href={getSectionHref(selectedModule.id, row.id)} onClick={(e) => e.stopPropagation()}>
+                      <RowIconButton title="Open">
+                        <IconEye className="size-4" />
+                      </RowIconButton>
+                    </Link>
+                    <RowIconButton
+                      title="Delete"
+                      destructive
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteConfirm({
+                          title: 'Delete Section?',
+                          description: `"${row.title}" and all its items will be permanently removed.`,
+                          confirmLabel: 'Delete Section',
+                          onConfirm: () => {
+                            updateModule(selectedModule.id, (module) => ({
+                              ...module,
+                              sections: module.sections.filter((s) => s.id !== row.id),
+                            }));
+                          },
+                        });
+                      }}
+                    >
+                      <IconTrash className="size-4" />
+                    </RowIconButton>
+                  </div>
+                );
+              }}
             />
           </div>
         </div>
@@ -1080,6 +1950,7 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
       >
         <div className="space-y-6">
           <ConfigBanner error={error} success={success} />
+          <DeleteConfirmModal state={deleteConfirm} onCancel={() => setDeleteConfirm(null)} />
 
           <div className="flex items-center gap-2 text-sm text-on-surface-variant">
             <Link href="/admin/configurations/learning-resources" className="hover:text-primary">
@@ -1105,11 +1976,27 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
                 variant="destructive"
                 size="sm"
                 onClick={() => {
-                  updateModule(selectedModule.id, (module) => ({
-                    ...module,
-                    sections: module.sections.filter((section) => section.id !== selectedSection.id),
-                  }));
-                  router.push(getModuleHref(selectedModule.id));
+                  setDeleteConfirm({
+                    title: 'Delete Section?',
+                    description: `"${selectedSection.title}" and all its items will be permanently removed.`,
+                    confirmLabel: 'Delete Section',
+                    onConfirm: () => {
+                      const updatedConfig = {
+                        ...config,
+                        modules: config.modules.map((m) =>
+                          m.id === selectedModule.id
+                            ? {
+                                ...m,
+                                sections: m.sections.filter((section) => section.id !== selectedSection.id),
+                              }
+                            : m,
+                        ),
+                      };
+                      setConfig(updatedConfig);
+                      autoSaveConfig(updatedConfig);
+                      router.push(getModuleHref(selectedModule.id));
+                    },
+                  });
                 }}
               >
                 <IconTrash className="size-4" />
@@ -1157,7 +2044,7 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
                 <div>
                   <h2 className="font-display text-[22px] font-semibold text-on-surface">Create Learning Item</h2>
                   <p className="mt-1 text-sm text-on-surface-variant">
-                    Add a lesson, reading, link, file, or exam into <strong>{selectedSection.title}</strong>.
+                    Select the type of content to add to <strong>{selectedSection.title}</strong>.
                   </p>
                 </div>
                 <Button variant="secondary" size="sm" onClick={() => setShowItemForm(false)}>
@@ -1165,6 +2052,7 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
                 </Button>
               </div>
 
+              {/* Basic Fields */}
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-on-surface">Title</label>
@@ -1173,40 +2061,283 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
                     onChange={(event) =>
                       setItemDraft((current) => ({ ...current, title: event.target.value }))
                     }
+                    placeholder="e.g., Module Overview Video"
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-on-surface">Type</label>
+                  <label className="mb-2 block text-sm font-semibold text-on-surface">Content Type *</label>
                   <Select
                     value={itemDraft.type}
-                    onChange={(event) =>
-                      setItemDraft((current) => ({ ...current, type: event.target.value as ResourceType }))
-                    }
+                    onChange={(event) => {
+                      const newType = event.target.value as ResourceType;
+                      setItemDraft((current) => ({
+                        ...current,
+                        type: newType,
+                        url: '',
+                        content: '',
+                      }));
+                      setItemSource('url');
+                      setItemFile(null);
+                      setExamQuestions(
+                        newType === 'exam'
+                          ? resizeExamQuestions([], Math.max(1, Number(itemDraft.questionCount) || 0), itemDraft.examFormat)
+                          : [],
+                      );
+                    }}
                     options={resourceTypeOptions}
                   />
                 </div>
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-on-surface">Duration</label>
-                  <Input
-                    value={itemDraft.duration}
-                    onChange={(event) =>
-                      setItemDraft((current) => ({ ...current, duration: event.target.value }))
-                    }
-                  />
-                </div>
-                {['video', 'pdf', 'link'].includes(itemDraft.type) ? (
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-on-surface">Launch URL</label>
-                    <Input
-                      value={itemDraft.url}
-                      onChange={(event) =>
-                        setItemDraft((current) => ({ ...current, url: event.target.value }))
-                      }
-                    />
-                  </div>
-                ) : null}
               </div>
 
+              {/* Type-specific content */}
+              {itemDraft.type === 'video' && (
+                <>
+                  <div className="mt-4 rounded-[14px] border border-info/20 bg-info/5 p-3 text-sm text-on-surface">
+                    Upload a video file (MP4, WebM) or paste a YouTube/Vimeo URL.
+                  </div>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-on-surface">Video Source *</label>
+                      <Select
+                        value={itemSource}
+                        onChange={(event) => {
+                          setItemSource(event.target.value as 'url' | 'upload');
+                          setItemFile(null);
+                        }}
+                        options={sourceModeOptions}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-on-surface">Duration</label>
+                      <Input
+                        value={itemDraft.duration}
+                        onChange={(event) =>
+                          setItemDraft((current) => ({ ...current, duration: event.target.value }))
+                        }
+                        placeholder="e.g., 15 min, 1 hr 20 min"
+                      />
+                    </div>
+                  </div>
+                  {itemSource === 'url' ? (
+                    <div className="mt-4">
+                      <label className="mb-2 block text-sm font-semibold text-on-surface">Video URL</label>
+                      <Input
+                        value={itemDraft.url}
+                        onChange={(event) =>
+                          setItemDraft((current) => ({ ...current, url: event.target.value }))
+                        }
+                        placeholder="https://youtube.com/watch?v=..."
+                      />
+                    </div>
+                  ) : (
+                    <div className="mt-4">
+                      <label className="mb-2 block text-sm font-semibold text-on-surface">Video File *</label>
+                      <input
+                        type="file"
+                        accept="video/*"
+                        className={fileInputClassName}
+                        onChange={(event) => setItemFile(event.target.files?.[0] ?? null)}
+                      />
+                      {itemFile ? (
+                        <p className="mt-1 text-xs text-on-surface-variant">
+                          Selected: {itemFile.name} ({formatFileSize(itemFile.size)})
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-xs text-on-surface-variant">MP4, WebM, and other video formats.</p>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {itemDraft.type === 'pdf' && (
+                <>
+                  <div className="mt-4 rounded-[14px] border border-info/20 bg-info/5 p-3 text-sm text-on-surface">
+                    Upload a PDF document or provide a link to a PDF file.
+                  </div>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-on-surface">PDF Source *</label>
+                      <Select
+                        value={itemSource}
+                        onChange={(event) => {
+                          setItemSource(event.target.value as 'url' | 'upload');
+                          setItemFile(null);
+                        }}
+                        options={sourceModeOptions}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-on-surface">Duration</label>
+                      <Input
+                        value={itemDraft.duration}
+                        onChange={(event) =>
+                          setItemDraft((current) => ({ ...current, duration: event.target.value }))
+                        }
+                        placeholder="e.g., 12 pages, 30 min read"
+                      />
+                    </div>
+                  </div>
+                  {itemSource === 'url' ? (
+                    <div className="mt-4">
+                      <label className="mb-2 block text-sm font-semibold text-on-surface">PDF URL</label>
+                      <Input
+                        value={itemDraft.url}
+                        onChange={(event) =>
+                          setItemDraft((current) => ({ ...current, url: event.target.value }))
+                        }
+                        placeholder="https://example.com/document.pdf"
+                      />
+                    </div>
+                  ) : (
+                    <div className="mt-4">
+                      <label className="mb-2 block text-sm font-semibold text-on-surface">PDF File *</label>
+                      <input
+                        type="file"
+                        accept="application/pdf,.pdf"
+                        className={fileInputClassName}
+                        onChange={(event) => setItemFile(event.target.files?.[0] ?? null)}
+                      />
+                      {itemFile ? (
+                        <p className="mt-1 text-xs text-on-surface-variant">
+                          Selected: {itemFile.name} ({formatFileSize(itemFile.size)})
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-xs text-on-surface-variant">PDF documents only.</p>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {itemDraft.type === 'link' && (
+                <>
+                  <div className="mt-4 rounded-[14px] border border-info/20 bg-info/5 p-3 text-sm text-on-surface">
+                    Link to external resources like documentation, articles, or reference materials.
+                  </div>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-on-surface">External URL *</label>
+                      <Input
+                        value={itemDraft.url}
+                        onChange={(event) =>
+                          setItemDraft((current) => ({ ...current, url: event.target.value }))
+                        }
+                        placeholder="https://example.com/article"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-on-surface">Duration</label>
+                      <Input
+                        value={itemDraft.duration}
+                        onChange={(event) =>
+                          setItemDraft((current) => ({ ...current, duration: event.target.value }))
+                        }
+                        placeholder="e.g., 15 min, varies"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {itemDraft.type === 'text' && (
+                <>
+                  <div className="mt-4 rounded-[14px] border border-info/20 bg-info/5 p-3 text-sm text-on-surface">
+                    Write a lesson, guide, or instructional content directly in the system.
+                  </div>
+                  <div className="mt-4">
+                    <label className="mb-2 block text-sm font-semibold text-on-surface">Duration</label>
+                    <Input
+                      value={itemDraft.duration}
+                      onChange={(event) =>
+                        setItemDraft((current) => ({ ...current, duration: event.target.value }))
+                      }
+                      placeholder="e.g., 10 min read, 20 min"
+                    />
+                  </div>
+                </>
+              )}
+
+              {itemDraft.type === 'exam' && (
+                <>
+                  <div className="mt-4 rounded-[14px] border border-warning/20 bg-warning/5 p-3 text-sm text-on-surface">
+                    Create an assessment. Choose between text-based short answer or multiple choice format.
+                  </div>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-on-surface">Exam Format *</label>
+                      <Select
+                        value={itemDraft.examFormat}
+                        onChange={(event) => {
+                          const examFormat = event.target.value as ExamFormat;
+                          setItemDraft((current) => ({ ...current, examFormat }));
+                          setExamQuestions((current) => applyFormatToQuestions(current, examFormat));
+                        }}
+                        options={[
+                          { label: 'Text-Based (Short Answer)', value: 'text' },
+                          { label: 'Multiple Choice', value: 'multiple-choice' },
+                        ]}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-on-surface">Duration</label>
+                      <Input
+                        value={itemDraft.duration}
+                        onChange={(event) =>
+                          setItemDraft((current) => ({ ...current, duration: event.target.value }))
+                        }
+                        placeholder="e.g., 30 minutes, 1 hour"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-on-surface">Number of Questions *</label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={itemDraft.questionCount}
+                        onChange={(event) => {
+                          const raw = event.target.value;
+                          setItemDraft((current) => ({ ...current, questionCount: raw }));
+                          const count = Math.max(0, Math.min(100, Math.floor(Number(raw) || 0)));
+                          setExamQuestions((current) =>
+                            resizeExamQuestions(current, count, itemDraft.examFormat),
+                          );
+                        }}
+                        placeholder="e.g., 20"
+                      />
+                      <p className="mt-1 text-xs text-on-surface-variant">
+                        A configuration card is created for each question below.
+                      </p>
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-on-surface">Passing Score (%) *</label>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={itemDraft.passingScore}
+                        onChange={(event) =>
+                          setItemDraft((current) => ({ ...current, passingScore: event.target.value }))
+                        }
+                        placeholder="e.g., 70"
+                      />
+                    </div>
+                  </div>
+
+                  <ExamQuestionsEditor
+                    format={itemDraft.examFormat}
+                    questions={examQuestions}
+                    onChange={(questions) => {
+                      setExamQuestions(questions);
+                      setItemDraft((current) => ({ ...current, questionCount: String(questions.length) }));
+                    }}
+                  />
+                </>
+              )}
+
+              {/* Description - always shown */}
               <div className="mt-4">
                 <label className="mb-2 block text-sm font-semibold text-on-surface">Description</label>
                 <Textarea
@@ -1215,53 +2346,35 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
                   onChange={(event) =>
                     setItemDraft((current) => ({ ...current, description: event.target.value }))
                   }
+                  placeholder="What is this content about? Who should complete it?"
                 />
               </div>
 
-              {['text', 'exam'].includes(itemDraft.type) ? (
+              {/* Content - for text and exam */}
+              {['text', 'exam'].includes(itemDraft.type) && (
                 <div className="mt-4">
-                  <label className="mb-2 block text-sm font-semibold text-on-surface">Content</label>
+                  <label className="mb-2 block text-sm font-semibold text-on-surface">
+                    {itemDraft.type === 'text' ? 'Lesson Content *' : 'Exam Instructions *'}
+                  </label>
                   <Textarea
-                    className="min-h-32"
+                    className="min-h-40"
                     value={itemDraft.content}
                     onChange={(event) =>
                       setItemDraft((current) => ({ ...current, content: event.target.value }))
                     }
+                    placeholder={
+                      itemDraft.type === 'text'
+                        ? 'Write your lesson content here. Include all instructional materials and examples.'
+                        : 'Add exam instructions, rules, or any guidance students should know before starting.'
+                    }
                   />
                 </div>
-              ) : null}
+              )}
 
-              {itemDraft.type === 'exam' ? (
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-on-surface">Question Count</label>
-                    <Input
-                      type="number"
-                      min={1}
-                      value={itemDraft.questionCount}
-                      onChange={(event) =>
-                        setItemDraft((current) => ({ ...current, questionCount: event.target.value }))
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-on-surface">Passing Score %</label>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={100}
-                      value={itemDraft.passingScore}
-                      onChange={(event) =>
-                        setItemDraft((current) => ({ ...current, passingScore: event.target.value }))
-                      }
-                    />
-                  </div>
-                </div>
-              ) : null}
-
-              <div className="mt-5">
+              <div className="mt-6">
                 <Button
-                  onClick={() => {
+                  disabled={uploadingItem}
+                  onClick={async () => {
                     const title = itemDraft.title.trim();
                     const duration = itemDraft.duration.trim();
                     const id = slugify(title);
@@ -1271,10 +2384,110 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
                       return;
                     }
 
+                    if (itemDraft.type === 'link' && !itemDraft.url.trim()) {
+                      setError('Link items require a URL.');
+                      return;
+                    }
+
+                    if (
+                      ['video', 'pdf'].includes(itemDraft.type) &&
+                      itemSource === 'upload' &&
+                      !itemFile
+                    ) {
+                      setError('Choose a file to upload, or switch the source to a link.');
+                      return;
+                    }
+
+                    if (itemDraft.type === 'text' && !itemDraft.content.trim()) {
+                      setError('Text lessons require content.');
+                      return;
+                    }
+
+                    if (itemDraft.type === 'exam') {
+                      if (!itemDraft.content.trim()) {
+                        setError('Exams require instructions.');
+                        return;
+                      }
+                      if (examQuestions.length === 0) {
+                        setError('Exam must have at least 1 question.');
+                        return;
+                      }
+
+                      for (let i = 0; i < examQuestions.length; i++) {
+                        const question = examQuestions[i];
+
+                        if (!question.prompt.trim()) {
+                          setError(`Question ${i + 1} needs a prompt.`);
+                          return;
+                        }
+                        if (!Number.isFinite(question.points) || question.points <= 0) {
+                          setError(`Question ${i + 1} needs marks greater than zero.`);
+                          return;
+                        }
+                        if (itemDraft.examFormat === 'multiple-choice') {
+                          const filledOptions = (question.options ?? []).filter((option) => option.trim());
+                          if (filledOptions.length < 2) {
+                            setError(`Question ${i + 1} needs at least two options.`);
+                            return;
+                          }
+                          if (
+                            question.correctOption === undefined ||
+                            !(question.options ?? [])[question.correctOption]?.trim()
+                          ) {
+                            setError(`Question ${i + 1} needs a correct answer selected.`);
+                            return;
+                          }
+                        }
+                      }
+                    }
+
                     if (selectedSection.resources.some((resource) => resource.id === id)) {
                       setError('An item with this title already exists in this section.');
                       return;
                     }
+
+                    let resourceUrl = itemDraft.url.trim();
+
+                    if (['video', 'pdf'].includes(itemDraft.type) && itemSource === 'upload' && itemFile) {
+                      try {
+                        setUploadingItem(true);
+                        setError(null);
+                        resourceUrl = await uploadFile(itemFile);
+                      } catch (uploadError) {
+                        setError(
+                          uploadError instanceof Error ? uploadError.message : 'Failed to upload file.',
+                        );
+                        return;
+                      } finally {
+                        setUploadingItem(false);
+                      }
+                    }
+
+                    const builtQuestions: ExamQuestion[] | undefined =
+                      itemDraft.type === 'exam'
+                        ? examQuestions.map((question, i) => {
+                            if (itemDraft.examFormat === 'multiple-choice') {
+                              const filled = (question.options ?? [])
+                                .map((option, idx) => ({ text: option.trim(), idx }))
+                                .filter((option) => option.text);
+                              return {
+                                id: `${id}-q${i + 1}`,
+                                prompt: question.prompt.trim(),
+                                points: question.points,
+                                options: filled.map((option) => option.text),
+                                correctOption: filled.findIndex(
+                                  (option) => option.idx === question.correctOption,
+                                ),
+                              };
+                            }
+                            return {
+                              id: `${id}-q${i + 1}`,
+                              prompt: question.prompt.trim(),
+                              points: question.points,
+                              expectedAnswer: question.expectedAnswer?.trim() || undefined,
+                            };
+                          })
+                        : undefined;
 
                     const item: LearningResource = {
                       id,
@@ -1283,19 +2496,38 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
                       duration,
                       description: itemDraft.description.trim(),
                       url: ['video', 'pdf', 'link'].includes(itemDraft.type)
-                        ? itemDraft.url.trim() || undefined
+                        ? resourceUrl || undefined
                         : undefined,
                       content: ['text', 'exam'].includes(itemDraft.type)
                         ? itemDraft.content.trim() || undefined
                         : undefined,
-                      questionCount: itemDraft.type === 'exam' ? Number(itemDraft.questionCount || 0) : undefined,
+                      questionCount: itemDraft.type === 'exam' ? builtQuestions?.length : undefined,
                       passingScore: itemDraft.type === 'exam' ? Number(itemDraft.passingScore || 0) : undefined,
+                      examFormat: itemDraft.type === 'exam' ? itemDraft.examFormat : undefined,
+                      questions: builtQuestions,
                     };
 
-                    updateSection(selectedModule.id, selectedSection.id, (section) => ({
-                      ...section,
-                      resources: [...section.resources, item],
-                    }));
+                    const updatedConfig = {
+                      ...config,
+                      modules: config.modules.map((m) =>
+                        m.id === selectedModule.id
+                          ? {
+                              ...m,
+                              sections: m.sections.map((s) =>
+                                s.id === selectedSection.id
+                                  ? {
+                                      ...s,
+                                      resources: [...s.resources, item],
+                                    }
+                                  : s,
+                              ),
+                            }
+                          : m,
+                      ),
+                    };
+
+                    setConfig(updatedConfig);
+                    autoSaveConfig(updatedConfig);
                     setSelectedItemId(id);
                     setItemDraft({
                       title: '',
@@ -1306,13 +2538,17 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
                       content: '',
                       questionCount: '10',
                       passingScore: '70',
+                      examFormat: 'text',
                     });
+                    setItemSource('url');
+                    setItemFile(null);
+                    setExamQuestions([]);
                     setShowItemForm(false);
                     setError(null);
                   }}
                 >
                   <IconPlus className="size-4" />
-                  Create Item
+                  {uploadingItem ? 'Uploading...' : 'Create Item'}
                 </Button>
               </div>
             </div>
@@ -1336,15 +2572,66 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
               onRowClick={(row) => setSelectedItemId(row.id)}
               mobileCardTitle={(row) => row.title}
               mobileCardSubtitle={(row) => `${resourceTypeLabels[row.type]} • ${row.duration}`}
-              rowActions={(row) => (
-                <Button
-                  variant={selectedItemId === row.id ? 'default' : 'secondary'}
-                  size="sm"
-                  onClick={() => setSelectedItemId(row.id)}
-                >
-                  Edit
-                </Button>
-              )}
+              rowActions={(row) => {
+                const item = selectedSection.resources.find((r) => r.id === row.id);
+                return (
+                  <div className="flex items-center gap-1">
+                    <RowIconButton
+                      title="Edit"
+                      active={selectedItemId === row.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedItemId(row.id);
+                      }}
+                    >
+                      <IconEdit className="size-4" />
+                    </RowIconButton>
+                    <RowIconButton
+                      title="Delete"
+                      destructive
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!item) {
+                          return;
+                        }
+                        setDeleteConfirm({
+                          title: 'Delete Item?',
+                          description: `"${item.title}" will be permanently removed from this section.`,
+                          confirmLabel: 'Delete Item',
+                          onConfirm: () => {
+                            const updatedConfig = {
+                              ...config,
+                              modules: config.modules.map((m) =>
+                                m.id === selectedModule.id
+                                  ? {
+                                      ...m,
+                                      sections: m.sections.map((s) =>
+                                        s.id === selectedSection.id
+                                          ? {
+                                              ...s,
+                                              resources: s.resources.filter((r) => r.id !== row.id),
+                                            }
+                                          : s,
+                                      ),
+                                    }
+                                  : m,
+                              ),
+                            };
+
+                            setConfig(updatedConfig);
+                            autoSaveConfig(updatedConfig);
+                            if (selectedItemId === row.id) {
+                              setSelectedItemId(null);
+                            }
+                          },
+                        });
+                      }}
+                    >
+                      <IconTrash className="size-4" />
+                    </RowIconButton>
+                  </div>
+                );
+              }}
             />
           </div>
 
@@ -1354,11 +2641,38 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
               moduleId={selectedModule.id}
               sectionId={selectedSection.id}
               updateResource={updateResource}
+              onUploadFile={uploadFile}
+              onError={setError}
               removeResource={(resourceId) => {
-                updateSection(selectedModule.id, selectedSection.id, (section) => ({
-                  ...section,
-                  resources: section.resources.filter((resource) => resource.id !== resourceId),
-                }));
+                const resource = selectedSection.resources.find((r) => r.id === resourceId);
+                setDeleteConfirm({
+                  title: 'Delete Item?',
+                  description: `"${resource?.title ?? resourceId}" will be permanently removed from this section.`,
+                  confirmLabel: 'Delete Item',
+                  onConfirm: () => {
+                    const updatedConfig = {
+                      ...config,
+                      modules: config.modules.map((m) =>
+                        m.id === selectedModule.id
+                          ? {
+                              ...m,
+                              sections: m.sections.map((s) =>
+                                s.id === selectedSection.id
+                                  ? {
+                                      ...s,
+                                      resources: s.resources.filter((r) => r.id !== resourceId),
+                                    }
+                                  : s,
+                              ),
+                            }
+                          : m,
+                      ),
+                    };
+
+                    setConfig(updatedConfig);
+                    autoSaveConfig(updatedConfig);
+                  },
+                });
               }}
             />
           ) : (

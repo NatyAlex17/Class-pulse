@@ -1,0 +1,88 @@
+{
+  "modules": [
+    {
+      "id": "introduction",
+      "title": "Introduction",
+      "summary": "Introduction",
+      "requiredHours": 10,
+      "order": 0,
+      "sections": [
+        {
+          "id": "section-one",
+          "title": "Section one",
+          "description": "Section one",
+          "resources": [
+            {
+              "id": "introduction-video",
+              "title": "Introduction video",
+              "type": "video",
+              "duration": "15",
+              "description": "this is for introduction",
+              "url": "http://localhost:4000/uploads/learning-resources/1783050742765-compliance-platform.mp4"
+            },
+            {
+              "id": "pdf-introduction",
+              "title": "pdf introduction",
+              "type": "pdf",
+              "duration": "10",
+              "description": "",
+              "url": "http://localhost:4000/uploads/learning-resources/1783050819018-module-3-writing-ground-truth-solutions.pdf"
+            },
+            {
+              "id": "module-exam",
+              "title": "Module Exam",
+              "type": "exam",
+              "duration": "30",
+              "description": "this should be completed in order to finalize this course",
+              "content": "this should be completed in order to finalize this course",
+              "questionCount": 3,
+              "passingScore": 70,
+              "examFormat": "multiple-choice",
+              "questions": [
+                {
+                  "id": "module-exam-q1",
+                  "prompt": "who is abebe",
+                  "points": 1,
+                  "options": [
+                    "kebede",
+                    "abebe",
+                    "chala",
+                    "chube"
+                  ],
+                  "correctOption": 3
+                },
+                {
+                  "id": "module-exam-q2",
+                  "prompt": "who is the developer of gta",
+                  "points": 1,
+                  "options": [
+                    "rockstar",
+                    "gameloft",
+                    "cd project",
+                    "none"
+                  ],
+                  "correctOption": 0
+                },
+                {
+                  "id": "module-exam-q3",
+                  "prompt": "is this an exam",
+                  "points": 1,
+                  "options": [
+                    "no",
+                    "yes",
+                    "maybe",
+                    "idk"
+                  ],
+                  "correctOption": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "globalSettings": {
+    "minimumHoursForCertification": 0
+  }
+}

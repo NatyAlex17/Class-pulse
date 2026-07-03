@@ -1,7 +1,25 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Req,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Request } from 'express';
+import * as fs from 'fs';
+import { diskStorage } from 'multer';
+import * as path from 'path';
 
 import { SupabaseAuthGuard } from '../../../common/auth/supabase-auth.guard';
 import { createApiResponse } from '../../../common/utils/create-api-response';
+import { LEARNING_RESOURCES_UPLOADS_DIR, UPLOADS_URL_PREFIX } from '../../../common/utils/upload-paths';
 import { ExamConfigService, type EntranceExamConfig } from '../../student/services/exam-config.service';
 import { EnrollmentWizardConfigService, type EnrollmentWizardConfig } from '../../student/services/enrollment-wizard-config.service';
 import {
@@ -262,6 +280,54 @@ export class AdminPortalController {
     return createApiResponse(
       this.learningResourcesConfigService.resetToDefault(),
       'Learning resources configuration reset to default successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Post('learning-resources-config/upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: (_req, _file, callback) => {
+          fs.mkdirSync(LEARNING_RESOURCES_UPLOADS_DIR, { recursive: true });
+          callback(null, LEARNING_RESOURCES_UPLOADS_DIR);
+        },
+        filename: (_req, file, callback) => {
+          const extension = path.extname(file.originalname).toLowerCase();
+          const baseName =
+            path
+              .basename(file.originalname, extension)
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/(^-|-$)/g, '') || 'file';
+          callback(null, `${Date.now()}-${baseName}${extension}`);
+        },
+      }),
+      limits: { fileSize: 500 * 1024 * 1024 },
+      fileFilter: (_req, file, callback) => {
+        if (file.mimetype.startsWith('video/') || file.mimetype === 'application/pdf') {
+          callback(null, true);
+        } else {
+          callback(new BadRequestException('Only video files and PDF documents can be uploaded.'), false);
+        }
+      },
+    }),
+  )
+  uploadLearningResourceFile(@UploadedFile() file: Express.Multer.File | undefined, @Req() request: Request) {
+    if (!file) {
+      throw new BadRequestException('No file received. Attach a file under the "file" field.');
+    }
+
+    const baseUrl = `${request.protocol}://${request.get('host')}`;
+
+    return createApiResponse(
+      {
+        url: `${baseUrl}${UPLOADS_URL_PREFIX}/learning-resources/${file.filename}`,
+        fileName: file.originalname,
+        size: file.size,
+        mimeType: file.mimetype,
+      },
+      'File uploaded successfully.',
     );
   }
 
