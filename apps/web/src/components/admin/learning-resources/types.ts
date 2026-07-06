@@ -89,9 +89,6 @@ export const resourceTypeLabels: Record<ResourceType, string> = {
   exam: 'Exam',
 };
 
-export const fileInputClassName =
-  'block w-full cursor-pointer text-sm text-on-surface-variant file:mr-4 file:cursor-pointer file:rounded-[10px] file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20';
-
 export const sourceModeOptions = [
   { label: 'Paste a link (URL)', value: 'url' },
   { label: 'Upload from this computer', value: 'upload' },

@@ -62,15 +62,15 @@ export function ModuleDetailView({
   }));
 
   const columns: DataTableColumn<SectionRow>[] = [
-    { id: 'title', header: 'Section', accessorKey: 'title' },
+    { id: 'title', header: 'Lesson', accessorKey: 'title' },
     { id: 'description', header: 'Description', accessorKey: 'description' },
-    { id: 'items', header: 'Items', accessorKey: 'items' },
+    { id: 'items', header: 'Learning Activities', accessorKey: 'items' },
   ];
 
   return (
     <AdminShell
       title={selectedModule.title}
-      subtitle="Manage this module and the sections inside it."
+      subtitle="Manage this module and the lessons inside it."
       topActions={
         <PageToolbar
           onRefresh={() => void fetchConfig()}
@@ -228,7 +228,7 @@ export function ModuleDetailView({
               onClick={() => {
                 setDeleteConfirm({
                   title: 'Delete Module?',
-                  description: `"${selectedModule.title}" and all its sections will be permanently removed.`,
+                  description: `"${selectedModule.title}" and all its lessons will be permanently removed.`,
                   confirmLabel: 'Delete Module',
                   onConfirm: () => {
                     const updatedConfig = {
@@ -262,12 +262,12 @@ export function ModuleDetailView({
             setEditingSectionId(null);
             setSectionDraft(emptySectionDraft);
           }}
-          title={editingSectionId ? 'Edit Section' : 'Create Section'}
-          description={`${editingSectionId ? 'Update this section under' : 'Add a section under'} "${selectedModule.title}".`}
+          title={editingSectionId ? 'Edit Lesson' : 'Create Lesson'}
+          description={`${editingSectionId ? 'Update this lesson under' : 'Add a lesson under'} "${selectedModule.title}".`}
         >
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm font-semibold text-on-surface">Section Title</label>
+              <label className="mb-2 block text-sm font-semibold text-on-surface">Lesson Title</label>
               <Input
                 value={sectionDraft.title}
                 onChange={(event) =>
@@ -299,7 +299,7 @@ export function ModuleDetailView({
                 const id = slugify(title);
 
                 if (!title) {
-                  setError('Section title is required.');
+                  setError('Lesson title is required.');
                   return;
                 }
 
@@ -328,7 +328,7 @@ export function ModuleDetailView({
                   setEditingSectionId(null);
                 } else {
                   if (selectedModule.sections.some((section) => section.id === id)) {
-                    setError('A section with this title already exists in this module.');
+                    setError('A lesson with this title already exists in this module.');
                     return;
                   }
 
@@ -360,7 +360,7 @@ export function ModuleDetailView({
               }}
             >
               <IconPlus className="size-4" />
-              {editingSectionId ? 'Update Section' : 'Create Section'}
+              {editingSectionId ? 'Update Lesson' : 'Create Lesson'}
             </Button>
           </div>
         </Modal>
@@ -368,13 +368,13 @@ export function ModuleDetailView({
         <div className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="font-display text-[22px] font-semibold text-on-surface">Sections</h2>
+              <h2 className="font-display text-[22px] font-semibold text-on-surface">Lessons</h2>
               <p className="mt-1 text-sm text-on-surface-variant">
-                Open a section to manage the full curriculum items inside it.
+                Open a lesson to manage all learning activities inside it.
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <Badge variant="info">{selectedModule.sections.length} sections</Badge>
+              <Badge variant="info">{selectedModule.sections.length} lessons</Badge>
               <Button
                 size="sm"
                 onClick={() => {
@@ -384,7 +384,7 @@ export function ModuleDetailView({
                 }}
               >
                 <IconPlus className="size-4" />
-                Add Section
+                Add Lesson
               </Button>
             </div>
           </div>
@@ -395,7 +395,7 @@ export function ModuleDetailView({
             getRowId={(row) => row.id}
             onRowClick={(row) => router.push(getSectionHref(selectedModule.id, row.id))}
             mobileCardTitle={(row) => row.title}
-            mobileCardSubtitle={(row) => `${row.items} items`}
+            mobileCardSubtitle={(row) => `${row.items} learning activities`}
             rowActions={(row) => {
               const section = selectedModule.sections.find((s) => s.id === row.id);
               return (
@@ -427,9 +427,9 @@ export function ModuleDetailView({
                     onClick={(e) => {
                       e.stopPropagation();
                       setDeleteConfirm({
-                        title: 'Delete Section?',
-                        description: `"${row.title}" and all its items will be permanently removed.`,
-                        confirmLabel: 'Delete Section',
+                        title: 'Delete Lesson?',
+                        description: `"${row.title}" and all its learning activities will be permanently removed.`,
+                        confirmLabel: 'Delete Lesson',
                         onConfirm: () => {
                           updateModule(selectedModule.id, (module) => ({
                             ...module,

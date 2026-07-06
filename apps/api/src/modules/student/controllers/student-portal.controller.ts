@@ -9,6 +9,7 @@ import type {
   AttendanceCheckInDto,
   LogClinicalHoursDto,
   RecordPaymentDto,
+  RegisterCohortDto,
   ReplaceStudentDocumentDto,
   ReportAbsenceDto,
   SelectModuleDto,
@@ -60,6 +61,22 @@ export class StudentPortalController {
     return createApiResponse(
       this.studentPortalService.updateProfile(studentId, body),
       'Student profile updated successfully.',
+    );
+  }
+
+  @Get('cohorts')
+  getCohorts(@Param('studentId') studentId: string) {
+    return createApiResponse(
+      this.studentPortalService.getCohorts(studentId),
+      'Available cohorts retrieved successfully.',
+    );
+  }
+
+  @Post('cohorts/register')
+  registerCohort(@Param('studentId') studentId: string, @Body() body: RegisterCohortDto) {
+    return createApiResponse(
+      this.studentPortalService.registerCohort(studentId, body),
+      'Cohort registration completed successfully.',
     );
   }
 

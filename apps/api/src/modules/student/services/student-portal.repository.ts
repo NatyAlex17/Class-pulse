@@ -5,6 +5,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 
 import type { LocalUserRecord } from '../../auth/types/auth-user.types';
 import { studentPortalSeed } from '../data/student-portal.seed';
+import { CohortsConfigService } from './cohorts-config.service';
 import { ExamConfigService } from './exam-config.service';
 import { LearningResourcesConfigService } from './learning-resources-config.service';
 import {
@@ -24,6 +25,7 @@ export class StudentPortalRepository {
   constructor(
     private examConfigService: ExamConfigService,
     private learningResourcesConfigService: LearningResourcesConfigService,
+    private cohortsConfigService: CohortsConfigService,
   ) {
     this.loadState();
   }
@@ -40,7 +42,20 @@ export class StudentPortalRepository {
 
   private enrichPortalWithConfigs(portal: StudentPortalState): StudentPortalState {
     const examConfig = this.examConfigService.getConfig();
-    const modules = this.applyLearningResourcesConfig(portal.modules);
+    const cohort = portal.profile.cohortId
+      ? this.cohortsConfigService.findCohort(portal.profile.cohortId)
+      : undefined;
+    const modules = this.applyLearningResourcesConfig(portal.modules, undefined, cohort?.moduleIds);
+    // A registered cohort with a configured fee is the source of truth for tuition.
+    const financials =
+      cohort && cohort.feeAmount > 0
+        ? {
+            ...portal.financials,
+            totalTuition: cohort.feeAmount,
+            balance: Math.max(0, cohort.feeAmount - portal.financials.amountPaid),
+          }
+        : portal.financials;
+
     return {
       ...portal,
       intakeJourney: {
@@ -51,6 +66,7 @@ export class StudentPortalRepository {
         ? portal.activeModuleId
         : (modules[0]?.id ?? portal.activeModuleId),
       modules,
+      financials,
     };
   }
 
@@ -244,8 +260,17 @@ export class StudentPortalRepository {
     );
   }
 
-  private applyLearningResourcesConfig(existingModules?: CurriculumModule[], fallbackModules?: CurriculumModule[]) {
-    const configuredModules = this.learningResourcesConfigService.getConfig().modules;
+  private applyLearningResourcesConfig(
+    existingModules?: CurriculumModule[],
+    fallbackModules?: CurriculumModule[],
+    allowedModuleIds?: string[],
+  ) {
+    const allModules = this.learningResourcesConfigService.getConfig().modules;
+    // Students registered into a cohort only receive that cohort's modules.
+    const configuredModules =
+      allowedModuleIds && allowedModuleIds.length > 0
+        ? allModules.filter((module) => allowedModuleIds.includes(module.id))
+        : allModules;
     const hasConfig = configuredModules.length > 0;
     const seedModules = fallbackModules ?? [];
 

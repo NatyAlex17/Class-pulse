@@ -17,6 +17,7 @@ import {
   IconSettings,
   IconAdjustments,
   IconUser,
+  IconUsersGroup,
   IconX,
   IconChevronDown,
 } from '@tabler/icons-react';
@@ -45,6 +46,7 @@ const navItems: AdminNavItem[] = [
     children: [
       { label: 'Onboarding Configs', href: '/admin/configurations/onboarding', icon: IconSettings },
       { label: 'Learning Resources', href: '/admin/configurations/learning-resources', icon: IconBook2 },
+      { label: 'Cohorts', href: '/admin/configurations/cohorts', icon: IconUsersGroup },
     ],
   },
 ];

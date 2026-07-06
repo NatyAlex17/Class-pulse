@@ -27,6 +27,7 @@ import {
   type LearningResourcesConfig,
 } from '../../student/services/learning-resources-config.service';
 import { OrientationSurveyConfigService, type OrientationSurveyConfig } from '../../student/services/orientation-survey-config.service';
+import { CohortsConfigService, type CohortsConfig } from '../../student/services/cohorts-config.service';
 import { IntakeSubmissionService } from '../../student/services/intake-submission.service';
 import { StudentPortalService } from '../../student/services/student-portal.service';
 import type { ApproveIntakeDto } from '../../student/types/student-portal.types';
@@ -46,6 +47,7 @@ export class AdminPortalController {
     private readonly enrollmentWizardConfigService: EnrollmentWizardConfigService,
     private readonly learningResourcesConfigService: LearningResourcesConfigService,
     private readonly orientationSurveyConfigService: OrientationSurveyConfigService,
+    private readonly cohortsConfigService: CohortsConfigService,
     private readonly intakeSubmissionService: IntakeSubmissionService,
     private readonly studentPortalService: StudentPortalService,
   ) {}
@@ -253,6 +255,33 @@ export class AdminPortalController {
     return createApiResponse(
       this.enrollmentWizardConfigService.resetToDefault(),
       'Enrollment wizard configuration reset to default successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('cohorts-config')
+  getCohortsConfig() {
+    return createApiResponse(
+      this.cohortsConfigService.getConfig(),
+      'Cohorts configuration retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Patch('cohorts-config')
+  updateCohortsConfig(@Body() config: CohortsConfig) {
+    return createApiResponse(
+      this.cohortsConfigService.updateConfig(config),
+      'Cohorts configuration updated successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Post('cohorts-config/reset')
+  resetCohortsConfig() {
+    return createApiResponse(
+      this.cohortsConfigService.resetToDefault(),
+      'Cohorts configuration reset to default successfully.',
     );
   }
 

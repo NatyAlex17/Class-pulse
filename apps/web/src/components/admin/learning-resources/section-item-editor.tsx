@@ -1,10 +1,10 @@
 'use client';
 
-import * as React from 'react';
 import { IconTrash } from '@tabler/icons-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { FileUploader } from '@/components/ui/file-uploader';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,7 +12,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { ExamQuestionsEditor } from './exam-questions-editor';
 import {
   applyFormatToQuestions,
-  fileInputClassName,
   resourceTypeLabels,
   type ExamFormat,
   type LearningResource,
@@ -25,7 +24,6 @@ export function SectionItemEditor({
   updateResource,
   removeResource,
   onUploadFile,
-  onError,
 }: {
   item: LearningResource;
   moduleId: string;
@@ -38,30 +36,12 @@ export function SectionItemEditor({
   ) => void;
   removeResource: (resourceId: string) => void;
   onUploadFile: (file: File) => Promise<string>;
-  onError: (message: string | null) => void;
 }) {
   const typeLabel = resourceTypeLabels[item.type];
-  const [uploading, setUploading] = React.useState(false);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const input = event.target;
-    const file = input.files?.[0];
-
-    if (!file) {
-      return;
-    }
-
-    try {
-      setUploading(true);
-      onError(null);
-      const url = await onUploadFile(file);
-      updateResource(moduleId, sectionId, item.id, (resource) => ({ ...resource, url }));
-    } catch (uploadError) {
-      onError(uploadError instanceof Error ? uploadError.message : 'Failed to upload file.');
-    } finally {
-      setUploading(false);
-      input.value = '';
-    }
+  const uploadAndAttach = async (file: File) => {
+    const url = await onUploadFile(file);
+    updateResource(moduleId, sectionId, item.id, (resource) => ({ ...resource, url }));
   };
 
   return (
@@ -143,13 +123,10 @@ export function SectionItemEditor({
             }
             placeholder="YouTube, Vimeo URL, or video file URL"
           />
-          <div className="mt-2 flex items-center gap-3">
-            <input type="file" accept="video/*" disabled={uploading} onChange={handleFileUpload} className={fileInputClassName} />
-            {uploading ? <span className="shrink-0 text-xs text-on-surface-variant">Uploading...</span> : null}
-          </div>
-          <p className="mt-1 text-xs text-on-surface-variant">
+          <p className="mb-2 mt-1 text-xs text-on-surface-variant">
             Paste a link above, or upload a video file to replace it.
           </p>
+          <FileUploader kind="video" previewUrl={item.url || undefined} onUpload={uploadAndAttach} />
         </div>
       )}
 
@@ -167,13 +144,10 @@ export function SectionItemEditor({
             }
             placeholder="Link to PDF document"
           />
-          <div className="mt-2 flex items-center gap-3">
-            <input type="file" accept="application/pdf,.pdf" disabled={uploading} onChange={handleFileUpload} className={fileInputClassName} />
-            {uploading ? <span className="shrink-0 text-xs text-on-surface-variant">Uploading...</span> : null}
-          </div>
-          <p className="mt-1 text-xs text-on-surface-variant">
+          <p className="mb-2 mt-1 text-xs text-on-surface-variant">
             Paste a link above, or upload a PDF document to replace it.
           </p>
+          <FileUploader kind="pdf" previewUrl={item.url || undefined} onUpload={uploadAndAttach} />
         </div>
       )}
 

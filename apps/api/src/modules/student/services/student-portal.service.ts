@@ -11,9 +11,11 @@ import type {
   CurriculumModule,
   LogClinicalHoursDto,
   RecordPaymentDto,
+  RegisterCohortDto,
   ReplaceStudentDocumentDto,
   ReportAbsenceDto,
   SelectModuleDto,
+  StudentCohortsSnapshot,
   SendStudentMessageDto,
   StudentAttendanceSummary,
   StudentAuditEvent,
@@ -38,6 +40,7 @@ import type {
   UpdateWizardStepDto,
   UploadStudentDocumentDto,
 } from '../types/student-portal.types';
+import { CohortsConfigService } from './cohorts-config.service';
 import { ExamConfigService } from './exam-config.service';
 import { IntakeSubmissionService } from './intake-submission.service';
 import { LearningResourcesConfigService } from './learning-resources-config.service';
@@ -53,6 +56,7 @@ export class StudentPortalService {
     private readonly examConfigService: ExamConfigService,
     private readonly intakeSubmissionService: IntakeSubmissionService,
     private readonly learningResourcesConfigService: LearningResourcesConfigService,
+    private readonly cohortsConfigService: CohortsConfigService,
   ) {}
 
   ensurePortalForLocalUser(localUser: LocalUserRecord) {
@@ -80,6 +84,75 @@ export class StudentPortalService {
     };
     this.recordAudit(portal, 'student.profile.updated', portal.profile.id, { ...payload });
     return this.repository.save(portal).profile;
+  }
+
+  getCohorts(studentId: string): StudentCohortsSnapshot {
+    const portal = this.repository.findByStudentId(studentId);
+    const moduleTitleById = new Map(
+      this.learningResourcesConfigService.getConfig().modules.map((module) => [module.id, module.title]),
+    );
+    const registeredCohort = portal.profile.cohortId
+      ? this.cohortsConfigService.findCohort(portal.profile.cohortId)
+      : undefined;
+
+    return {
+      registeredCohortId: portal.profile.cohortId ?? null,
+      registeredCohortName:
+        registeredCohort?.name ?? (portal.profile.cohortId ? portal.profile.cohort : null),
+      cohorts: this.cohortsConfigService
+        .getConfig()
+        .cohorts.filter((cohort) => cohort.isOpen)
+        .map((cohort) => ({
+          id: cohort.id,
+          name: cohort.name,
+          description: cohort.description,
+          feeAmount: cohort.feeAmount,
+          moduleCount: cohort.moduleIds.length,
+          moduleTitles: cohort.moduleIds
+            .map((moduleId) => moduleTitleById.get(moduleId))
+            .filter((title): title is string => Boolean(title)),
+        })),
+    };
+  }
+
+  registerCohort(studentId: string, payload: RegisterCohortDto): StudentCohortsSnapshot {
+    const cohortId = payload.cohortId?.trim();
+
+    if (!cohortId) {
+      throw new BadRequestException('A cohortId is required to register.');
+    }
+
+    const cohort = this.cohortsConfigService.findCohort(cohortId);
+
+    if (!cohort) {
+      throw new BadRequestException(`Cohort "${cohortId}" was not found.`);
+    }
+
+    if (!cohort.isOpen) {
+      throw new BadRequestException(`Cohort "${cohort.name}" is not open for registration.`);
+    }
+
+    const portal = this.repository.findByStudentId(studentId);
+    portal.profile = {
+      ...portal.profile,
+      cohortId: cohort.id,
+      cohort: cohort.name,
+    };
+
+    if (cohort.feeAmount > 0) {
+      portal.financials = {
+        ...portal.financials,
+        totalTuition: cohort.feeAmount,
+        balance: Math.max(0, cohort.feeAmount - portal.financials.amountPaid),
+      };
+    }
+
+    this.recordAudit(portal, 'student.cohort.registered', cohort.id, {
+      cohortName: cohort.name,
+      feeAmount: cohort.feeAmount,
+    });
+    this.repository.save(portal);
+    return this.getCohorts(studentId);
   }
 
   getDashboard(studentId: string): StudentDashboardSnapshot {

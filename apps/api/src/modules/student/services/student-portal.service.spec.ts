@@ -3,6 +3,7 @@ import { join } from 'path';
 
 import { BadRequestException } from '@nestjs/common';
 
+import { CohortsConfigService } from './cohorts-config.service';
 import { ExamConfigService } from './exam-config.service';
 import { IntakeSubmissionService } from './intake-submission.service';
 import { LearningResourcesConfigService } from './learning-resources-config.service';
@@ -25,12 +26,14 @@ describe('StudentPortalService', () => {
 
     const examConfigService = new ExamConfigService();
     const learningResourcesConfigService = new LearningResourcesConfigService();
+    const cohortsConfigService = new CohortsConfigService();
     intakeSubmissionService = new IntakeSubmissionService();
     service = new StudentPortalService(
-      new StudentPortalRepository(examConfigService, learningResourcesConfigService),
+      new StudentPortalRepository(examConfigService, learningResourcesConfigService, cohortsConfigService),
       examConfigService,
       intakeSubmissionService,
       learningResourcesConfigService,
+      cohortsConfigService,
     );
   });
 
@@ -278,12 +281,18 @@ describe('StudentPortalService', () => {
 
     const reloadedExamConfigService = new ExamConfigService();
     const reloadedLearningResourcesConfigService = new LearningResourcesConfigService();
+    const reloadedCohortsConfigService = new CohortsConfigService();
     const reloadedIntakeSubmissionService = new IntakeSubmissionService();
     const reloadedService = new StudentPortalService(
-      new StudentPortalRepository(reloadedExamConfigService, reloadedLearningResourcesConfigService),
+      new StudentPortalRepository(
+        reloadedExamConfigService,
+        reloadedLearningResourcesConfigService,
+        reloadedCohortsConfigService,
+      ),
       reloadedExamConfigService,
       reloadedIntakeSubmissionService,
       reloadedLearningResourcesConfigService,
+      reloadedCohortsConfigService,
     );
     const reloadedPortal = reloadedService.getPortal('student-amara-singh');
 

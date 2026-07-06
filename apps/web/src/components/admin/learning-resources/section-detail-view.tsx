@@ -9,6 +9,7 @@ import { AdminShell } from '@/components/admin/admin-shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
+import { FileUploader } from '@/components/ui/file-uploader';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { Select } from '@/components/ui/select';
@@ -19,8 +20,6 @@ import { SectionItemEditor } from './section-item-editor';
 import { ConfigBanner, DeleteConfirmModal, PageToolbar, RowIconButton, type DeleteConfirmState } from './shared';
 import {
   applyFormatToQuestions,
-  fileInputClassName,
-  formatFileSize,
   getModuleHref,
   resizeExamQuestions,
   resourceTypeLabels,
@@ -123,7 +122,7 @@ export function SectionDetailView({
   }));
 
   const columns: DataTableColumn<ResourceRow>[] = [
-    { id: 'title', header: 'Learning Item', accessorKey: 'title' },
+    { id: 'title', header: 'Learning Activity', accessorKey: 'title' },
     {
       id: 'type',
       header: 'Type',
@@ -137,7 +136,7 @@ export function SectionDetailView({
   return (
     <AdminShell
       title={selectedSection.title}
-      subtitle="Manage this section and all its learning items."
+      subtitle="Manage this lesson and all its learning activities."
       topActions={
         <PageToolbar
           onRefresh={() => void fetchConfig()}
@@ -166,19 +165,19 @@ export function SectionDetailView({
           </div>
           <Button variant="secondary" size="sm" onClick={() => setShowSectionDetail(true)}>
             <IconEye className="size-4" />
-            Show Section Details
+            Show Lesson Details
           </Button>
         </div>
 
         <Modal
           open={showSectionDetail}
           onClose={() => setShowSectionDetail(false)}
-          title="Section Details"
-          description="Edit the section here. Changes are saved automatically."
+          title="Lesson Details"
+          description="Edit the lesson here. Changes are saved automatically."
         >
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm font-semibold text-on-surface">Section Title</label>
+              <label className="mb-2 block text-sm font-semibold text-on-surface">Lesson Title</label>
               <Input
                 value={selectedSection.title}
                 onChange={(event) =>
@@ -215,9 +214,9 @@ export function SectionDetailView({
               size="sm"
               onClick={() => {
                 setDeleteConfirm({
-                  title: 'Delete Section?',
-                  description: `"${selectedSection.title}" and all its items will be permanently removed.`,
-                  confirmLabel: 'Delete Section',
+                  title: 'Delete Lesson?',
+                  description: `"${selectedSection.title}" and all its learning activities will be permanently removed.`,
+                  confirmLabel: 'Delete Lesson',
                   onConfirm: () => {
                     const updatedConfig = {
                       ...config,
@@ -239,7 +238,7 @@ export function SectionDetailView({
               }}
             >
               <IconTrash className="size-4" />
-              Remove Section
+              Remove Lesson
             </Button>
             <Button variant="secondary" size="sm" onClick={() => setShowSectionDetail(false)}>
               Done
@@ -250,7 +249,7 @@ export function SectionDetailView({
         <Modal
           open={showItemForm}
           onClose={() => setShowItemForm(false)}
-          title="Create Learning Item"
+          title="Create Learning Activity"
           description={`Select the type of content to add to "${selectedSection.title}".`}
           size="xl"
         >
@@ -334,19 +333,7 @@ export function SectionDetailView({
               ) : (
                 <div className="mt-4">
                   <label className="mb-2 block text-sm font-semibold text-on-surface">Video File *</label>
-                  <input
-                    type="file"
-                    accept="video/*"
-                    className={fileInputClassName}
-                    onChange={(event) => setItemFile(event.target.files?.[0] ?? null)}
-                  />
-                  {itemFile ? (
-                    <p className="mt-1 text-xs text-on-surface-variant">
-                      Selected: {itemFile.name} ({formatFileSize(itemFile.size)})
-                    </p>
-                  ) : (
-                    <p className="mt-1 text-xs text-on-surface-variant">MP4, WebM, and other video formats.</p>
-                  )}
+                  <FileUploader kind="video" file={itemFile} onFileSelect={setItemFile} />
                 </div>
               )}
             </>
@@ -394,19 +381,7 @@ export function SectionDetailView({
               ) : (
                 <div className="mt-4">
                   <label className="mb-2 block text-sm font-semibold text-on-surface">PDF File *</label>
-                  <input
-                    type="file"
-                    accept="application/pdf,.pdf"
-                    className={fileInputClassName}
-                    onChange={(event) => setItemFile(event.target.files?.[0] ?? null)}
-                  />
-                  {itemFile ? (
-                    <p className="mt-1 text-xs text-on-surface-variant">
-                      Selected: {itemFile.name} ({formatFileSize(itemFile.size)})
-                    </p>
-                  ) : (
-                    <p className="mt-1 text-xs text-on-surface-variant">PDF documents only.</p>
-                  )}
+                  <FileUploader kind="pdf" file={itemFile} onFileSelect={setItemFile} />
                 </div>
               )}
             </>
@@ -582,12 +557,12 @@ export function SectionDetailView({
                 const id = slugify(title);
 
                 if (!title || !duration) {
-                  setError('Item title and duration are required.');
+                  setError('Learning activity title and duration are required.');
                   return;
                 }
 
                 if (itemDraft.type === 'link' && !itemDraft.url.trim()) {
-                  setError('Link items require a URL.');
+                  setError('Link-based learning activities require a URL.');
                   return;
                 }
 
@@ -644,7 +619,7 @@ export function SectionDetailView({
                 }
 
                 if (selectedSection.resources.some((resource) => resource.id === id)) {
-                  setError('An item with this title already exists in this section.');
+                  setError('A learning activity with this title already exists in this lesson.');
                   return;
                 }
 
@@ -740,7 +715,7 @@ export function SectionDetailView({
               }}
             >
               <IconPlus className="size-4" />
-              {uploadingItem ? 'Uploading...' : 'Create Item'}
+              {uploadingItem ? 'Uploading...' : 'Create Learning Activity'}
             </Button>
           </div>
         </Modal>
@@ -748,16 +723,16 @@ export function SectionDetailView({
         <div className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="font-display text-[22px] font-semibold text-on-surface">Section Items</h2>
+              <h2 className="font-display text-[22px] font-semibold text-on-surface">Learning Activities</h2>
               <p className="mt-1 text-sm text-on-surface-variant">
-                Click a row to open that item&apos;s details in a popup.
+                Click a row to open that learning activity&apos;s details in a popup.
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <Badge variant="info">{selectedSection.resources.length} items</Badge>
+              <Badge variant="info">{selectedSection.resources.length} learning activities</Badge>
               <Button size="sm" onClick={() => setShowItemForm(true)}>
                 <IconPlus className="size-4" />
-                Add Item
+                Add Learning Activity
               </Button>
             </div>
           </div>
@@ -796,9 +771,9 @@ export function SectionDetailView({
                         return;
                       }
                       setDeleteConfirm({
-                        title: 'Delete Item?',
-                        description: `"${item.title}" will be permanently removed from this section.`,
-                        confirmLabel: 'Delete Item',
+                        title: 'Delete Learning Activity?',
+                        description: `"${item.title}" will be permanently removed from this lesson.`,
+                        confirmLabel: 'Delete Learning Activity',
                         onConfirm: () => {
                           const updatedConfig = {
                             ...config,
@@ -839,7 +814,7 @@ export function SectionDetailView({
 
         {selectedSection.resources.length === 0 ? (
           <div className="rounded-[20px] border border-dashed border-border-subtle bg-surface p-8 text-center text-sm text-on-surface-variant">
-            No items yet. Add your first learning item to start building this section.
+            No learning activities yet. Add your first learning activity to start building this lesson.
           </div>
         ) : null}
 
@@ -848,7 +823,7 @@ export function SectionDetailView({
             open={showItemDetail}
             onClose={() => setShowItemDetail(false)}
             title={selectedItem.title}
-            description={`Edit this ${resourceTypeLabels[selectedItem.type].toLowerCase()} item. Changes are saved automatically.`}
+            description={`Edit this ${resourceTypeLabels[selectedItem.type].toLowerCase()} learning activity. Changes are saved automatically.`}
             size="xl"
           >
             <SectionItemEditor
@@ -857,13 +832,12 @@ export function SectionDetailView({
               sectionId={selectedSection.id}
               updateResource={updateResource}
               onUploadFile={uploadFile}
-              onError={setError}
               removeResource={(resourceId) => {
                 const resource = selectedSection.resources.find((r) => r.id === resourceId);
                 setDeleteConfirm({
-                  title: 'Delete Item?',
-                  description: `"${resource?.title ?? resourceId}" will be permanently removed from this section.`,
-                  confirmLabel: 'Delete Item',
+                  title: 'Delete Learning Activity?',
+                  description: `"${resource?.title ?? resourceId}" will be permanently removed from this lesson.`,
+                  confirmLabel: 'Delete Learning Activity',
                   onConfirm: () => {
                     const updatedConfig = {
                       ...config,

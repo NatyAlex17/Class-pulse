@@ -27,7 +27,20 @@ type StudentIntakeModalProps = {
   onClose: () => void;
 };
 
+type AvailableCohort = {
+  id: string;
+  name: string;
+  description: string;
+  feeAmount: number;
+  moduleCount: number;
+  moduleTitles: string[];
+};
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+
+function formatCohortFee(amount: number) {
+  return `$${amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+}
 
 export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
   const router = useRouter();
@@ -36,6 +49,11 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
   const [isCheckingStatus, setIsCheckingStatus] = React.useState(false);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [isSubmittingExam, setIsSubmittingExam] = React.useState(false);
+  const [cohorts, setCohorts] = React.useState<AvailableCohort[]>([]);
+  const [registeredCohortId, setRegisteredCohortId] = React.useState<string | null>(null);
+  const [cohortsLoaded, setCohortsLoaded] = React.useState(false);
+  const [selectedCohortId, setSelectedCohortId] = React.useState<string | null>(null);
+  const [isRegisteringCohort, setIsRegisteringCohort] = React.useState(false);
 
   const {
     workflowStage,
@@ -90,6 +108,66 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
     void checkApprovalStatus();
   }, [checkApprovalStatus, hasAuth, isStudentUser, open]);
 
+  const loadCohorts = React.useCallback(async () => {
+    if (!hasAuth || !isStudentUser || !syncedUser?.localUserId) {
+      setCohortsLoaded(true);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/students/${studentId}/cohorts`, {
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const payload = await response.json();
+        setCohorts(payload.data?.cohorts ?? []);
+        setRegisteredCohortId(payload.data?.registeredCohortId ?? null);
+      }
+    } catch {
+      // Cohort registration is skipped when the list cannot be loaded.
+    } finally {
+      setCohortsLoaded(true);
+    }
+  }, [hasAuth, isStudentUser, session?.access_token, studentId, syncedUser?.localUserId]);
+
+  React.useEffect(() => {
+    if (!open) return;
+    void loadCohorts();
+  }, [loadCohorts, open]);
+
+  const handleRegisterCohort = async () => {
+    if (!selectedCohortId || !session?.access_token) return;
+
+    try {
+      setIsRegisteringCohort(true);
+      setSubmitError(null);
+      const response = await fetch(`${API_BASE_URL}/students/${studentId}/cohorts/register`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cohortId: selectedCohortId }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error?.message ?? 'Failed to register for the cohort.');
+      }
+
+      const payload = await response.json();
+      setRegisteredCohortId(payload.data?.registeredCohortId ?? selectedCohortId);
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Failed to register for the cohort.');
+    } finally {
+      setIsRegisteringCohort(false);
+    }
+  };
+
   const handleSubmitExam = async () => {
     if (!session?.access_token || !isStudentUser || !syncedUser?.localUserId) return;
 
@@ -136,6 +214,16 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
   const enrollmentSteps = journey?.enrollmentWizard.steps ?? [];
   const surveySections = journey?.orientationSurvey.sections ?? [];
   const hasStudentAccess = hasAuth && isStudentUser && Boolean(syncedUser?.localUserId);
+
+  // Students choose a cohort before anything else — it decides their modules and fee.
+  const needsCohortSelection =
+    cohortsLoaded &&
+    hasStudentAccess &&
+    !registeredCohortId &&
+    cohorts.length > 0 &&
+    workflowStage === 'entrance_exam' &&
+    !entranceExam.taken;
+  const selectedCohort = cohorts.find((cohort) => cohort.id === selectedCohortId) ?? null;
 
   const examComplete = examQuestions.every((question) =>
     (entranceExam.answers[question.id] ?? '').trim(),
@@ -304,7 +392,70 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
 
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8">
-            {workflowStage === 'entrance_exam' ? (
+            {needsCohortSelection ? (
+              <section className="space-y-6">
+                <div className="rounded-[22px] border border-info/20 bg-info/5 p-5">
+                  <p className="text-sm leading-6 text-on-surface-variant">
+                    Choose the cohort you are enrolling into. Your cohort determines the modules you will
+                    learn and the program fee.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  {cohorts.map((cohort) => {
+                    const selected = selectedCohortId === cohort.id;
+                    return (
+                      <button
+                        key={cohort.id}
+                        type="button"
+                        onClick={() => setSelectedCohortId(cohort.id)}
+                        className={cn(
+                          'w-full rounded-[20px] border p-5 text-left transition',
+                          selected
+                            ? 'border-primary bg-primary/5 shadow-md'
+                            : 'border-border-subtle bg-surface hover:border-primary/40',
+                        )}
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="text-base font-semibold text-on-surface">{cohort.name}</p>
+                            {cohort.description ? (
+                              <p className="mt-1 text-sm text-on-surface-variant">{cohort.description}</p>
+                            ) : null}
+                          </div>
+                          <div className="text-right">
+                            <p className="font-display text-[22px] font-semibold text-primary">
+                              {formatCohortFee(cohort.feeAmount)}
+                            </p>
+                            <p className="text-xs text-on-surface-variant">program fee</p>
+                          </div>
+                        </div>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <Badge variant={selected ? 'success' : 'info'}>
+                            {selected ? 'Selected' : `${cohort.moduleCount} modules`}
+                          </Badge>
+                          {cohort.moduleTitles.slice(0, 4).map((title) => (
+                            <span
+                              key={title}
+                              className="rounded-full border border-border-subtle bg-surface-muted px-3 py-1 text-xs text-on-surface-variant"
+                            >
+                              {title}
+                            </span>
+                          ))}
+                          {cohort.moduleTitles.length > 4 ? (
+                            <span className="text-xs text-on-surface-variant">
+                              +{cohort.moduleTitles.length - 4} more
+                            </span>
+                          ) : null}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            ) : null}
+
+            {workflowStage === 'entrance_exam' && !needsCohortSelection ? (
               <section className="space-y-6">
               <div className="rounded-[22px] border border-warning/20 bg-warning/5 p-5">
                 <p className="text-sm leading-6 text-on-surface-variant">
@@ -826,7 +977,23 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
             ) : null}
           </div>
 
-          {workflowStage === 'entrance_exam' && (
+          {needsCohortSelection && (
+            <div className="shrink-0 border-t border-border-subtle bg-surface px-6 py-4 sm:px-8">
+              <Button
+                disabled={!selectedCohortId || isRegisteringCohort}
+                onClick={handleRegisterCohort}
+                className="w-full"
+              >
+                {isRegisteringCohort
+                  ? 'Registering...'
+                  : selectedCohort
+                    ? `Register for ${selectedCohort.name} — ${formatCohortFee(selectedCohort.feeAmount)}`
+                    : 'Select a cohort to continue'}
+              </Button>
+            </div>
+          )}
+
+          {workflowStage === 'entrance_exam' && !needsCohortSelection && (
             <div className="shrink-0 border-t border-border-subtle bg-surface px-6 py-4 sm:px-8">
               <Button
                 disabled={!examComplete || approvalStatus === 'pending' || isSubmittingExam || !hasStudentAccess}

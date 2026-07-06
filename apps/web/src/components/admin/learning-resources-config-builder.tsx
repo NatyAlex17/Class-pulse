@@ -28,7 +28,7 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
 
   if (loading) {
     return (
-      <AdminShell title="Learning Management Config" subtitle="Loading module and section configuration.">
+      <AdminShell title="Learning Management Config" subtitle="Loading module and lesson configuration.">
         <div className="p-8 text-center">Loading learning management configuration...</div>
       </AdminShell>
     );
@@ -38,7 +38,7 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
     return (
       <AdminShell
         title="Learning Management Config"
-        subtitle="Module and section authoring."
+        subtitle="Module and lesson authoring."
         topActions={
           <PageToolbar
             onRefresh={() => void fetchConfig()}
@@ -69,7 +69,7 @@ export function LearningResourcesConfigBuilder({ view, moduleId, sectionId }: Bu
 
   if (view === 'section-detail' && (!selectedModule || !selectedSection)) {
     return (
-      <AdminShell title="Section Not Found" subtitle="Return to the module list to choose another section.">
+      <AdminShell title="Lesson Not Found" subtitle="Return to the module list to choose another lesson.">
         <Link href="/admin/configurations/learning-resources">
           <Button variant="secondary">
             <IconArrowLeft className="size-4" />

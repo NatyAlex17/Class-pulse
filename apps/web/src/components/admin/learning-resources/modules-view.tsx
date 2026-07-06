@@ -64,14 +64,14 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
   const columns: DataTableColumn<ModuleRow>[] = [
     { id: 'title', header: 'Module', accessorKey: 'title' },
     { id: 'requiredHours', header: 'Hours', accessorKey: 'requiredHours' },
-    { id: 'sections', header: 'Sections', accessorKey: 'sections' },
-    { id: 'items', header: 'Items', accessorKey: 'items' },
+    { id: 'sections', header: 'Lessons', accessorKey: 'sections' },
+    { id: 'items', header: 'Learning Activities', accessorKey: 'items' },
   ];
 
   return (
     <AdminShell
       title="Learning Management Config"
-      subtitle="Start with the module list, then open one module to manage its sections."
+      subtitle="Start with the module list, then open one module to manage its lessons."
       topActions={
         <PageToolbar
           onRefresh={() => void fetchConfig()}
@@ -96,7 +96,7 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
           </div>
           <div className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft">
             <div className="flex items-center justify-between">
-              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Sections</p>
+              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Lessons</p>
               <IconHierarchy3 className="size-5 text-primary" />
             </div>
             <p className="mt-3 font-display text-[30px] font-semibold text-on-surface">
@@ -105,7 +105,7 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
           </div>
           <div className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft">
             <div className="flex items-center justify-between">
-              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Learning Items</p>
+              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">Learning Activities</p>
               <IconClipboardText className="size-5 text-primary" />
             </div>
             <p className="mt-3 font-display text-[30px] font-semibold text-on-surface">
@@ -125,7 +125,7 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
           description={
             editingModuleId
               ? 'Update module details, order, and certification requirements.'
-              : 'Add the module first, then open it to create sections inside it.'
+              : 'Add the module first, then open it to create lessons inside it.'
           }
         >
           <div className="grid gap-4 md:grid-cols-2">
@@ -279,7 +279,7 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
             <div>
               <h2 className="font-display text-[22px] font-semibold text-on-surface">Modules</h2>
               <p className="mt-1 text-sm text-on-surface-variant">
-                Click a module row to open its detail page and manage sections.
+                Click a module row to open its detail page and manage lessons.
               </p>
             </div>
             <Button
@@ -301,7 +301,7 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
             getRowId={(row) => row.id}
             onRowClick={(row) => router.push(getModuleHref(row.id))}
             mobileCardTitle={(row) => row.title}
-            mobileCardSubtitle={(row) => `${row.sections} sections • ${row.items} items`}
+            mobileCardSubtitle={(row) => `${row.sections} lessons • ${row.items} learning activities`}
             rowActions={(row) => {
               const module = config.modules.find((m) => m.id === row.id);
               return (
@@ -338,7 +338,7 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
                       e.stopPropagation();
                       setDeleteConfirm({
                         title: 'Delete Module?',
-                        description: `"${row.title}" and all its sections will be permanently removed.`,
+                        description: `"${row.title}" and all its lessons will be permanently removed.`,
                         confirmLabel: 'Delete Module',
                         onConfirm: () => {
                           const updatedConfig = {

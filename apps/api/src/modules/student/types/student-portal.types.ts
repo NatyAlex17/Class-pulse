@@ -21,6 +21,8 @@ export interface StudentProfile {
   phone: string;
   location: string;
   cohort: string;
+  /** Id of the configured cohort the student registered into (drives module access and fees). */
+  cohortId?: string;
   levelLabel: string;
   studentNumber: string;
 }
@@ -627,6 +629,25 @@ export interface AdvanceLearningDto {
 
 export interface SelectModuleDto {
   moduleId: string;
+}
+
+export interface RegisterCohortDto {
+  cohortId: string;
+}
+
+export interface AvailableCohort {
+  id: string;
+  name: string;
+  description: string;
+  feeAmount: number;
+  moduleCount: number;
+  moduleTitles: string[];
+}
+
+export interface StudentCohortsSnapshot {
+  registeredCohortId: string | null;
+  registeredCohortName: string | null;
+  cohorts: AvailableCohort[];
 }
 
 export interface SubmitModuleExamDto {
