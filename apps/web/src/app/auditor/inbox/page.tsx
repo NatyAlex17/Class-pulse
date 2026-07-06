@@ -2,14 +2,14 @@
 
 import Link from 'next/link';
 import * as React from 'react';
-import { IconArrowRight, IconMessageCircle, IconPlus, IconSchool, IconSend2 } from '@tabler/icons-react';
+import { IconArrowRight, IconMessageCircle, IconPlus, IconSend2, IconUserCircle } from '@tabler/icons-react';
 import { useAuth } from '@/components/auth/auth-provider';
+import { AuditorShell } from '@/components/auditor/auditor-shell';
 import { NewConversationModal } from '@/components/chat/new-conversation-modal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { StudentShell } from '@/components/student/student-shell';
-import { studentDemoUser } from '@/lib/chat/mock-data';
+import { auditorDemoUser } from '@/lib/chat/mock-data';
 import { useRealtimeInbox } from '@/lib/chat/use-realtime-inbox';
 
 function formatThreadTime(value: string) {
@@ -21,10 +21,10 @@ function formatThreadTime(value: string) {
   }).format(new Date(value));
 }
 
-export default function StudentInboxPage() {
+export default function AuditorInboxPage() {
   const { session } = useAuth();
   const inbox = useRealtimeInbox({
-    fallbackCurrentUser: studentDemoUser,
+    fallbackCurrentUser: auditorDemoUser,
     fallbackThreads: [],
   });
   const [newConversationOpen, setNewConversationOpen] = React.useState(false);
@@ -33,9 +33,9 @@ export default function StudentInboxPage() {
       ?.id ?? null;
 
   return (
-    <StudentShell
+    <AuditorShell
       title="Inbox"
-      subtitle="Student-to-instructor communication, updates, and operational notices."
+      subtitle="Direct messaging with program administrators."
       topActions={
         <div className="flex items-center gap-2">
           <Badge variant={inbox.setupState.mode === 'supabase' ? 'success' : 'warning'}>
@@ -95,7 +95,7 @@ export default function StudentInboxPage() {
               <div className="border-b border-border-subtle p-6">
                 <div className="flex items-center gap-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <IconSchool className="size-5" />
+                    <IconUserCircle className="size-5" />
                   </div>
                   <div>
                     <h3 className="font-display text-[18px] font-semibold">{inbox.activeThread.title}</h3>
@@ -146,7 +146,7 @@ export default function StudentInboxPage() {
               </div>
               <div className="border-t border-border-subtle p-4">
                 <Link
-                  href="/student/dashboard"
+                  href="/auditor/dashboard"
                   className="flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
                 >
                   Return to dashboard
@@ -170,6 +170,6 @@ export default function StudentInboxPage() {
         savedMessagesThreadId={savedMessagesThreadId}
         onCreated={(threadId) => void inbox.refresh(threadId)}
       />
-    </StudentShell>
+    </AuditorShell>
   );
 }

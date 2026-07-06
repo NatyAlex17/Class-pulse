@@ -12,6 +12,7 @@ import {
   IconFileAnalytics,
   IconHelpCircle,
   IconLayoutDashboard,
+  IconMail,
   IconMenu2,
   IconSearch,
   IconSettings,
@@ -23,6 +24,8 @@ import {
   IconChevronDown,
 } from '@tabler/icons-react';
 import { SignOutButton } from '@/components/auth/sign-out-button';
+import { UnreadMessageBanner } from '@/components/chat/unread-message-banner';
+import { useUnreadMessagesCount } from '@/lib/chat/use-unread-count';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,6 +54,7 @@ const navItems: AdminNavItem[] = [
       { label: 'Cohorts', href: '/admin/configurations/cohorts', icon: IconUsersGroup },
     ],
   },
+  { label: 'Inbox', href: '/admin/inbox', icon: IconMail },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -89,6 +93,7 @@ export function AdminShell({
   const pathname = usePathname();
   const [profileMenuOpen, setProfileMenuOpen] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const { unreadCount, notification, dismissNotification } = useUnreadMessagesCount();
 
   // Auto-expand parent menus if child is active
   const initialExpandedMenus = React.useMemo(() => {
@@ -141,6 +146,11 @@ export function AdminShell({
 
   return (
     <div className="min-h-screen bg-background text-on-surface">
+      <UnreadMessageBanner
+        notification={notification}
+        inboxHref="/admin/inbox"
+        onDismiss={dismissNotification}
+      />
       <aside className="fixed left-0 top-0 z-50 hidden h-full w-[240px] flex-col border-r border-border-subtle bg-surface-low px-4 py-6 lg:flex">
         <div className="mb-10 px-2">
           <h1 className="font-display text-[30px] font-bold tracking-[-0.02em] text-primary">
@@ -216,6 +226,7 @@ export function AdminShell({
             }
 
             const active = isActive(pathname, item.href || '');
+            const isInbox = item.href === '/admin/inbox';
             return (
               <Link
                 key={`${item.label}-${item.href ?? 'item'}`}
@@ -228,7 +239,12 @@ export function AdminShell({
                 )}
               >
                 <Icon className="size-5" />
-                <span>{item.label}</span>
+                <span className="flex-1">{item.label}</span>
+                {isInbox && unreadCount > 0 ? (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-error px-1.5 text-[11px] font-bold text-white">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                ) : null}
               </Link>
             );
           })}
@@ -340,6 +356,7 @@ export function AdminShell({
                 }
 
                 const active = isActive(pathname, item.href || '');
+                const isInbox = item.href === '/admin/inbox';
                 return (
                   <Link
                     key={`${item.label}-${item.href ?? 'item'}`}
@@ -353,7 +370,12 @@ export function AdminShell({
                     )}
                   >
                     <Icon className="size-5" />
-                    <span>{item.label}</span>
+                    <span className="flex-1">{item.label}</span>
+                    {isInbox && unreadCount > 0 ? (
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-error px-1.5 text-[11px] font-bold text-white">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    ) : null}
                   </Link>
                 );
               })}

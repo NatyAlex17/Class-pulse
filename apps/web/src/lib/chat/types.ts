@@ -38,3 +38,9 @@ export interface InboxSetupState {
   sendPending: boolean;
   errorMessage: string | null;
 }
+
+export interface MessagingContact {
+  supabaseUserId: string;
+  email: string;
+  role: string;
+}

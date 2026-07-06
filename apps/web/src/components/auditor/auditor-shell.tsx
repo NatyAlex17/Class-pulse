@@ -11,6 +11,7 @@ import {
   IconHelpCircle,
   IconHistory,
   IconIdBadge2,
+  IconMail,
   IconMenu2,
   IconNotebook,
   IconReportAnalytics,
@@ -22,6 +23,8 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { SignOutButton } from '@/components/auth/sign-out-button';
+import { UnreadMessageBanner } from '@/components/chat/unread-message-banner';
+import { useUnreadMessagesCount } from '@/lib/chat/use-unread-count';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,6 +53,7 @@ const navItems: AuditorNavItem[] = [
   { label: 'Documents & Evidence', href: '/auditor/documents', icon: IconFolderCheck },
   { label: 'Reports', href: '/auditor/reports', icon: IconReportAnalytics },
   { label: 'Audit Log', href: '/auditor/audit-log', icon: IconHistory },
+  { label: 'Inbox', href: '/auditor/inbox', icon: IconMail },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -82,6 +86,7 @@ export function AuditorShell({
   const pathname = usePathname();
   const [profileMenuOpen, setProfileMenuOpen] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const { unreadCount, notification, dismissNotification } = useUnreadMessagesCount();
 
   React.useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -106,6 +111,11 @@ export function AuditorShell({
 
   return (
     <div className="min-h-screen bg-background text-on-surface">
+      <UnreadMessageBanner
+        notification={notification}
+        inboxHref="/auditor/inbox"
+        onDismiss={dismissNotification}
+      />
       <aside className="fixed left-0 top-0 z-50 hidden h-full w-[240px] flex-col border-r border-border-subtle bg-surface-low px-4 py-6 lg:flex">
         <div className="mb-10 px-2">
           <h1 className="font-display text-[30px] font-bold tracking-[-0.02em] text-primary">
@@ -120,6 +130,7 @@ export function AuditorShell({
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(pathname, item.href);
+            const isInbox = item.href === '/auditor/inbox';
 
             return (
               <Link
@@ -133,7 +144,12 @@ export function AuditorShell({
                 )}
               >
                 <Icon className="size-5" />
-                <span>{item.label}</span>
+                <span className="flex-1">{item.label}</span>
+                {isInbox && unreadCount > 0 ? (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-error px-1.5 text-[11px] font-bold text-white">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                ) : null}
               </Link>
             );
           })}
@@ -180,6 +196,7 @@ export function AuditorShell({
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(pathname, item.href);
+                const isInbox = item.href === '/auditor/inbox';
 
                 return (
                   <Link
@@ -193,7 +210,12 @@ export function AuditorShell({
                     )}
                   >
                     <Icon className="size-5" />
-                    <span>{item.label}</span>
+                    <span className="flex-1">{item.label}</span>
+                    {isInbox && unreadCount > 0 ? (
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-error px-1.5 text-[11px] font-bold text-white">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    ) : null}
                   </Link>
                 );
               })}

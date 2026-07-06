@@ -4,15 +4,18 @@ import * as React from 'react';
 import {
   IconPaperclip,
   IconPhoneCall,
+  IconPlus,
   IconSearch,
   IconSend2,
   IconVideo,
 } from '@tabler/icons-react';
+import { useAuth } from '@/components/auth/auth-provider';
+import { NewConversationModal } from '@/components/chat/new-conversation-modal';
 import { InstructorShell } from '@/components/instructor/instructor-shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { instructorDemoThreads, instructorDemoUser } from '@/lib/chat/mock-data';
+import { instructorDemoUser } from '@/lib/chat/mock-data';
 import { useRealtimeInbox } from '@/lib/chat/use-realtime-inbox';
 
 function formatThreadTime(value: string) {
@@ -25,11 +28,16 @@ function formatThreadTime(value: string) {
 }
 
 export default function InstructorInboxPage() {
+  const { session } = useAuth();
   const inbox = useRealtimeInbox({
     fallbackCurrentUser: instructorDemoUser,
-    fallbackThreads: instructorDemoThreads,
+    fallbackThreads: [],
   });
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [newConversationOpen, setNewConversationOpen] = React.useState(false);
+  const savedMessagesThreadId =
+    inbox.threads.find((thread) => thread.participants.length === 1 && thread.participants[0]?.isCurrentUser)
+      ?.id ?? null;
 
   const filteredConversations = inbox.threads.filter((thread) =>
     [thread.title, thread.subtitle, thread.preview]
@@ -42,7 +50,12 @@ export default function InstructorInboxPage() {
     <InstructorShell
       title="Instructor Inbox"
       subtitle="Messages, escalations, and student follow-up in one workspace."
-      topActions={<Button className="hidden rounded-full px-5 md:inline-flex">Check-in Session</Button>}
+      topActions={
+        <Button className="hidden gap-1.5 rounded-full px-5 md:inline-flex" onClick={() => setNewConversationOpen(true)}>
+          <IconPlus className="size-4" />
+          New message
+        </Button>
+      }
     >
       <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_280px] h-[calc(100vh-200px)]">
         {/* Conversations List - Fixed */}
@@ -51,9 +64,7 @@ export default function InstructorInboxPage() {
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-display text-[22px] font-semibold">Messages</h3>
               <Badge variant={inbox.setupState.mode === 'supabase' ? 'success' : 'warning'}>
-                {inbox.setupState.mode === 'supabase'
-                  ? `${inbox.threads.length} live`
-                  : `${inbox.threads.length} demo`}
+                {inbox.setupState.mode === 'supabase' ? `${inbox.threads.length} live` : 'Chat offline'}
               </Badge>
             </div>
             <div className="relative">
@@ -214,6 +225,15 @@ export default function InstructorInboxPage() {
           </div>
         </aside>
       </div>
+
+      <NewConversationModal
+        open={newConversationOpen}
+        onClose={() => setNewConversationOpen(false)}
+        accessToken={session?.access_token}
+        currentUserId={inbox.currentUser.id}
+        savedMessagesThreadId={savedMessagesThreadId}
+        onCreated={(threadId) => void inbox.refresh(threadId)}
+      />
     </InstructorShell>
   );
 }

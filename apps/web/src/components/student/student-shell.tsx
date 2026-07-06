@@ -24,6 +24,8 @@ import {
 } from '@tabler/icons-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { SignOutButton } from '@/components/auth/sign-out-button';
+import { UnreadMessageBanner } from '@/components/chat/unread-message-banner';
+import { useUnreadMessagesCount } from '@/lib/chat/use-unread-count';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -125,6 +127,7 @@ export function StudentShell({
   const [workflowOpen, setWorkflowOpen] = React.useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const { unreadCount, notification, dismissNotification } = useUnreadMessagesCount();
 
   const resolvedProfileName =
     typeof user?.user_metadata?.full_name === 'string' && user.user_metadata.full_name.trim()
@@ -173,6 +176,11 @@ export function StudentShell({
 
   return (
     <div className="min-h-screen bg-background text-on-surface">
+      <UnreadMessageBanner
+        notification={notification}
+        inboxHref="/student/inbox"
+        onDismiss={dismissNotification}
+      />
       <aside className="fixed left-0 top-0 z-50 hidden h-full w-[240px] flex-col border-r border-border-subtle bg-surface-low px-4 py-6 lg:flex">
         <div className="mb-10 px-2">
           <h1 className="font-display text-[30px] font-bold tracking-[-0.02em] text-primary">
@@ -187,6 +195,7 @@ export function StudentShell({
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(pathname, item.href);
+            const isInbox = item.href === '/student/inbox';
 
             return (
               <Link
@@ -200,7 +209,12 @@ export function StudentShell({
                 )}
               >
                 <Icon className="size-5" />
-                <span>{item.label}</span>
+                <span className="flex-1">{item.label}</span>
+                {isInbox && unreadCount > 0 ? (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-error px-1.5 text-[11px] font-bold text-white">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                ) : null}
               </Link>
             );
           })}
@@ -259,6 +273,7 @@ export function StudentShell({
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(pathname, item.href);
+                const isInbox = item.href === '/student/inbox';
 
                 return (
                   <Link
@@ -272,7 +287,12 @@ export function StudentShell({
                     )}
                   >
                     <Icon className="size-5" />
-                    <span>{item.label}</span>
+                    <span className="flex-1">{item.label}</span>
+                    {isInbox && unreadCount > 0 ? (
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-error px-1.5 text-[11px] font-bold text-white">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    ) : null}
                   </Link>
                 );
               })}
@@ -475,17 +495,25 @@ export function StudentShell({
         ].map((item) => {
           const Icon = item.icon;
           const active = item.href !== '#' && isActive(pathname, item.href);
+          const isInbox = item.href === '/student/inbox';
 
           return (
             <Link
               key={`${item.href}-${item.label}`}
               href={item.href}
               className={cn(
-                'flex flex-col items-center gap-1 text-[10px] font-medium',
+                'relative flex flex-col items-center gap-1 text-[10px] font-medium',
                 active ? 'text-primary' : 'text-on-surface-variant'
               )}
             >
-              <Icon className="size-5" />
+              <span className="relative">
+                <Icon className="size-5" />
+                {isInbox && unreadCount > 0 ? (
+                  <span className="absolute -right-1.5 -top-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-error text-[8px] font-bold text-white">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                ) : null}
+              </span>
               <span>{item.mobileLabel ?? item.label}</span>
             </Link>
           );

@@ -89,6 +89,47 @@ export class LocalUsersService {
     return result.rows[0] ? this.mapRow(result.rows[0]) : null;
   }
 
+  async listByRoles(roles: string[], options: { excludeSupabaseUserId?: string; search?: string } = {}) {
+    if (roles.length === 0) {
+      return [];
+    }
+
+    const schema = this.databaseService.getSchema();
+    const values: Array<string | string[]> = [roles];
+    const conditions = [`"role" = ANY($1)`];
+
+    if (options.excludeSupabaseUserId) {
+      values.push(options.excludeSupabaseUserId);
+      conditions.push(`"supabase_user_id" <> $${values.length}`);
+    }
+
+    if (options.search?.trim()) {
+      values.push(`%${options.search.trim()}%`);
+      conditions.push(`"email" ILIKE $${values.length}`);
+    }
+
+    const result = await this.databaseService.query<LocalUserRow>(
+      `
+        SELECT
+          "id",
+          "supabase_user_id",
+          "email",
+          "role",
+          "status",
+          "created_at",
+          "updated_at"
+        FROM "${schema}"."users"
+        WHERE ${conditions.join(' AND ')}
+        ORDER BY "email" ASC
+        LIMIT 50
+      `,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      values as any[],
+    );
+
+    return result.rows.map((row) => this.mapRow(row));
+  }
+
   private mapRow(row: LocalUserRow): LocalUserRecord {
     return {
       id: row.id,

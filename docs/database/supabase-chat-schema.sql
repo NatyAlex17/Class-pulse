@@ -71,10 +71,30 @@ using (
   )
 );
 
+-- A policy on chat_thread_participants cannot query chat_thread_participants directly
+-- without triggering "infinite recursion detected in policy" in Postgres, so membership
+-- checks go through this security definer helper instead.
+create or replace function public.is_chat_thread_participant(target_thread_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (
+    select 1
+    from public.chat_thread_participants
+    where thread_id = target_thread_id
+      and user_id = auth.uid()
+  );
+$$;
+
+drop policy if exists "chat participants can read their memberships" on public.chat_thread_participants;
+
 create policy "chat participants can read their memberships"
 on public.chat_thread_participants
 for select
-using (user_id = auth.uid());
+using (public.is_chat_thread_participant(thread_id));
 
 create policy "chat participants can update their own read marker"
 on public.chat_thread_participants

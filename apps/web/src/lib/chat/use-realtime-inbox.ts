@@ -68,6 +68,10 @@ function deriveThreadSubtitle(thread: RawThread, participants: ChatParticipant[]
     .map((participant) => participant.role)
     .filter(Boolean);
 
+  if (participants.length === 1 && participants[0]?.isCurrentUser) {
+    return 'Personal notes';
+  }
+
   if (thread.context_type && thread.context_id) {
     return `${thread.context_type} / ${thread.context_id}`;
   }
@@ -409,6 +413,21 @@ export function useRealtimeInbox({
     supabase,
   ]);
 
+  const refresh = React.useCallback(
+    async (selectThreadId?: string) => {
+      if (setupState.mode !== 'supabase') {
+        return;
+      }
+
+      await hydrateThreads(currentUser);
+
+      if (selectThreadId) {
+        setActiveThreadId(selectThreadId);
+      }
+    },
+    [currentUser, hydrateThreads, setupState.mode],
+  );
+
   return {
     threads,
     activeThread,
@@ -419,5 +438,6 @@ export function useRealtimeInbox({
     sendMessage,
     currentUser,
     setupState,
+    refresh,
   };
 }
