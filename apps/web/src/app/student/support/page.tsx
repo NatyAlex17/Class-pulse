@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { IconArrowRight, IconHelpCircle, IconMail, IconPhone } from '@tabler/icons-react';
-import { useStudentDemo } from '@/components/student/student-demo-store';
+import { useStudentDemo } from '@/components/student/student-portal-store';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -64,7 +64,7 @@ export default function StudentSupportPage() {
             Create Support Request
           </h3>
           <p className="mt-1 text-sm text-on-surface-variant">
-            Static demo flow that adds a ticket to the student support queue.
+            Submit a ticket directly into the student support queue.
           </p>
           <div className="mt-6 space-y-4">
             <Input

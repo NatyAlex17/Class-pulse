@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import {
   IconArrowLeft,
   IconArrowRight,
@@ -9,8 +10,11 @@ import {
   IconRosetteDiscountCheck,
   IconSparkles,
   IconX,
+  IconAlertCircle,
+  IconClockPause,
 } from '@tabler/icons-react';
-import { useStudentDemo } from '@/components/student/student-demo-store';
+import { useAuth } from '@/components/auth/auth-provider';
+import { useStudentDemo } from '@/components/student/student-portal-store';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,176 +22,46 @@ import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
-const examQuestions = [
-  {
-    id: 'q1',
-    prompt: 'What must students do in the self-paced program?',
-    type: 'choice',
-    options: [
-      'A. Only watch videos',
-      'B. Read instructions and finish work',
-      'C. Skip assignments',
-      'D. Wait for instructors to do everything',
-    ],
-  },
-  {
-    id: 'q2',
-    prompt: 'Why is English important in this program?',
-    type: 'choice',
-    options: [
-      'A. Only for chatting',
-      'B. To understand lessons and exams',
-      'C. To avoid clinical hours',
-      'D. Only for orientation day',
-    ],
-  },
-  {
-    id: 'q3',
-    prompt: 'When can students ask instructors questions?',
-    type: 'choice',
-    options: [
-      'A. Never',
-      'B. Only after graduation',
-      'C. During scheduled support hours',
-      'D. Only on weekends',
-    ],
-  },
-  {
-    id: 'q4',
-    prompt: 'What can happen if a student does not understand instructions?',
-    type: 'choice',
-    options: [
-      'A. Nothing changes',
-      'B. They may fail assignments or exams',
-      'C. They automatically pass',
-      'D. The program pauses for everyone',
-    ],
-  },
-  {
-    id: 'q5',
-    prompt: 'What is the main point of the readiness passage?',
-    type: 'choice',
-    options: [
-      'A. Clinical practice is optional',
-      'B. English comprehension is required to succeed',
-      'C. Instructors complete the work',
-      'D. Technology is never used',
-    ],
-  },
-  {
-    id: 'q6',
-    prompt: 'Write one complete sentence explaining why following instructions matters in healthcare training.',
-    options: [],
-    type: 'text',
-  },
-] as const;
-
-const surveySections = [
-  {
-    title: 'Student Background',
-    fields: [
-      {
-        id: 'healthcare_exp',
-        label: 'Have you worked in healthcare before?',
-        type: 'select',
-        options: [
-          { label: 'No, this is my first time', value: 'first_time' },
-          { label: 'Yes, unpaid or volunteer', value: 'volunteer' },
-          { label: 'Yes, paid experience', value: 'paid' },
-        ],
-      },
-      {
-        id: 'motivation',
-        label: 'What motivated you to enroll?',
-        type: 'textarea',
-      },
-    ],
-  },
-  {
-    title: 'Confidence & Readiness',
-    fields: [
-      {
-        id: 'confidence',
-        label: 'How confident do you feel starting the program?',
-        type: 'select',
-        options: [
-          { label: 'Very confident', value: 'very_confident' },
-          { label: 'Somewhat confident', value: 'somewhat_confident' },
-          { label: 'A little nervous', value: 'nervous' },
-        ],
-      },
-      {
-        id: 'support_needs',
-        label: 'Where do you expect to need the most support?',
-        type: 'textarea',
-      },
-    ],
-  },
-  {
-    title: 'Expectations',
-    fields: [
-      {
-        id: 'expectations',
-        label: 'What do you expect to gain from this program?',
-        type: 'textarea',
-      },
-      {
-        id: 'success_definition',
-        label: 'What does a successful student experience look like to you?',
-        type: 'textarea',
-      },
-    ],
-  },
-  {
-    title: 'Goals & Outcomes',
-    fields: [
-      {
-        id: 'post_grad_goals',
-        label: 'What are your goals after completing the program?',
-        type: 'textarea',
-      },
-      {
-        id: 'work_timeline',
-        label: 'How soon do you hope to start working after certification?',
-        type: 'select',
-        options: [
-          { label: 'Immediately', value: 'immediately' },
-          { label: 'Within 1-3 months', value: 'one_to_three_months' },
-          { label: 'Not sure yet', value: 'not_sure' },
-        ],
-      },
-    ],
-  },
-  {
-    title: 'Support & Communication',
-    fields: [
-      {
-        id: 'instructor_support',
-        label: 'What kind of support do you expect from instructors?',
-        type: 'textarea',
-      },
-      {
-        id: 'additional_info',
-        label: 'Anything else you would like the team to know?',
-        type: 'textarea',
-      },
-    ],
-  },
-] as const;
-
 type StudentIntakeModalProps = {
   open: boolean;
   onClose: () => void;
 };
 
+type AvailableCohort = {
+  id: string;
+  name: string;
+  description: string;
+  feeAmount: number;
+  moduleCount: number;
+  moduleTitles: string[];
+};
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+
+function formatCohortFee(amount: number) {
+  return `$${amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+}
+
 export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
+  const router = useRouter();
+  const { session, syncedUser, signOut } = useAuth();
+  const [approvalStatus, setApprovalStatus] = React.useState<'pending' | 'approved' | 'rejected' | null | undefined>(undefined);
+  const [isCheckingStatus, setIsCheckingStatus] = React.useState(false);
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const [isSubmittingExam, setIsSubmittingExam] = React.useState(false);
+  const [cohorts, setCohorts] = React.useState<AvailableCohort[]>([]);
+  const [registeredCohortId, setRegisteredCohortId] = React.useState<string | null>(null);
+  const [cohortsLoaded, setCohortsLoaded] = React.useState(false);
+  const [selectedCohortId, setSelectedCohortId] = React.useState<string | null>(null);
+  const [isRegisteringCohort, setIsRegisteringCohort] = React.useState(false);
+
   const {
     workflowStage,
+    intakeJourney,
     entranceExam,
     enrollmentWizard,
     entranceSurvey,
     answerEntranceExamQuestion,
-    submitEntranceExam,
     updateEnrollmentWizardField,
     toggleEnrollmentAgreement,
     setEnrollmentWizardStep,
@@ -195,17 +69,168 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
     updateEntranceSurveyAnswer,
     setEntranceSurveyStep,
     submitEntranceSurvey,
-    setWorkflowStage,
   } = useStudentDemo();
+
+  const studentId = React.useMemo(() => syncedUser?.localUserId || 'student-001', [syncedUser?.localUserId]);
+  const hasAuth = Boolean(session?.access_token);
+  const isStudentUser = syncedUser?.role === 'student';
+
+  const checkApprovalStatus = React.useCallback(async () => {
+    if (!hasAuth || !isStudentUser || !syncedUser?.localUserId) {
+      setApprovalStatus(null);
+      return;
+    }
+
+    try {
+      setIsCheckingStatus(true);
+      const response = await fetch(`${API_BASE_URL}/students/${studentId}/intake/approval-status`, {
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setApprovalStatus(data.data.status);
+      } else {
+        setApprovalStatus(null);
+      }
+    } catch {
+      setApprovalStatus(null);
+    } finally {
+      setIsCheckingStatus(false);
+    }
+  }, [hasAuth, isStudentUser, session?.access_token, studentId, syncedUser?.localUserId]);
+
+  React.useEffect(() => {
+    if (!open || !hasAuth || !isStudentUser) return;
+    void checkApprovalStatus();
+  }, [checkApprovalStatus, hasAuth, isStudentUser, open]);
+
+  const loadCohorts = React.useCallback(async () => {
+    if (!hasAuth || !isStudentUser || !syncedUser?.localUserId) {
+      setCohortsLoaded(true);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/students/${studentId}/cohorts`, {
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const payload = await response.json();
+        setCohorts(payload.data?.cohorts ?? []);
+        setRegisteredCohortId(payload.data?.registeredCohortId ?? null);
+      }
+    } catch {
+      // Cohort registration is skipped when the list cannot be loaded.
+    } finally {
+      setCohortsLoaded(true);
+    }
+  }, [hasAuth, isStudentUser, session?.access_token, studentId, syncedUser?.localUserId]);
+
+  React.useEffect(() => {
+    if (!open) return;
+    void loadCohorts();
+  }, [loadCohorts, open]);
+
+  const handleRegisterCohort = async () => {
+    if (!selectedCohortId || !session?.access_token) return;
+
+    try {
+      setIsRegisteringCohort(true);
+      setSubmitError(null);
+      const response = await fetch(`${API_BASE_URL}/students/${studentId}/cohorts/register`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cohortId: selectedCohortId }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error?.message ?? 'Failed to register for the cohort.');
+      }
+
+      const payload = await response.json();
+      setRegisteredCohortId(payload.data?.registeredCohortId ?? selectedCohortId);
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Failed to register for the cohort.');
+    } finally {
+      setIsRegisteringCohort(false);
+    }
+  };
+
+  const handleSubmitExam = async () => {
+    if (!session?.access_token || !isStudentUser || !syncedUser?.localUserId) return;
+
+    try {
+      setIsSubmittingExam(true);
+      setSubmitError(null);
+      const response = await fetch(`${API_BASE_URL}/students/${studentId}/intake/entrance-exam/submit`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error?.message ?? 'Failed to submit entrance exam.');
+      }
+
+      await checkApprovalStatus();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Failed to submit entrance exam.');
+    } finally {
+      setIsSubmittingExam(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      router.push('/');
+    } catch (err) {
+      console.error('Logout failed:', err);
+      router.push('/');
+    }
+  };
 
   if (!open) {
     return null;
   }
 
+  const journey = intakeJourney;
+  const examQuestions = journey?.entranceExam.questions ?? [];
+  const enrollmentSteps = journey?.enrollmentWizard.steps ?? [];
+  const surveySections = journey?.orientationSurvey.sections ?? [];
+  const hasStudentAccess = hasAuth && isStudentUser && Boolean(syncedUser?.localUserId);
+
+  // Students choose a cohort before anything else — it decides their modules and fee.
+  const needsCohortSelection =
+    cohortsLoaded &&
+    hasStudentAccess &&
+    !registeredCohortId &&
+    cohorts.length > 0 &&
+    workflowStage === 'entrance_exam' &&
+    !entranceExam.taken;
+  const selectedCohort = cohorts.find((cohort) => cohort.id === selectedCohortId) ?? null;
+
   const examComplete = examQuestions.every((question) =>
     (entranceExam.answers[question.id] ?? '').trim(),
   );
   const wizardStep = enrollmentWizard.step;
+  const currentWizardDefinition =
+    enrollmentSteps.find((item) => item.step === wizardStep) ?? enrollmentSteps[0];
   const wizardStepValid =
     wizardStep === 1
       ? true
@@ -217,9 +242,10 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
           )
         : wizardStep === 3
           ? true
-          : wizardStep === 4
-            ? Object.values(enrollmentWizard.agreements).every(Boolean)
-            : enrollmentWizard.signature.trim().toLowerCase() === 'amara singh';
+            : wizardStep === 4
+              ? Object.values(enrollmentWizard.agreements).every(Boolean)
+              : enrollmentWizard.signature.trim().toLowerCase() ===
+                (journey?.enrollmentWizard.signatureRequirement.value ?? '').trim().toLowerCase();
 
   const currentSurveySection = surveySections[entranceSurvey.step - 1];
   const surveyStepValid = currentSurveySection
@@ -237,25 +263,30 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
       active: 5,
     }[workflowStage] ?? 1;
 
+  if (!journey) {
+    return null;
+  }
+
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm">
       <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] bg-surface shadow-2xl">
         <div className="shrink-0 flex items-start justify-between gap-6 border-b border-border-subtle bg-primary px-6 py-5 text-white sm:px-8">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-white/75">
-              Student Journey
+              {journey.header.eyebrow}
             </p>
             <h2 className="mt-1 font-display text-[28px] font-bold tracking-[-0.02em]">
-              Intake, Enrollment, and Orientation
+              {journey.header.title}
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-white/80">
-              This mirrors the real student flow from your reference project, but everything is now
-              driven by static demo data and shared local state.
+              {journey.header.description}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full border border-white/20 p-2 text-white/80 transition hover:bg-surface/10 hover:text-white"
+            disabled={workflowStage !== 'active'}
+            className="rounded-full border border-white/20 p-2 text-white/80 transition hover:bg-surface/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+            title={workflowStage !== 'active' ? 'Complete all steps to close' : 'Close'}
           >
             <IconX className="size-5" />
           </button>
@@ -263,14 +294,8 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
 
         <div className="shrink-0 border-b border-border-subtle bg-surface-low px-6 py-4 sm:px-8">
           <div className="flex flex-wrap items-center gap-3">
-            {[
-              'Entrance Exam',
-              'Enrollment Wizard',
-              'Admin Review',
-              'Orientation Survey',
-              'Portal Active',
-            ].map((label, index) => (
-              <div key={label} className="flex items-center gap-3">
+            {journey.stages.map((stage, index) => (
+              <div key={stage.id} className="flex items-center gap-3">
                 <div
                   className={cn(
                     'flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold',
@@ -281,45 +306,195 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                 >
                   {index + 1 < stageIndex ? <IconCheck className="size-4" /> : index + 1}
                 </div>
-                <span className="text-sm font-semibold text-on-surface">{label}</span>
+                <span className="text-sm font-semibold text-on-surface">{stage.label}</span>
               </div>
             ))}
           </div>
         </div>
 
+        {approvalStatus === 'pending' ? (
+          <div className="shrink-0 border-b border-warning/20 bg-warning/5 px-6 py-4 sm:px-8">
+            <div className="flex items-start gap-3">
+              <IconClockPause className="size-5 text-warning mt-0.5 shrink-0" />
+              <div className="flex-1">
+                <p className="font-semibold text-on-surface text-sm">Application Under Review</p>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Your intake has been submitted and is pending admin approval. You will be allowed to use the platform once approved.
+                </p>
+                <Button
+                  onClick={handleLogout}
+                  variant="secondary"
+                  size="sm"
+                  className="mt-3"
+                >
+                  Logout & Check Back Later
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {approvalStatus === 'rejected' && (
+          <div className="shrink-0 border-b border-error/20 bg-error/5 px-6 py-4 sm:px-8">
+            <div className="flex items-start gap-3">
+              <IconAlertCircle className="size-5 text-error mt-0.5 shrink-0" />
+              <div className="flex-1">
+                <p className="font-semibold text-on-surface text-sm">Application Rejected</p>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Your intake application was rejected. Please contact support for more information.
+                </p>
+                <Button
+                  onClick={handleLogout}
+                  variant="secondary"
+                  size="sm"
+                  className="mt-3"
+                >
+                  Logout
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!hasStudentAccess ? (
+          <div className="shrink-0 border-b border-warning/20 bg-warning/5 px-6 py-4 sm:px-8">
+            <div className="flex items-start gap-3">
+              <IconAlertCircle className="size-5 text-warning mt-0.5 shrink-0" />
+              <div className="flex-1">
+                <p className="font-semibold text-on-surface text-sm">Student Access Required</p>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  This intake flow can only run with a synced student account. The current session is not authorized for student intake requests.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {approvalStatus === null && workflowStage === 'entrance_exam' && !entranceExam.taken && hasStudentAccess && (
+          <div className="shrink-0 border-b border-info/20 bg-info/5 px-6 py-4 sm:px-8">
+            <div className="flex items-start gap-3">
+              <IconAlertCircle className="size-5 text-info mt-0.5 shrink-0" />
+              <div className="flex-1">
+                <p className="font-semibold text-on-surface text-sm">Submit for Admin Review</p>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Complete the entrance exam and submit your application for admin review to access the platform.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {submitError ? (
+          <div className="shrink-0 border-b border-error/20 bg-error/5 px-6 py-4 text-sm text-error sm:px-8">
+            {submitError}
+          </div>
+        ) : null}
+
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8">
-            {workflowStage === 'entrance_exam' ? (
+            {needsCohortSelection ? (
+              <section className="space-y-6">
+                <div className="rounded-[22px] border border-info/20 bg-info/5 p-5">
+                  <p className="text-sm leading-6 text-on-surface-variant">
+                    Choose the cohort you are enrolling into. Your cohort determines the modules you will
+                    learn and the program fee.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  {cohorts.map((cohort) => {
+                    const selected = selectedCohortId === cohort.id;
+                    return (
+                      <button
+                        key={cohort.id}
+                        type="button"
+                        onClick={() => setSelectedCohortId(cohort.id)}
+                        className={cn(
+                          'w-full rounded-[20px] border p-5 text-left transition',
+                          selected
+                            ? 'border-primary bg-primary/5 shadow-md'
+                            : 'border-border-subtle bg-surface hover:border-primary/40',
+                        )}
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="text-base font-semibold text-on-surface">{cohort.name}</p>
+                            {cohort.description ? (
+                              <p className="mt-1 text-sm text-on-surface-variant">{cohort.description}</p>
+                            ) : null}
+                          </div>
+                          <div className="text-right">
+                            <p className="font-display text-[22px] font-semibold text-primary">
+                              {formatCohortFee(cohort.feeAmount)}
+                            </p>
+                            <p className="text-xs text-on-surface-variant">program fee</p>
+                          </div>
+                        </div>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <Badge variant={selected ? 'success' : 'info'}>
+                            {selected ? 'Selected' : `${cohort.moduleCount} modules`}
+                          </Badge>
+                          {cohort.moduleTitles.slice(0, 4).map((title) => (
+                            <span
+                              key={title}
+                              className="rounded-full border border-border-subtle bg-surface-muted px-3 py-1 text-xs text-on-surface-variant"
+                            >
+                              {title}
+                            </span>
+                          ))}
+                          {cohort.moduleTitles.length > 4 ? (
+                            <span className="text-xs text-on-surface-variant">
+                              +{cohort.moduleTitles.length - 4} more
+                            </span>
+                          ) : null}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            ) : null}
+
+            {workflowStage === 'entrance_exam' && !needsCohortSelection ? (
               <section className="space-y-6">
               <div className="rounded-[22px] border border-warning/20 bg-warning/5 p-5">
                 <p className="text-sm leading-6 text-on-surface-variant">
-                  Passing score for the demo is 5 out of 6. Just like the reference app, this gates
-                  the rest of the onboarding journey.
+                  {journey.entranceExam.intro}
                 </p>
               </div>
 
-              {entranceExam.taken && entranceExam.score !== null ? (
+              {entranceExam.taken ? (
                 <div className="rounded-[22px] border border-border-subtle bg-surface-muted p-6">
-                  <Badge variant={entranceExam.passed ? 'success' : 'warning'}>
-                    {entranceExam.passed ? 'Passed' : 'Needs Review'}
+                  <Badge variant={entranceExam.score === null ? 'warning' : entranceExam.passed ? 'success' : 'warning'}>
+                    {entranceExam.score === null ? 'Pending Review' : entranceExam.passed ? 'Passed' : 'Needs Review'}
                   </Badge>
                   <h3 className="mt-4 font-display text-[26px] font-semibold text-on-surface">
-                    Score: {entranceExam.score} / {examQuestions.length}
+                    {entranceExam.score === null
+                      ? 'Submitted for review'
+                      : `Score: ${entranceExam.score} / ${journey.entranceExam.questions.length}`}
                   </h3>
+                  <p className="mt-2 text-sm font-semibold text-on-surface">
+                    Rank: {entranceExam.rank ?? 'Pending'}
+                  </p>
                   <p className="mt-2 text-sm text-on-surface-variant">
-                    {entranceExam.passed
-                      ? 'The student is cleared to continue to enrollment setup.'
-                      : 'The reference app would stop here. For demo walkthroughs, you can continue manually.'}
+                    {entranceExam.score === null
+                      ? 'Your answers are waiting for staff review. The reviewer will mark each question correct or wrong before final approval.'
+                      : entranceExam.passed
+                        ? 'The result is ready and now waiting for admin approval before the student can continue.'
+                        : 'The result is waiting for admin review. The student stays locked here until staff approves or rejects the intake.'}
                   </p>
                   <div className="mt-5 flex flex-wrap gap-3">
-                    <Button onClick={() => setWorkflowStage('enrollment_wizard')}>
-                      Continue To Enrollment
-                    </Button>
-                    {!entranceExam.passed ? (
-                      <Button variant="secondary" onClick={() => setWorkflowStage('enrollment_wizard')}>
-                        Override For Demo
-                      </Button>
-                    ) : null}
+                    {approvalStatus === 'approved' ? (
+                      <p className="text-sm text-success">
+                        Admin approved this intake. Enrollment is now unlocked.
+                      </p>
+                    ) : (
+                      <p className="text-sm text-on-surface-variant">
+                        {approvalStatus === 'pending' && 'Your application is pending admin review.'}
+                        {approvalStatus === 'rejected' && 'Your application was rejected. Contact support.'}
+                        {approvalStatus === null && 'Submit your exam to get started.'}
+                      </p>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -335,22 +510,22 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                           onChange={(event) =>
                             answerEntranceExamQuestion(question.id, event.target.value)
                           }
-                          placeholder="Write one complete sentence..."
+                          placeholder={question.placeholder ?? 'Write your response...'}
                         />
                       ) : (
                         <div className="grid gap-3 sm:grid-cols-2">
                           {question.options.map((option) => (
                             <button
-                              key={option}
-                              onClick={() => answerEntranceExamQuestion(question.id, option)}
+                              key={option.value}
+                              onClick={() => answerEntranceExamQuestion(question.id, option.value)}
                               className={cn(
                                 'rounded-[16px] border p-4 text-left text-sm font-medium transition',
-                                entranceExam.answers[question.id] === option
+                                entranceExam.answers[question.id] === option.value
                                   ? 'border-primary bg-primary text-white shadow-md'
                                   : 'border-border-subtle bg-surface hover:border-primary hover:bg-primary/5',
                               )}
                             >
-                              {option}
+                              {option.label}
                             </button>
                           ))}
                         </div>
@@ -362,53 +537,101 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
               </section>
             ) : null}
 
-            {workflowStage === 'enrollment_wizard' ? (
+            {workflowStage === 'enrollment_wizard' && approvalStatus !== 'approved' ? (
+              <section className="flex flex-col items-center justify-center py-12 text-center">
+                <IconLockAccess className="size-12 text-warning mb-4" />
+                <h3 className="font-display text-[26px] font-semibold text-on-surface">
+                  Portal Access Locked
+                </h3>
+                <p className="mt-2 text-sm text-on-surface-variant max-w-md">
+                  Your application must be approved by admin before you can proceed. Please wait for approval notification.
+                </p>
+                {approvalStatus === 'rejected' && (
+                  <Button
+                    onClick={handleLogout}
+                    variant="secondary"
+                    className="mt-4"
+                  >
+                    Logout
+                  </Button>
+                )}
+              </section>
+            ) : null}
+
+            {workflowStage === 'enrollment_wizard' && approvalStatus === 'approved' ? (
               <section className="space-y-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <Badge variant="info">Step {wizardStep} of 5</Badge>
+                  <Badge variant="info">Step {wizardStep} of {enrollmentSteps.length}</Badge>
                   <h3 className="mt-3 font-display text-[26px] font-semibold text-on-surface">
-                    Enrollment Setup
+                    {currentWizardDefinition?.title ?? 'Enrollment Setup'}
                   </h3>
+                  {currentWizardDefinition?.description ? (
+                    <p className="mt-2 text-sm text-on-surface-variant">
+                      {currentWizardDefinition.description}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="h-2 w-44 overflow-hidden rounded-full bg-surface-container">
                   <div
                     className="h-full rounded-full bg-primary"
-                    style={{ width: `${(wizardStep / 5) * 100}%` }}
+                    style={{ width: `${(wizardStep / Math.max(enrollmentSteps.length, 1)) * 100}%` }}
                   />
                 </div>
               </div>
 
               {wizardStep === 1 ? (
                 <div className="rounded-[22px] border border-border-subtle bg-surface-muted p-6">
-                  <h4 className="font-display text-[22px] font-semibold text-on-surface">
-                    Step 1: Career Boost
-                  </h4>
-                  <button
-                    onClick={() =>
-                      updateEnrollmentWizardField('hhaAddon', !enrollmentWizard.hhaAddon)
-                    }
-                    className={cn(
-                      'mt-4 w-full rounded-[18px] border p-5 text-left transition',
-                      enrollmentWizard.hhaAddon
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border-subtle bg-surface hover:border-primary/30',
-                    )}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-base font-semibold text-on-surface">
-                          Home Health Aide Add-On
+                  {currentWizardDefinition?.sections[0] ? (
+                    <>
+                      <h4 className="font-display text-[22px] font-semibold text-on-surface">
+                        {currentWizardDefinition.sections[0].title}
+                      </h4>
+                      {currentWizardDefinition.sections[0].description ? (
+                        <p className="mt-2 text-sm text-on-surface-variant">
+                          {currentWizardDefinition.sections[0].description}
                         </p>
-                        <p className="mt-1 text-sm text-on-surface-variant">
-                          Add a second certification track to the student journey.
-                        </p>
+                      ) : null}
+                      <div className="mt-4 space-y-3">
+                        {currentWizardDefinition.sections[0].fields[0]?.options?.map((option) => {
+                          const selected = String(enrollmentWizard.hhaAddon) === option.value;
+
+                          return (
+                            <button
+                              key={option.value}
+                              onClick={() =>
+                                updateEnrollmentWizardField('hhaAddon', option.value === 'true')
+                              }
+                              className={cn(
+                                'w-full rounded-[18px] border p-5 text-left transition',
+                                selected
+                                  ? 'border-primary bg-primary/5'
+                                  : 'border-border-subtle bg-surface hover:border-primary/30',
+                              )}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-base font-semibold text-on-surface">
+                                    {option.label}
+                                  </p>
+                                  {option.description ? (
+                                    <p className="mt-1 text-sm text-on-surface-variant">
+                                      {option.description}
+                                    </p>
+                                  ) : null}
+                                </div>
+                                {option.badge ? (
+                                  <Badge variant={selected ? 'success' : 'neutral'}>
+                                    {selected ? 'Selected' : option.badge}
+                                  </Badge>
+                                ) : null}
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
-                      <Badge variant={enrollmentWizard.hhaAddon ? 'success' : 'neutral'}>
-                        {enrollmentWizard.hhaAddon ? 'Selected' : '+$500'}
-                      </Badge>
-                    </div>
-                  </button>
+                    </>
+                  ) : null}
                 </div>
               ) : null}
 
@@ -416,7 +639,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                 <div className="grid gap-6 lg:grid-cols-2">
                   <div className="rounded-[22px] border border-border-subtle bg-surface-muted p-6">
                     <h4 className="font-display text-[22px] font-semibold text-on-surface">
-                      Step 2: Gear Up
+                      {currentWizardDefinition?.sections[0]?.title ?? 'Scrub Sizing'}
                     </h4>
                     <div className="mt-4 grid gap-4 sm:grid-cols-2">
                       <Select
@@ -424,40 +647,31 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                         onChange={(event) =>
                           updateEnrollmentWizardField('scrubTop', event.target.value)
                         }
-                        placeholder="Scrub top size"
-                        options={['XS', 'S', 'M', 'L', 'XL', '2XL'].map((size) => ({
-                          label: size,
-                          value: size,
-                        }))}
+                        placeholder={currentWizardDefinition?.sections[0]?.fields[0]?.label ?? 'Scrub top size'}
+                        options={currentWizardDefinition?.sections[0]?.fields[0]?.options ?? []}
                       />
                       <Select
                         value={enrollmentWizard.scrubBottom}
                         onChange={(event) =>
                           updateEnrollmentWizardField('scrubBottom', event.target.value)
                         }
-                        placeholder="Scrub bottom size"
-                        options={['XS', 'S', 'M', 'L', 'XL', '2XL'].map((size) => ({
-                          label: size,
-                          value: size,
-                        }))}
+                        placeholder={currentWizardDefinition?.sections[0]?.fields[1]?.label ?? 'Scrub bottom size'}
+                        options={currentWizardDefinition?.sections[0]?.fields[1]?.options ?? []}
                       />
                     </div>
                     <div className="mt-5 space-y-3">
-                      {[
-                        ['pickup', 'Pick up at orientation'],
-                        ['ship', 'Ship to home (+$10)'],
-                      ].map(([value, label]) => (
+                      {currentWizardDefinition?.sections[1]?.fields[0]?.options?.map((option) => (
                         <button
-                          key={value}
-                          onClick={() => updateEnrollmentWizardField('shipping', value)}
+                          key={option.value}
+                          onClick={() => updateEnrollmentWizardField('shipping', option.value)}
                           className={cn(
                             'w-full rounded-[16px] border p-4 text-left transition',
-                            enrollmentWizard.shipping === value
+                            enrollmentWizard.shipping === option.value
                               ? 'border-primary bg-primary/5'
                               : 'border-border-subtle bg-surface hover:border-primary/30',
                           )}
                         >
-                          {label}
+                          {option.label}
                         </button>
                       ))}
                     </div>
@@ -465,29 +679,26 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
 
                   <div className="rounded-[22px] border border-border-subtle bg-surface-muted p-6">
                     <h4 className="font-display text-[22px] font-semibold text-on-surface">
-                      State Exam Preference
+                      {currentWizardDefinition?.sections[2]?.title ?? 'State Exam Preference'}
                     </h4>
                     <div className="mt-4 space-y-3">
-                      {[
-                        [true, 'Yes, test at Daisy Medical Institute'],
-                        [false, 'No, use another regional testing site'],
-                      ].map(([value, label]) => (
+                      {currentWizardDefinition?.sections[2]?.fields[0]?.options?.map((option) => (
                         <button
-                          key={String(value)}
+                          key={option.value}
                           onClick={() =>
                             updateEnrollmentWizardField(
                               'wantsToTestAtDaisy',
-                              value === true,
+                              option.value === 'true',
                             )
                           }
                           className={cn(
                             'w-full rounded-[16px] border p-4 text-left transition',
-                            enrollmentWizard.wantsToTestAtDaisy === value
+                            String(enrollmentWizard.wantsToTestAtDaisy) === option.value
                               ? 'border-primary bg-primary/5'
                               : 'border-border-subtle bg-surface hover:border-primary/30',
                           )}
                         >
-                          {label}
+                          {option.label}
                         </button>
                       ))}
                     </div>
@@ -498,18 +709,17 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
               {wizardStep === 3 ? (
                 <div className="rounded-[22px] border border-border-subtle bg-surface-muted p-6">
                   <h4 className="font-display text-[22px] font-semibold text-on-surface">
-                    Step 3: Orientation Briefing
+                    {currentWizardDefinition?.sections[0]?.title ?? 'Program Orientation'}
                   </h4>
                   <div className="mt-5 aspect-video rounded-[18px] bg-[radial-gradient(circle_at_top_left,_rgba(39,110,241,0.28),_transparent_34%),linear-gradient(135deg,#11244a,#1c3f83,#276ef1)] p-6 text-white">
                     <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-white/70">
                       Video Preview
                     </p>
                     <h5 className="mt-4 font-display text-[28px] font-semibold">
-                      Program Orientation
+                      {currentWizardDefinition?.sections[0]?.title ?? 'Program Orientation'}
                     </h5>
                     <p className="mt-3 max-w-xl text-sm leading-6 text-white/80">
-                      In production this would be a real video. For the static flow, it still marks
-                      the student as having passed through the orientation checkpoint.
+                      {currentWizardDefinition?.sections[0]?.description}
                     </p>
                   </div>
                 </div>
@@ -518,27 +728,19 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
               {wizardStep === 4 ? (
                 <div className="rounded-[22px] border border-border-subtle bg-surface-muted p-6">
                   <h4 className="font-display text-[22px] font-semibold text-on-surface">
-                    Step 4: Terms of Agreement
+                    {currentWizardDefinition?.sections[0]?.title ?? 'Program Agreements'}
                   </h4>
                   <div className="mt-5 space-y-3">
-                    {[
-                      ['ip', 'I understand curriculum and AI tools are proprietary.'],
-                      ['refund', 'I understand the refund and withdrawal timeline.'],
-                      ['conduct', 'I understand conduct standards can affect enrollment status.'],
-                      ['lateFee', 'I understand installment timing and late-fee policy.'],
-                    ].map(([key, label]) => {
+                    {currentWizardDefinition?.sections[0]?.fields.map((field) => {
+                      const key = field.id as keyof typeof enrollmentWizard.agreements;
                       const checked =
-                        enrollmentWizard.agreements[
-                          key as keyof typeof enrollmentWizard.agreements
-                        ];
+                        enrollmentWizard.agreements[key];
 
                       return (
                         <button
-                          key={key}
+                          key={field.id}
                           onClick={() =>
-                            toggleEnrollmentAgreement(
-                              key as keyof typeof enrollmentWizard.agreements,
-                            )
+                            toggleEnrollmentAgreement(key)
                           }
                           className={cn(
                             'flex w-full items-start gap-3 rounded-[16px] border p-4 text-left transition',
@@ -553,7 +755,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                               checked ? 'border-success bg-success' : 'border-outline-variant',
                             )}
                           />
-                          <span className="text-sm text-on-surface">{label}</span>
+                          <span className="text-sm text-on-surface">{field.label}</span>
                         </button>
                       );
                     })}
@@ -565,23 +767,25 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                 <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
                   <div className="rounded-[22px] border border-border-subtle bg-surface-muted p-6">
                     <h4 className="font-display text-[22px] font-semibold text-on-surface">
-                      Step 5: Review & Sign
+                      {currentWizardDefinition?.sections[0]?.title ?? 'Program Signature'}
                     </h4>
                     <div className="mt-5 rounded-[18px] bg-surface p-5">
                       <p className="text-sm text-on-surface-variant">
-                        Registration, tuition, optional HHA add-on, and delivery preference are now
-                        staged in local state exactly like a submitted enrollment packet.
+                        Registration, tuition, optional HHA add-on, and delivery preference are staged in the enrollment packet for review.
                       </p>
                       <Input
                         value={enrollmentWizard.signature}
                         onChange={(event) =>
                           updateEnrollmentWizardField('signature', event.target.value)
                         }
-                        placeholder="Type Amara Singh to sign"
+                        placeholder={
+                          currentWizardDefinition?.sections[0]?.fields[0]?.placeholder ??
+                          'Type the required signature'
+                        }
                         className="mt-4 h-12 rounded-[14px]"
                       />
                       <p className="mt-3 text-xs text-on-surface-variant">
-                        Signature must match <strong>Amara Singh</strong> to continue.
+                        {journey.enrollmentWizard.signatureRequirement.hint}
                       </p>
                     </div>
                   </div>
@@ -591,20 +795,24 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                       Enrollment Summary
                     </p>
                     <div className="mt-5 space-y-3 text-sm text-white/85">
-                      <p>HHA add-on: {enrollmentWizard.hhaAddon ? 'Included' : 'Not selected'}</p>
-                      <p>
-                        Scrubs: {enrollmentWizard.scrubTop || 'TBD'} /{' '}
-                        {enrollmentWizard.scrubBottom || 'TBD'}
-                      </p>
-                      <p>Delivery: {enrollmentWizard.shipping}</p>
-                      <p>
-                        State exam preference:{' '}
-                        {enrollmentWizard.wantsToTestAtDaisy === null
-                          ? 'TBD'
-                          : enrollmentWizard.wantsToTestAtDaisy
-                            ? 'Daisy Medical Institute'
-                            : 'Other site'}
-                      </p>
+                      {journey.enrollmentWizard.summaryItems.map((item) => (
+                        <p key={item.id}>
+                          {item.label}:{' '}
+                          {item.id === 'hhaAddon'
+                            ? enrollmentWizard.hhaAddon
+                              ? 'Included'
+                              : 'Not selected'
+                            : item.id === 'scrubs'
+                              ? `${enrollmentWizard.scrubTop || 'TBD'} / ${enrollmentWizard.scrubBottom || 'TBD'}`
+                              : item.id === 'shipping'
+                                ? enrollmentWizard.shipping
+                                : enrollmentWizard.wantsToTestAtDaisy === null
+                                  ? 'TBD'
+                                  : enrollmentWizard.wantsToTestAtDaisy
+                                    ? 'Daisy Medical Institute'
+                                    : 'Other site'}
+                        </p>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -613,25 +821,20 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
               </section>
             ) : null}
 
-            {workflowStage === 'admin_review' ? (
+            {workflowStage === 'admin_review' && approvalStatus !== 'approved' ? (
               <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
               <div className="rounded-[22px] bg-[linear-gradient(135deg,#11244a,#1a2d58,#1f4da1)] p-6 text-white">
-                <Badge variant="warning">Pending Review</Badge>
+                <Badge variant="warning">{journey.adminReview.badgeLabel}</Badge>
                 <h3 className="mt-4 font-display text-[28px] font-semibold">
-                  Admissions is reviewing the packet
+                  {journey.adminReview.title}
                 </h3>
                 <p className="mt-3 text-sm leading-6 text-white/80">
-                  This stage mirrors the reference dashboard where the student sees a waiting state
-                  before the main portal is unlocked.
+                  {journey.adminReview.description}
                 </p>
               </div>
               <div className="rounded-[22px] border border-border-subtle bg-surface-muted p-6">
                 <div className="space-y-5 border-l-2 border-primary/20 pl-5">
-                  {[
-                    'Entrance exam passed and attached to admissions record',
-                    'Enrollment selections captured for logistics and billing',
-                    'Packet awaiting approval from student operations',
-                  ].map((item) => (
+                  {journey.adminReview.checklist.map((item) => (
                     <div key={item} className="relative">
                       <div className="absolute -left-[29px] top-1 h-3.5 w-3.5 rounded-full bg-primary" />
                       <p className="text-sm font-semibold text-on-surface">{item}</p>
@@ -639,22 +842,33 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                   ))}
                 </div>
                 <div className="mt-6 flex flex-wrap gap-3">
-                  <Button onClick={() => setWorkflowStage('orientation_survey')}>
-                    Simulate Approval
-                  </Button>
-                  <Button variant="secondary" onClick={() => setWorkflowStage('enrollment_wizard')}>
-                    Return To Wizard
+                  <Button variant="secondary" onClick={checkApprovalStatus} disabled={isCheckingStatus}>
+                    {isCheckingStatus ? 'Checking Approval...' : 'Refresh Approval Status'}
                   </Button>
                 </div>
               </div>
               </section>
             ) : null}
 
-            {workflowStage === 'orientation_survey' ? (
+            {workflowStage === 'orientation_survey' && approvalStatus !== 'approved' ? (
+              <section className="flex flex-col items-center justify-center py-12 text-center">
+                <IconLockAccess className="size-12 text-warning mb-4" />
+                <h3 className="font-display text-[26px] font-semibold text-on-surface">
+                  Portal Access Locked
+                </h3>
+                <p className="mt-2 text-sm text-on-surface-variant max-w-md">
+                  Your application must be approved by admin before proceeding. Check back after approval.
+                </p>
+              </section>
+            ) : null}
+
+            {workflowStage === 'orientation_survey' && approvalStatus === 'approved' ? (
               <section className="space-y-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <Badge variant="primary">Section {entranceSurvey.step} of 5</Badge>
+                  <Badge variant="primary">
+                    Section {entranceSurvey.step} of {surveySections.length}
+                  </Badge>
                   <h3 className="mt-3 font-display text-[26px] font-semibold text-on-surface">
                     Orientation Intake Survey
                   </h3>
@@ -662,7 +876,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                 <div className="h-2 w-44 overflow-hidden rounded-full bg-surface-container">
                   <div
                     className="h-full rounded-full bg-success"
-                    style={{ width: `${(entranceSurvey.step / 5) * 100}%` }}
+                    style={{ width: `${(entranceSurvey.step / Math.max(surveySections.length, 1)) * 100}%` }}
                   />
                 </div>
               </div>
@@ -672,6 +886,11 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                   <h4 className="font-display text-[22px] font-semibold text-on-surface">
                     {currentSurveySection.title}
                   </h4>
+                  {currentSurveySection.description ? (
+                    <p className="mt-2 text-sm text-on-surface-variant">
+                      {currentSurveySection.description}
+                    </p>
+                  ) : null}
                   <div className="mt-5 space-y-5">
                     {currentSurveySection.fields.map((field) => (
                       <div key={field.id}>
@@ -705,37 +924,48 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
               </section>
             ) : null}
 
-            {workflowStage === 'active' ? (
+            {workflowStage === 'active' && approvalStatus !== 'approved' ? (
+              <section className="flex flex-col items-center justify-center py-12 text-center">
+                <IconLockAccess className="size-12 text-warning mb-4" />
+                <h3 className="font-display text-[26px] font-semibold text-on-surface">
+                  Portal Access Locked
+                </h3>
+                <p className="mt-2 text-sm text-on-surface-variant max-w-md">
+                  Your account is not yet approved. Please complete all intake stages first.
+                </p>
+              </section>
+            ) : null}
+
+            {workflowStage === 'active' && approvalStatus === 'approved' ? (
               <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
               <div className="rounded-[22px] bg-[linear-gradient(135deg,#0b7a53,#159a6d,#1db581)] p-6 text-white">
-                <Badge variant="success">Portal Active</Badge>
+                <Badge variant="success">{journey.activation.badgeLabel}</Badge>
                 <h3 className="mt-4 font-display text-[30px] font-semibold">
-                  Student flow fully unlocked
+                  {journey.activation.title}
                 </h3>
                 <p className="mt-3 text-sm leading-6 text-white/85">
-                  The student can now move through learning, forms, documents, financials, and
-                  messaging with shared state just like a live portal.
+                  {journey.activation.description}
                 </p>
               </div>
               <div className="rounded-[22px] border border-border-subtle bg-surface-muted p-6">
                 <div className="space-y-4">
-                  {[
-                    { label: 'Entrance exam stored', icon: IconCheck },
-                    {
-                      label: 'Enrollment package submitted',
-                      icon: IconRosetteDiscountCheck,
-                    },
-                    { label: 'Orientation survey completed', icon: IconSparkles },
-                    { label: 'Student tools available', icon: IconLockAccess },
-                  ].map((item) => (
+                  {journey.activation.checklist.map((item) => (
                     <div
-                      key={item.label}
+                      key={item}
                       className="flex items-center gap-3 rounded-[16px] border border-border-subtle bg-surface p-4"
                     >
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success/10 text-success">
-                        <item.icon className="size-5" />
+                        {item.toLowerCase().includes('enrollment') ? (
+                          <IconRosetteDiscountCheck className="size-5" />
+                        ) : item.toLowerCase().includes('orientation') ? (
+                          <IconSparkles className="size-5" />
+                        ) : item.toLowerCase().includes('tools') ? (
+                          <IconLockAccess className="size-5" />
+                        ) : (
+                          <IconCheck className="size-5" />
+                        )}
                       </div>
-                      <p className="text-sm font-semibold text-on-surface">{item.label}</p>
+                      <p className="text-sm font-semibold text-on-surface">{item}</p>
                     </div>
                   ))}
                 </div>
@@ -747,10 +977,30 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
             ) : null}
           </div>
 
-          {workflowStage === 'entrance_exam' && (
+          {needsCohortSelection && (
             <div className="shrink-0 border-t border-border-subtle bg-surface px-6 py-4 sm:px-8">
-              <Button disabled={!examComplete} onClick={submitEntranceExam} className="w-full">
-                Submit Entrance Exam
+              <Button
+                disabled={!selectedCohortId || isRegisteringCohort}
+                onClick={handleRegisterCohort}
+                className="w-full"
+              >
+                {isRegisteringCohort
+                  ? 'Registering...'
+                  : selectedCohort
+                    ? `Register for ${selectedCohort.name} — ${formatCohortFee(selectedCohort.feeAmount)}`
+                    : 'Select a cohort to continue'}
+              </Button>
+            </div>
+          )}
+
+          {workflowStage === 'entrance_exam' && !needsCohortSelection && (
+            <div className="shrink-0 border-t border-border-subtle bg-surface px-6 py-4 sm:px-8">
+              <Button
+                disabled={!examComplete || approvalStatus === 'pending' || isSubmittingExam || !hasStudentAccess}
+                onClick={handleSubmitExam}
+                className="w-full"
+              >
+                {isSubmittingExam ? 'Submitting...' : 'Submit for Admin Review'}
               </Button>
             </div>
           )}
@@ -767,7 +1017,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                   <IconArrowLeft className="size-4" />
                   Back
                 </Button>
-                {wizardStep < 5 ? (
+                {wizardStep < enrollmentSteps.length ? (
                   <Button
                     onClick={() => setEnrollmentWizardStep(wizardStep + 1)}
                     disabled={!wizardStepValid}
@@ -801,7 +1051,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                   <IconArrowLeft className="size-4" />
                   Back
                 </Button>
-                {entranceSurvey.step < 5 ? (
+                {entranceSurvey.step < surveySections.length ? (
                   <Button
                     onClick={() => setEntranceSurveyStep(entranceSurvey.step + 1)}
                     disabled={!surveyStepValid}

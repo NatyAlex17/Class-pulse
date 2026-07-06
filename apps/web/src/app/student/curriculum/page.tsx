@@ -11,7 +11,7 @@ import {
   IconStethoscope,
 } from '@tabler/icons-react';
 import { StudentShell } from '@/components/student/student-shell';
-import { useStudentDemo } from '@/components/student/student-demo-store';
+import { useStudentDemo } from '@/components/student/student-portal-store';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -51,6 +51,28 @@ export default function StudentCurriculumPage() {
 
   const selectedModule =
     modules.find((module) => module.id === selectedModuleId) ?? currentModule;
+
+  const selectedModuleSections = selectedModule.steps.reduce<
+    Array<{ id: string; title: string; description?: string; steps: typeof selectedModule.steps }>
+  >((sections, step) => {
+    const id = step.sectionId || 'module-content';
+    const existing = sections.find((section) => section.id === id);
+
+    if (existing) {
+      existing.steps.push(step);
+      return sections;
+    }
+
+    return [
+      ...sections,
+      {
+        id,
+        title: step.sectionTitle || 'Module Content',
+        description: step.sectionDescription,
+        steps: [step],
+      },
+    ];
+  }, []);
 
   return (
     <StudentShell
@@ -258,34 +280,52 @@ export default function StudentCurriculumPage() {
             </div>
           </div>
 
-          <div className="mt-6 space-y-4">
-            {selectedModule.steps.map((step, index) => (
-              <div
-                key={step.id}
-                className="flex gap-4 rounded-[18px] border border-border-subtle bg-surface p-4"
-              >
-                <div
-                  className={cn(
-                    'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold',
-                    step.complete
-                      ? 'bg-success text-white'
-                      : selectedModule.status === 'Locked'
-                        ? 'bg-surface-container text-on-surface-variant'
-                        : 'bg-primary/10 text-primary',
-                  )}
-                >
-                  {index + 1}
+          <div className="mt-6 space-y-6">
+            {selectedModuleSections.map((section, sectionIndex) => (
+              <div key={section.id}>
+                <div className="mb-3">
+                  <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-primary">
+                    Section {sectionIndex + 1}
+                  </p>
+                  <h4 className="mt-1 font-display text-[20px] font-semibold text-on-surface">
+                    {section.title}
+                  </h4>
+                  {section.description ? (
+                    <p className="mt-1 text-sm leading-6 text-on-surface-variant">{section.description}</p>
+                  ) : null}
                 </div>
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h4 className="text-base font-semibold text-on-surface">{step.title}</h4>
-                    <Badge variant={step.complete ? 'success' : 'neutral'}>{step.type}</Badge>
-                    <span className="font-mono text-[12px] uppercase tracking-[0.1em] text-on-surface-variant">
-                      {step.duration}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-on-surface-variant">{step.note}</p>
+                <div className="space-y-3">
+                  {section.steps.map((step, index) => (
+                    <div
+                      key={step.id}
+                      className="flex gap-4 rounded-[18px] border border-border-subtle bg-surface p-4"
+                    >
+                      <div
+                        className={cn(
+                          'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold',
+                          step.complete
+                            ? 'bg-success text-white'
+                            : selectedModule.status === 'Locked'
+                              ? 'bg-surface-container text-on-surface-variant'
+                              : 'bg-primary/10 text-primary',
+                        )}
+                      >
+                        {index + 1}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <h4 className="text-base font-semibold text-on-surface">{step.title}</h4>
+                          <Badge variant={step.complete ? 'success' : 'neutral'}>{step.type}</Badge>
+                          <span className="font-mono text-[12px] uppercase tracking-[0.1em] text-on-surface-variant">
+                            {step.duration}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-on-surface-variant">{step.note}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}

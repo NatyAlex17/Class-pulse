@@ -1,7 +1,7 @@
 'use client';
 
 import { IconAdjustments, IconBell, IconShieldCheck } from '@tabler/icons-react';
-import { useStudentDemo } from '@/components/student/student-demo-store';
+import { useStudentDemo } from '@/components/student/student-portal-store';
 import { FormDesigner, type FormSchema } from '@/components/ui/form-designer';
 import { StudentShell } from '@/components/student/student-shell';
 

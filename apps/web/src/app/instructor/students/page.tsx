@@ -11,6 +11,8 @@ import {
   IconMail,
   IconMapPin,
   IconCalendar,
+  IconAlertCircle,
+  IconTrendingUp,
   IconFileText,
 } from '@tabler/icons-react';
 import { InstructorShell } from '@/components/instructor/instructor-shell';

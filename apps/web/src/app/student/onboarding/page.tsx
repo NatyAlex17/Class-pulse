@@ -6,7 +6,7 @@ import {
   IconFileUpload,
   IconShieldCheck,
 } from '@tabler/icons-react';
-import { useStudentDemo } from '@/components/student/student-demo-store';
+import { useStudentDemo } from '@/components/student/student-portal-store';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { StudentShell } from '@/components/student/student-shell';
@@ -50,8 +50,8 @@ export default function StudentOnboardingPage() {
               Readiness Tracker
             </h2>
             <p className="mt-3 text-sm leading-6 text-white/80">
-              This demo behaves like a real admissions intake packet with auto-saved answers,
-              acknowledgements, upload checkpoints, and a submission gate.
+              Admissions intake responses, acknowledgements, upload checkpoints, and submission
+              gating are now persisted through the backend workflow.
             </p>
             <div className="mt-4">
               <Badge variant={portalUnlocked ? 'success' : 'warning'}>
@@ -140,7 +140,7 @@ export default function StudentOnboardingPage() {
                 Student Onboarding Application
               </h2>
               <p className="mt-2 text-sm text-on-surface-variant">
-                Each answer updates shared demo state so the dashboard, documents, and readiness views respond.
+                Each answer updates the student record so the dashboard, documents, and readiness views stay aligned.
               </p>
             </div>
             <Badge variant={onboardingSubmitted ? 'success' : 'info'}>

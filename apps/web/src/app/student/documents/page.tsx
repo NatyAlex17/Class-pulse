@@ -16,7 +16,7 @@ import {
   StudentCertificateModal,
   type StudentCertificatePreview,
 } from '@/components/student/student-certificate-modal';
-import { useStudentDemo } from '@/components/student/student-demo-store';
+import { useStudentDemo } from '@/components/student/student-portal-store';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { StudentShell } from '@/components/student/student-shell';
@@ -41,7 +41,7 @@ export default function StudentDocumentsPage() {
     replaceDocument,
     lastAction,
   } = useStudentDemo();
-  const [preview, setPreview] = React.useState('Textbook preview is ready. Open a resource to show its static viewer state.');
+  const [preview, setPreview] = React.useState('Textbook preview is ready. Open a resource to review it here.');
   const [activeCertificate, setActiveCertificate] =
     React.useState<StudentCertificatePreview | null>(null);
 
@@ -70,7 +70,7 @@ export default function StudentDocumentsPage() {
             <div className="mx-auto flex max-w-[1200px] flex-col gap-3 text-sm text-on-surface-variant md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-3">
                 <IconShieldCheck className="size-5 text-info" />
-                <p>All student records remain local demo state while still behaving like a working portal.</p>
+                <p>Student records, document actions, and certificate gates are now backed by the student API.</p>
               </div>
               <span className="font-mono text-[11px]">Last action: {lastAction}</span>
             </div>
@@ -148,7 +148,7 @@ export default function StudentDocumentsPage() {
             </div>
             <Button className="w-full rounded-[14px]" onClick={() => {
               issueTextbook();
-              setPreview('Digital textbook preview opened. The student access event has been logged in local state.');
+              setPreview('Digital textbook preview opened. The student access event has been logged to the portal record.');
             }}>
               Open Textbook Demo
             </Button>

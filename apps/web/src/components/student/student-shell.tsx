@@ -19,14 +19,15 @@ import {
   IconSettings,
   IconStethoscope,
   IconUserCheck,
-  IconLogout,
   IconUser,
   IconX,
 } from '@tabler/icons-react';
+import { useAuth } from '@/components/auth/auth-provider';
+import { SignOutButton } from '@/components/auth/sign-out-button';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { useStudentDemo } from '@/components/student/student-demo-store';
+import { useStudentDemo } from '@/components/student/student-portal-store';
 import { StudentIntakeModal } from '@/components/student/student-intake-modal';
 
 type StudentNavItem = {
@@ -41,15 +42,47 @@ const navItems: StudentNavItem[] = [
   { label: 'Learning', href: '/student/learning', icon: IconBook2, mobileLabel: 'Learn' },
   { label: 'Inbox', href: '/student/inbox', icon: IconMail, mobileLabel: 'Inbox' },
   { label: 'Progress', href: '/student/progress', icon: IconChartLine, mobileLabel: 'Stats' },
-  { label: 'Clinical Hours', href: '/student/clinical-hours', icon: IconStethoscope, mobileLabel: 'Hours' },
+  {
+    label: 'Clinical Hours',
+    href: '/student/clinical-hours',
+    icon: IconStethoscope,
+    mobileLabel: 'Hours',
+  },
   { label: 'Financials', href: '/student/financials', icon: IconCreditCard, mobileLabel: 'Money' },
-  { label: 'Documents', href: '/student/documents', icon: IconFileDescription, mobileLabel: 'Docs' },
+  {
+    label: 'Documents',
+    href: '/student/documents',
+    icon: IconFileDescription,
+    mobileLabel: 'Docs',
+  },
   { label: 'Onboarding', href: '/student/onboarding', icon: IconUserCheck, mobileLabel: 'Start' },
   { label: 'Forms', href: '/student/forms', icon: IconFileText, mobileLabel: 'Forms' },
 ];
 
 function isActive(pathname: string, href: string) {
   return pathname === href;
+}
+
+function formatRoleLabel(role?: string) {
+  if (!role) {
+    return 'Student';
+  }
+
+  return role
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function getInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean).slice(0, 2);
+
+  if (parts.length === 0) {
+    return 'S';
+  }
+
+  return parts.map((part) => part.charAt(0).toUpperCase()).join('');
 }
 
 export interface StudentShellProps {
@@ -87,16 +120,35 @@ export function StudentShell({
   patternedCanvas = false,
 }: StudentShellProps) {
   const pathname = usePathname();
-  const { workflowStage, portalUnlocked } = useStudentDemo();
+  const { workflowStage, portalHydrated, portalUnlocked } = useStudentDemo();
+  const { user, syncedUser } = useAuth();
   const [workflowOpen, setWorkflowOpen] = React.useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
+  const resolvedProfileName =
+    typeof user?.user_metadata?.full_name === 'string' && user.user_metadata.full_name.trim()
+      ? user.user_metadata.full_name.trim()
+      : typeof user?.user_metadata?.name === 'string' && user.user_metadata.name.trim()
+        ? user.user_metadata.name.trim()
+        : syncedUser?.email
+          ? syncedUser.email
+          : profileName;
+  const resolvedProfileMeta = `${formatRoleLabel(syncedUser?.role)}${
+    syncedUser?.status ? ` · ${syncedUser.status}` : ''
+  }`;
+  const resolvedProfileImageUrl =
+    typeof user?.user_metadata?.avatar_url === 'string' && user.user_metadata.avatar_url.trim()
+      ? user.user_metadata.avatar_url.trim()
+      : typeof user?.user_metadata?.picture === 'string' && user.user_metadata.picture.trim()
+        ? user.user_metadata.picture.trim()
+        : profileImageUrl;
+
   React.useEffect(() => {
-    if (!portalUnlocked) {
+    if (portalHydrated && !portalUnlocked) {
       setWorkflowOpen(true);
     }
-  }, [portalUnlocked]);
+  }, [portalHydrated, portalUnlocked]);
 
   React.useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -144,7 +196,7 @@ export function StudentShell({
                   'flex items-center gap-3 rounded-[16px] px-3 py-2.5 text-sm transition-colors',
                   active
                     ? 'border-r-4 border-primary bg-primary-container/10 font-semibold text-primary'
-                    : 'text-on-surface-variant hover:bg-surface-high hover:text-primary',
+                    : 'text-on-surface-variant hover:bg-surface-high hover:text-primary'
                 )}
               >
                 <Icon className="size-5" />
@@ -216,7 +268,7 @@ export function StudentShell({
                       'flex items-center gap-3 rounded-[16px] px-3 py-3 text-sm transition-colors',
                       active
                         ? 'bg-primary-container/10 font-semibold text-primary'
-                        : 'text-on-surface-variant hover:bg-surface-high hover:text-primary',
+                        : 'text-on-surface-variant hover:bg-surface-high hover:text-primary'
                     )}
                   >
                     <Icon className="size-5" />
@@ -258,6 +310,7 @@ export function StudentShell({
         <div className="flex h-full items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <button
+              suppressHydrationWarning
               onClick={() => setMobileMenuOpen(true)}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-subtle text-on-surface-variant transition hover:bg-surface-high hover:text-primary lg:hidden"
             >
@@ -283,37 +336,53 @@ export function StudentShell({
           <div className="flex items-center gap-2 sm:gap-4">
             {topActions}
             <ThemeToggle />
-            <button className="text-on-surface-variant transition hover:text-primary">
+            <button
+              suppressHydrationWarning
+              className="text-on-surface-variant transition hover:text-primary"
+            >
               <IconBell className="size-5" />
             </button>
             <div className="relative" data-profile-menu>
               <button
+                suppressHydrationWarning
                 onClick={() => setProfileMenuOpen(!profileMenuOpen)}
                 className="flex items-center gap-3 border-l border-border-subtle pl-2 transition hover:opacity-80 sm:pl-4"
               >
                 <div className="hidden text-right sm:block">
-                  <p className="text-sm font-semibold text-on-surface">{profileName}</p>
-                  <p className="text-[12px] text-on-surface-variant">{profileMeta}</p>
+                  <p className="text-sm font-semibold text-on-surface">{resolvedProfileName}</p>
+                  <p className="text-[12px] text-on-surface-variant">{resolvedProfileMeta}</p>
                 </div>
-                <img
-                  className="h-10 w-10 rounded-full border-2 border-primary-fixed object-cover cursor-pointer"
-                  src={profileImageUrl}
-                  alt={profileName}
-                />
+                {resolvedProfileImageUrl ? (
+                  <img
+                    className="h-10 w-10 rounded-full border-2 border-primary-fixed object-cover cursor-pointer"
+                    src={resolvedProfileImageUrl}
+                    alt={resolvedProfileName}
+                  />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary-fixed bg-primary/10 text-xs font-bold text-primary">
+                    {getInitials(resolvedProfileName)}
+                  </div>
+                )}
               </button>
 
               {profileMenuOpen && (
                 <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-[16px] border border-border-subtle bg-surface shadow-lg">
                   <div className="border-b border-border-subtle p-4">
                     <div className="flex items-center gap-3">
-                      <img
-                        className="h-12 w-12 rounded-full border-2 border-primary-fixed object-cover"
-                        src={profileImageUrl}
-                        alt={profileName}
-                      />
+                      {resolvedProfileImageUrl ? (
+                        <img
+                          className="h-12 w-12 rounded-full border-2 border-primary-fixed object-cover"
+                          src={resolvedProfileImageUrl}
+                          alt={resolvedProfileName}
+                        />
+                      ) : (
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-primary-fixed bg-primary/10 text-sm font-bold text-primary">
+                          {getInitials(resolvedProfileName)}
+                        </div>
+                      )}
                       <div>
-                        <p className="font-semibold text-on-surface">{profileName}</p>
-                        <p className="text-[12px] text-on-surface-variant">{profileMeta}</p>
+                        <p className="font-semibold text-on-surface">{resolvedProfileName}</p>
+                        <p className="text-[12px] text-on-surface-variant">{resolvedProfileMeta}</p>
                       </div>
                     </div>
                   </div>
@@ -338,16 +407,10 @@ export function StudentShell({
                   </div>
 
                   <div className="border-t border-border-subtle p-2">
-                    <button
-                      onClick={() => {
-                        setProfileMenuOpen(false);
-                        window.location.href = '/';
-                      }}
+                    <SignOutButton
+                      onBeforeSignOut={() => setProfileMenuOpen(false)}
                       className="w-full flex items-center gap-3 rounded-[12px] px-4 py-2.5 text-sm text-error transition hover:bg-error/10"
-                    >
-                      <IconLogout className="size-4" />
-                      <span>Logout</span>
-                    </button>
+                    />
                   </div>
                 </div>
               )}
@@ -360,16 +423,14 @@ export function StudentShell({
         <div
           className={cn(
             'min-h-[calc(100vh-4rem)] px-4 py-6 sm:px-6 lg:px-8',
-            patternedCanvas && 'cp-grid-pattern',
+            patternedCanvas && 'cp-grid-pattern'
           )}
         >
           <div className="mx-auto w-full max-w-[1200px]">
             <div
               className={cn(
                 'mb-6 flex flex-col gap-3 rounded-[18px] border px-5 py-4 sm:flex-row sm:items-center sm:justify-between',
-                portalUnlocked
-                  ? 'border-success/20 bg-success/5'
-                  : 'border-warning/20 bg-warning/5',
+                portalUnlocked ? 'border-success/20 bg-success/5' : 'border-warning/20 bg-warning/5'
               )}
             >
               <div>
@@ -421,7 +482,7 @@ export function StudentShell({
               href={item.href}
               className={cn(
                 'flex flex-col items-center gap-1 text-[10px] font-medium',
-                active ? 'text-primary' : 'text-on-surface-variant',
+                active ? 'text-primary' : 'text-on-surface-variant'
               )}
             >
               <Icon className="size-5" />

@@ -1,0 +1,176 @@
+{
+  "modules": [
+    {
+      "id": "introduction",
+      "title": "Introduction",
+      "summary": "Introduction",
+      "requiredHours": 10,
+      "order": 0,
+      "sections": [
+        {
+          "id": "section-one",
+          "title": "Section one",
+          "description": "Section one",
+          "resources": [
+            {
+              "id": "introduction-video",
+              "title": "Introduction video",
+              "type": "video",
+              "duration": "15",
+              "description": "this is for introductionss",
+              "url": "http://localhost:4000/uploads/learning-resources/1783050742765-compliance-platform.mp4"
+            },
+            {
+              "id": "pdf-introduction",
+              "title": "pdf introduction",
+              "type": "pdf",
+              "duration": "10",
+              "description": "",
+              "url": "http://localhost:4000/uploads/learning-resources/1783050819018-module-3-writing-ground-truth-solutions.pdf"
+            },
+            {
+              "id": "module-exam",
+              "title": "Module Exam",
+              "type": "exam",
+              "duration": "30",
+              "description": "this should be completed in order to finalize this course",
+              "content": "this should be completed in order to finalize this course",
+              "questionCount": 3,
+              "passingScore": 70,
+              "examFormat": "multiple-choice",
+              "questions": [
+                {
+                  "id": "module-exam-q1",
+                  "prompt": "who is abebe",
+                  "points": 1,
+                  "options": [
+                    "kebede",
+                    "abebe",
+                    "chala",
+                    "chube"
+                  ],
+                  "correctOption": 3
+                },
+                {
+                  "id": "module-exam-q2",
+                  "prompt": "who is the developer of gta",
+                  "points": 1,
+                  "options": [
+                    "rockstar",
+                    "gameloft",
+                    "cd project",
+                    "none"
+                  ],
+                  "correctOption": 0
+                },
+                {
+                  "id": "module-exam-q3",
+                  "prompt": "is this an exam",
+                  "points": 1,
+                  "options": [
+                    "no",
+                    "yes",
+                    "maybe",
+                    "idk"
+                  ],
+                  "correctOption": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "foundation-of-patients",
+      "title": "Foundation of Patients",
+      "summary": "Foundation of Patients",
+      "requiredHours": 4,
+      "order": 1,
+      "minimumHoursForCertification": 3,
+      "sections": [
+        {
+          "id": "lesson-one",
+          "title": "Lesson One",
+          "description": "Lesson One",
+          "resources": [
+            {
+              "id": "overview-video",
+              "title": "Overview Video",
+              "type": "video",
+              "duration": "15",
+              "description": "something",
+              "url": "http://localhost:4000/uploads/learning-resources/1783169763877-screencast-from-03-06-2026-04-39-42-pm.webm"
+            },
+            {
+              "id": "pdf-content",
+              "title": "Pdf content",
+              "type": "pdf",
+              "duration": "12",
+              "description": "done",
+              "url": "http://localhost:4000/uploads/learning-resources/1783169825389-shipment-cmr53vk2j000h97zaainsg8dh.pdf"
+            },
+            {
+              "id": "final-exam",
+              "title": "final exam",
+              "type": "exam",
+              "duration": "20 min",
+              "description": "sample desc",
+              "content": "instructions should be here",
+              "questionCount": 3,
+              "passingScore": 90,
+              "examFormat": "multiple-choice",
+              "questions": [
+                {
+                  "id": "final-exam-q1",
+                  "prompt": "first question",
+                  "points": 1,
+                  "options": [
+                    "a",
+                    "b",
+                    "c",
+                    "d"
+                  ],
+                  "correctOption": 0
+                },
+                {
+                  "id": "final-exam-q2",
+                  "prompt": "question 2",
+                  "points": 1,
+                  "options": [
+                    "e",
+                    "f",
+                    "g",
+                    "h"
+                  ],
+                  "correctOption": 1
+                },
+                {
+                  "id": "final-exam-q3",
+                  "prompt": "question three",
+                  "points": 1,
+                  "options": [
+                    "i",
+                    "j",
+                    "k",
+                    "l"
+                  ],
+                  "correctOption": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "lesson-two",
+          "title": "Lesson Two",
+          "description": "Lesson Two",
+          "resources": []
+        }
+      ]
+    }
+  ],
+  "globalSettings": {
+    "minimumHoursForCertification": 0
+  }
+}

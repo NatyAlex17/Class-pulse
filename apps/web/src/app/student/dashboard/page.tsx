@@ -8,7 +8,6 @@ import {
   IconCalendarEvent,
   IconCheck,
   IconCircleCheckFilled,
-  IconClockHour4,
   IconLocation,
   IconMail,
   IconMessageCircle,
@@ -18,7 +17,7 @@ import {
   IconShieldCheck,
   IconStethoscope,
 } from '@tabler/icons-react';
-import { useStudentDemo } from '@/components/student/student-demo-store';
+import { useStudentDemo } from '@/components/student/student-portal-store';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,7 +52,6 @@ export default function StudentDashboardPage() {
     lastAction,
     toggleTask,
     completeOnboardingStep,
-    advanceLearning,
     checkIn,
     reportAbsence,
     submitReflection,
@@ -86,7 +84,11 @@ export default function StudentDashboardPage() {
     {
       label: 'ENGAGEMENT',
       value: `${(learningMinutes / 60).toFixed(1)} hrs`,
-      width: `${Math.round((learningMinutes / 480) * 100)}%`,
+      width: `${
+        theoryHoursRequired > 0
+          ? Math.min(100, Math.round((learningMinutes / 60 / theoryHoursRequired) * 100))
+          : 0
+      }%`,
       tone: 'bg-info',
     },
   ] as const;
@@ -94,7 +96,7 @@ export default function StudentDashboardPage() {
   return (
     <StudentShell
       title="Welcome Back, Amara"
-      subtitle="Responsive student demo with onboarding, learning, compliance, documents, and support all tied together through static state."
+      subtitle="Student operations hub for onboarding, learning, compliance, documents, and support."
       topActions={
         <div className="hidden items-center gap-2 md:flex">
           <Link href="/student/onboarding">
@@ -123,7 +125,7 @@ export default function StudentDashboardPage() {
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-on-surface-variant sm:text-base">
                   {portalUnlocked
-                    ? 'The dashboard now reacts like a working system: attendance check-ins, onboarding progress, assignments, reflections, inbox state, and module activity all update together as you move through the demo.'
+                    ? 'Attendance check-ins, onboarding progress, assignments, reflections, inbox state, and module activity now stay in sync through the backend student portal.'
                     : `The portal is still staged at ${workflowStage.replaceAll('_', ' ')}. Open the shared walkthrough to finish the real student journey before continuing deeper into the portal.`}
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
@@ -133,14 +135,6 @@ export default function StudentDashboardPage() {
                       {portalUnlocked ? 'Continue Learning' : 'Learning Locked'}
                     </Button>
                   </Link>
-                  <Button
-                    variant="secondary"
-                    className="h-12 rounded-[16px] px-6"
-                    onClick={() => advanceLearning(30)}
-                    disabled={!portalUnlocked}
-                  >
-                    Simulate 30 Minutes
-                  </Button>
                 </div>
               </div>
 
