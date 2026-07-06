@@ -6,6 +6,7 @@ import { createApiResponse } from '../../../common/utils/create-api-response';
 import type {
   AdvanceLearningDto,
   AnswerOnboardingQuestionDto,
+  AskAiTutorDto,
   AttendanceCheckInDto,
   LogClinicalHoursDto,
   ReportLearningAttentionEventDto,
@@ -341,6 +342,30 @@ export class StudentPortalController {
       this.studentPortalService.reportExamSecurityEvent(studentId, moduleId, body),
       'Exam security event recorded successfully.',
     );
+  }
+
+  @Get('learning/modules/:moduleId/lessons/:lessonId/ai-tutor')
+  getAiTutorConversation(
+    @Param('studentId') studentId: string,
+    @Param('moduleId') moduleId: string,
+    @Param('lessonId') lessonId: string,
+  ) {
+    return createApiResponse(
+      this.studentPortalService.getAiTutorConversation(studentId, moduleId, lessonId),
+      'AI tutor conversation retrieved successfully.',
+    );
+  }
+
+  @Post('learning/modules/:moduleId/lessons/:lessonId/ai-tutor')
+  askAiTutor(
+    @Param('studentId') studentId: string,
+    @Param('moduleId') moduleId: string,
+    @Param('lessonId') lessonId: string,
+    @Body() body: AskAiTutorDto,
+  ) {
+    return this.studentPortalService
+      .askAiTutor(studentId, moduleId, lessonId, body)
+      .then((conversation) => createApiResponse(conversation, 'AI tutor replied successfully.'));
   }
 
   @Patch('learning/modules/active')

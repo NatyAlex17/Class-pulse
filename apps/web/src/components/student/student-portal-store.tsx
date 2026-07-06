@@ -118,6 +118,20 @@ type ActiveExamSession = {
   recentEvents: ExamSecurityEvent[];
 };
 
+type AiTutorMessage = {
+  id: string;
+  role: 'student' | 'tutor';
+  text: string;
+  sentAt: string;
+};
+
+type AiTutorConversation = {
+  moduleId: string;
+  lessonId: string;
+  updatedAt: string;
+  messages: AiTutorMessage[];
+};
+
 type ModuleItem = {
   id: string;
   title: string;
@@ -389,6 +403,7 @@ type StudentDemoState = {
   lessonElapsedMinutes: Record<string, number>;
   activeLearningAttention?: ActiveLearningAttention;
   activeExamSession?: ActiveExamSession;
+  aiTutorConversations: Record<string, AiTutorConversation>;
   attendanceRecords: AttendanceRecord[];
   reflectionResponse: string;
   questionOfDayAnswer: string;
@@ -470,6 +485,8 @@ type StudentDemoContextValue = StudentDemoState & {
     moduleId: string,
     payload: { type: ExamSecurityEventType; detail?: string }
   ) => void;
+  loadAiTutorConversation: (moduleId: string, lessonId: string) => Promise<void>;
+  askAiTutor: (moduleId: string, lessonId: string, question: string) => Promise<AiTutorConversation | null>;
   selectModule: (moduleId: string) => void;
   markStepComplete: (moduleId: string, stepId: string) => void;
   submitModuleExam: (payload?: {
@@ -659,6 +676,7 @@ function createFallbackState(): StudentDemoState {
     lessonElapsedMinutes: {},
     activeLearningAttention: undefined,
     activeExamSession: undefined,
+    aiTutorConversations: {},
     attendanceRecords: [],
     reflectionResponse: '',
     questionOfDayAnswer: '',
@@ -728,6 +746,7 @@ function mapPortalToState(portal: StudentPortalApi): StudentDemoState {
     lessonElapsedMinutes: portal.lessonElapsedMinutes ?? {},
     activeLearningAttention: portal.activeLearningAttention,
     activeExamSession: portal.activeExamSession,
+    aiTutorConversations: {},
     attendanceRecords: portal.attendanceRecords,
     reflectionResponse: portal.reflectionResponse,
     questionOfDayAnswer: portal.questionOfDayAnswer,
@@ -1310,6 +1329,49 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
     [mutate]
   );
 
+  const loadAiTutorConversation = React.useCallback(
+    async (moduleId: string, lessonId: string) => {
+      try {
+        const conversation = await callStudentApi<AiTutorConversation>(
+          `/learning/modules/${moduleId}/lessons/${lessonId}/ai-tutor`,
+          { method: 'GET' }
+        );
+        setState((current) => ({
+          ...current,
+          aiTutorConversations: {
+            ...current.aiTutorConversations,
+            [`${moduleId}::${lessonId}`]: conversation,
+          },
+        }));
+      } catch {
+        // Keep any previously loaded conversation on failure.
+      }
+    },
+    [callStudentApi]
+  );
+
+  const askAiTutor = React.useCallback(
+    async (moduleId: string, lessonId: string, question: string): Promise<AiTutorConversation | null> => {
+      try {
+        const conversation = await callStudentApi<AiTutorConversation>(
+          `/learning/modules/${moduleId}/lessons/${lessonId}/ai-tutor`,
+          { method: 'POST', body: JSON.stringify({ question }) }
+        );
+        setState((current) => ({
+          ...current,
+          aiTutorConversations: {
+            ...current.aiTutorConversations,
+            [`${moduleId}::${lessonId}`]: conversation,
+          },
+        }));
+        return conversation;
+      } catch {
+        return null;
+      }
+    },
+    [callStudentApi]
+  );
+
   const selectModule = React.useCallback(
     (moduleId: string) => {
       setState((current) => ({ ...current, activeModuleId: moduleId }));
@@ -1582,6 +1644,8 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       reportLearningAttentionEvent,
       startModuleExamSession,
       reportExamSecurityEvent,
+      loadAiTutorConversation,
+      askAiTutor,
       selectModule,
       markStepComplete,
       submitModuleExam,
@@ -1605,6 +1669,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       advanceLearning,
       answerEntranceExamQuestion,
       answerOnboardingQuestion,
+      askAiTutor,
       checkIn,
       clinicalHoursCompleted,
       completeExitSurvey,
@@ -1614,6 +1679,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       examUnlocked,
       generateLiveScan,
       issueTextbook,
+      loadAiTutorConversation,
       logClinicalHours,
       makePayment,
       markStepComplete,

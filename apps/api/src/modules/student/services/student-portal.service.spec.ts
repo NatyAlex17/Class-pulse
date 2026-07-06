@@ -2,9 +2,11 @@ import { existsSync, rmSync } from 'fs';
 import { join } from 'path';
 
 import { BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 import { CohortsConfigService } from './cohorts-config.service';
 import { ExamConfigService } from './exam-config.service';
+import { GeminiService } from './gemini.service';
 import { IntakeSubmissionService } from './intake-submission.service';
 import { LearningResourcesConfigService } from './learning-resources-config.service';
 import { StudentPortalRepository } from './student-portal.repository';
@@ -45,6 +47,7 @@ describe('StudentPortalService', () => {
       intakeSubmissionService,
       learningResourcesConfigService,
       cohortsConfigService,
+      new GeminiService(new ConfigService()),
     );
   });
 
@@ -353,6 +356,7 @@ describe('StudentPortalService', () => {
       reloadedIntakeSubmissionService,
       reloadedLearningResourcesConfigService,
       reloadedCohortsConfigService,
+      new GeminiService(new ConfigService()),
     );
     const reloadedPortal = reloadedService.getPortal('student-amara-singh');
 

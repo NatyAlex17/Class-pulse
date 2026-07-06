@@ -3404,7 +3404,7 @@
           "id": "clinical-log",
           "title": "Submit Clinical Log #04",
           "detail": "Skills lab follow-up needs one pending hour entry.",
-          "complete": false
+          "complete": true
         }
       ],
       "onboarding": {
@@ -3652,10 +3652,10 @@
           "recipientRole": "Senior Instructor",
           "moduleId": "m3",
           "moduleName": "Vital Signs & Monitoring",
-          "status": "Unread",
-          "preview": "Great progress on your vital signs drill. I've left feedback on your charting.",
-          "time": "2026-06-30T10:45:00.000Z",
-          "unread": true,
+          "status": "Read",
+          "preview": "How do I take an accurate pulse?",
+          "time": "2026-07-06T16:35:10.559Z",
+          "unread": false,
           "messages": [
             {
               "id": "lw-1",
@@ -3668,6 +3668,12 @@
               "sender": "student",
               "text": "Thank you. I'm reviewing the charting notes before I upload the skill check.",
               "time": "2026-06-30T11:02:00.000Z"
+            },
+            {
+              "id": "msg-1783355710559",
+              "sender": "student",
+              "text": "How do I take an accurate pulse?",
+              "time": "2026-07-06T16:35:10.559Z"
             }
           ]
         },
@@ -3904,8 +3910,93 @@
       "learningSessionActive": false,
       "reflectionResponse": "",
       "questionOfDayAnswer": "",
-      "lastAction": "Learning attention event recorded: session paused.",
+      "lastAction": "Asked the AI tutor about pdf introduction.",
       "auditTrail": [
+        {
+          "id": "audit-1783356553394-568",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.learning.ai-tutor.message",
+          "target": "pdf-introduction",
+          "occurredAt": "2026-07-06T16:49:13.394Z",
+          "details": {
+            "moduleId": "introduction"
+          }
+        },
+        {
+          "id": "audit-1783356442152-941",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.learning.ai-tutor.message",
+          "target": "pdf-introduction",
+          "occurredAt": "2026-07-06T16:47:22.152Z",
+          "details": {
+            "moduleId": "introduction"
+          }
+        },
+        {
+          "id": "audit-1783356410891-770",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.learning.ai-tutor.message",
+          "target": "introduction-video",
+          "occurredAt": "2026-07-06T16:46:50.891Z",
+          "details": {
+            "moduleId": "introduction"
+          }
+        },
+        {
+          "id": "audit-1783356392432-621",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.learning.ai-tutor.message",
+          "target": "introduction-video",
+          "occurredAt": "2026-07-06T16:46:32.432Z",
+          "details": {
+            "moduleId": "introduction"
+          }
+        },
+        {
+          "id": "audit-1783355710567-21",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.message.sent",
+          "target": "lisa-wong",
+          "occurredAt": "2026-07-06T16:35:10.567Z",
+          "details": {
+            "moduleId": "introduction"
+          }
+        },
+        {
+          "id": "audit-1783355228661-266",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.task.toggled",
+          "target": "clinical-log",
+          "occurredAt": "2026-07-06T16:27:08.661Z"
+        },
+        {
+          "id": "audit-1783355226403-921",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.task.toggled",
+          "target": "theory-hours",
+          "occurredAt": "2026-07-06T16:27:06.403Z"
+        },
+        {
+          "id": "audit-1783355226091-189",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.task.toggled",
+          "target": "theory-hours",
+          "occurredAt": "2026-07-06T16:27:06.091Z"
+        },
+        {
+          "id": "audit-1783355225559-830",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.task.toggled",
+          "target": "theory-hours",
+          "occurredAt": "2026-07-06T16:27:05.559Z"
+        },
+        {
+          "id": "audit-1783355224853-617",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.task.toggled",
+          "target": "theory-hours",
+          "occurredAt": "2026-07-06T16:27:04.853Z"
+        },
         {
           "id": "audit-1783354730919-320",
           "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
@@ -4412,7 +4503,71 @@
             "detail": "introduction-video"
           }
         ]
-      }
+      },
+      "aiTutorConversations": [
+        {
+          "moduleId": "introduction",
+          "lessonId": "introduction-video",
+          "updatedAt": "2026-07-06T16:46:50.890Z",
+          "messages": [
+            {
+              "id": "ai-msg-1783356389394-417",
+              "role": "student",
+              "text": "hey grace so whats microbiology?",
+              "sentAt": "2026-07-06T16:46:29.394Z"
+            },
+            {
+              "id": "ai-msg-1783356392432-405",
+              "role": "tutor",
+              "text": "That's a great question, but it looks like our current lesson module is focused just on the introductions to the course. We'll definitely cover important topics like microbiology later on! For now, let's make sure you've watched the introduction video and gotten comfortable with the course overview.",
+              "sentAt": "2026-07-06T16:46:32.432Z"
+            },
+            {
+              "id": "ai-msg-1783356408497-140",
+              "role": "student",
+              "text": "so whats the introduction about",
+              "sentAt": "2026-07-06T16:46:48.497Z"
+            },
+            {
+              "id": "ai-msg-1783356410890-183",
+              "role": "tutor",
+              "text": "That's a very practical question! Based on our current lesson, the introduction is all about getting you started and oriented to the course. I'd highly recommend watching the \"Introduction video\" provided – it's designed to give you all the key information you need to begin our journey together effectively.",
+              "sentAt": "2026-07-06T16:46:50.890Z"
+            }
+          ]
+        },
+        {
+          "moduleId": "introduction",
+          "lessonId": "pdf-introduction",
+          "updatedAt": "2026-07-06T16:49:13.394Z",
+          "messages": [
+            {
+              "id": "ai-msg-1783356440300-147",
+              "role": "student",
+              "text": "hey grace how about this lession what is it",
+              "sentAt": "2026-07-06T16:47:20.300Z"
+            },
+            {
+              "id": "ai-msg-1783356442152-962",
+              "role": "tutor",
+              "text": "Hi there! Great question. This lesson, \"Introduction,\" is exactly what it sounds like – it's designed to introduce you to the course material, what we'll be covering, and perhaps some foundational concepts. Think of it as our starting point, setting the stage for everything important you'll learn as a CNA.",
+              "sentAt": "2026-07-06T16:47:22.152Z"
+            },
+            {
+              "id": "ai-msg-1783356551088-655",
+              "role": "student",
+              "text": "whats the normal BP?",
+              "sentAt": "2026-07-06T16:49:11.088Z"
+            },
+            {
+              "id": "ai-msg-1783356553394-59",
+              "role": "tutor",
+              "text": "That's a fantastic and very important question, especially for a CNA!\n\nFor an adult, a **normal blood pressure** is generally considered to be **less than 120/80 mmHg**.\n\nLet's break that down quickly:\n*   The **top number (systolic)** represents the pressure in your arteries when your heart beats.\n*   The **bottom number (diastolic)** represents the pressure in your arteries when your heart rests between beats.\n\nAs a CNA, you'll often be taking vital signs, including blood pressure. Your role is crucial in accurately measuring it and knowing what falls within the normal range so you can **observe and report** any readings that are too high, too low, or outside a resident's usual pattern. You don't diagnose, but your accurate observations are essential for the nursing team to assess and intervene when needed. Patient safety always comes first!",
+              "sentAt": "2026-07-06T16:49:13.394Z"
+            }
+          ]
+        }
+      ]
     },
     {
       "profile": {

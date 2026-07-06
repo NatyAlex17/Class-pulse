@@ -19,6 +19,7 @@ import {
   IconUserCircle,
   IconX,
 } from '@tabler/icons-react';
+import { useAuth } from '@/components/auth/auth-provider';
 import { useStudentDemo } from '@/components/student/student-portal-store';
 import { StudentIntakeModal } from '@/components/student/student-intake-modal';
 import { Button } from '@/components/ui/button';
@@ -42,6 +43,16 @@ const suggestionQuestions = [
   'What are normal BP ranges for elderly?',
   'Explain respiratory rhythm vs depth.',
 ];
+
+function getInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean).slice(0, 2);
+
+  if (parts.length === 0) {
+    return 'S';
+  }
+
+  return parts.map((part) => part.charAt(0).toUpperCase()).join('');
+}
 
 function formatSessionTime(totalMinutes: number) {
   const minutes = Math.max(0, Math.round(totalMinutes));
@@ -121,15 +132,32 @@ export default function StudentLearningPage() {
     reportLearningAttentionEvent,
     startModuleExamSession,
     reportExamSecurityEvent,
+    loadAiTutorConversation,
+    askAiTutor,
+    aiTutorConversations,
     selectModule,
     markStepComplete,
-    sendMessage,
-    activeThread,
     submitModuleExam,
     refreshLearning,
   } = useStudentDemo();
+  const { user, syncedUser } = useAuth();
+  const profileName =
+    typeof user?.user_metadata?.full_name === 'string' && user.user_metadata.full_name.trim()
+      ? user.user_metadata.full_name.trim()
+      : typeof user?.user_metadata?.name === 'string' && user.user_metadata.name.trim()
+        ? user.user_metadata.name.trim()
+        : (syncedUser?.email ?? 'Student');
+  const profileImageUrl =
+    typeof user?.user_metadata?.avatar_url === 'string' && user.user_metadata.avatar_url.trim()
+      ? user.user_metadata.avatar_url.trim()
+      : typeof user?.user_metadata?.picture === 'string' && user.user_metadata.picture.trim()
+        ? user.user_metadata.picture.trim()
+        : null;
   const [tab, setTab] = React.useState<'ai' | 'instructor'>('ai');
   const [message, setMessage] = React.useState('');
+  const [aiSending, setAiSending] = React.useState(false);
+  const [aiError, setAiError] = React.useState<string | null>(null);
+  const loadedAiTutorKeysRef = React.useRef<Set<string>>(new Set());
   const [workflowOpen, setWorkflowOpen] = React.useState(false);
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
   const [selectedLessonId, setSelectedLessonId] = React.useState<string>('');
@@ -194,6 +222,11 @@ export default function StudentLearningPage() {
     Boolean(secureExamSession) &&
     !completedLessons.has(selectedLesson?.id ?? '') &&
     examResult === null;
+  const aiTutorConversationKey =
+    currentModule && selectedLesson ? `${currentModule.id}::${selectedLesson.id}` : null;
+  const aiTutorMessages = aiTutorConversationKey
+    ? (aiTutorConversations[aiTutorConversationKey]?.messages ?? [])
+    : [];
   const currentLearningAttention =
     selectedLesson &&
     selectedLesson.type !== 'Quiz' &&
@@ -470,6 +503,45 @@ export default function StudentLearningPage() {
     };
   }, [examModeActive, learningSessionActive, reportLearningEvent, selectedLesson]);
 
+  React.useEffect(() => {
+    const moduleId = currentModule?.id;
+    const lessonId = selectedLesson?.id;
+
+    if (!moduleId || !lessonId) {
+      return;
+    }
+
+    const key = `${moduleId}::${lessonId}`;
+
+    if (loadedAiTutorKeysRef.current.has(key)) {
+      return;
+    }
+
+    loadedAiTutorKeysRef.current.add(key);
+    void loadAiTutorConversation(moduleId, lessonId);
+  }, [currentModule?.id, selectedLesson?.id, loadAiTutorConversation]);
+
+  const handleAskAiTutor = React.useCallback(
+    async (rawQuestion: string) => {
+      const question = rawQuestion.trim();
+
+      if (!question || examModeActive || !portalUnlocked || !currentModule || !selectedLesson) {
+        return;
+      }
+
+      setMessage('');
+      setAiError(null);
+      setAiSending(true);
+      const result = await askAiTutor(currentModule.id, selectedLesson.id, question);
+      setAiSending(false);
+
+      if (!result) {
+        setAiError("Grace couldn't respond right now. Please try again.");
+      }
+    },
+    [askAiTutor, currentModule, examModeActive, portalUnlocked, selectedLesson]
+  );
+
   const isLessonComplete = (lessonId: string) =>
     completedLessons.has(lessonId) ||
     lessons.find((lesson) => lesson.id === lessonId)?.complete === true;
@@ -695,11 +767,17 @@ export default function StudentLearningPage() {
               <IconBell className="size-5" />
             </button>
             <div className="overflow-hidden rounded-full border-2 border-primary-container p-0.5">
-              <img
-                className="h-10 w-10 rounded-full object-cover"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAlIAQOrWnQ3pXIjFC7XMyDXOrooYGBlv3TOvWzMFgJYRcBCiCb6POf7Ckye-wxhhZTkWMo3VML3ip-NXf55odJTNh_wdIUTyXOSeEXV33ae1f3yeUtX4D0wjlLlYKcPjCmU4xnQAz9B4xOWasL0PDcBwjyvxEKcOREyEbcb8aG9wUSLd7NlB7RjhzEns5s3wcQ8DEzzcAOg_EmwoJ2ofVHp4djx1YLkY2N5oQnSIu3gspJfJ-8yXAQeg8UGji2pBYbEP38NbDCBL1"
-                alt="Student avatar"
-              />
+              {profileImageUrl ? (
+                <img
+                  className="h-10 w-10 rounded-full object-cover"
+                  src={profileImageUrl}
+                  alt={profileName}
+                />
+              ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                  {getInitials(profileName)}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1733,18 +1811,54 @@ export default function StudentLearningPage() {
             {tab === 'ai' ? (
               <>
                 <div className="flex-1 space-y-3 overflow-y-auto p-3">
-                  <div className="flex gap-2">
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary-container text-on-primary-container">
-                      <IconBolt className="size-3" />
+                  {aiTutorMessages.length === 0 ? (
+                    <div className="flex gap-2">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary-container text-on-primary-container">
+                        <IconBolt className="size-3" />
+                      </div>
+                      <div className="max-w-[80%] rounded-bl-lg rounded-br-lg rounded-tr-lg border border-border-subtle bg-surface p-2 shadow-sm text-[12px]">
+                        <p className="text-on-surface">
+                          {examModeActive
+                            ? 'AI help is locked while secure exam mode is active.'
+                            : "Hi, I'm Grace, your AI tutor. Ask me anything about this lesson."}
+                        </p>
+                      </div>
                     </div>
-                    <div className="max-w-[80%] rounded-bl-lg rounded-br-lg rounded-tr-lg border border-border-subtle bg-surface p-2 shadow-sm text-[12px]">
-                      <p className="text-on-surface">
-                        {examModeActive
-                          ? 'AI help is locked while secure exam mode is active.'
-                          : 'Ready to help with your lesson!'}
-                      </p>
+                  ) : (
+                    aiTutorMessages.map((chatMessage) => (
+                      <div
+                        key={chatMessage.id}
+                        className={cn('flex gap-2', chatMessage.role === 'student' && 'justify-end')}
+                      >
+                        {chatMessage.role === 'tutor' ? (
+                          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary-container text-on-primary-container">
+                            <IconBolt className="size-3" />
+                          </div>
+                        ) : null}
+                        <div
+                          className={cn(
+                            'max-w-[80%] rounded-lg p-2 shadow-sm text-[12px]',
+                            chatMessage.role === 'student'
+                              ? 'rounded-br-none bg-primary text-on-primary'
+                              : 'rounded-bl-none border border-border-subtle bg-surface text-on-surface'
+                          )}
+                        >
+                          <p style={{ whiteSpace: 'pre-wrap' }}>{chatMessage.text}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                  {aiSending ? (
+                    <div className="flex gap-2">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary-container text-on-primary-container">
+                        <IconBolt className="size-3" />
+                      </div>
+                      <div className="max-w-[80%] rounded-lg rounded-bl-none border border-border-subtle bg-surface p-2 shadow-sm text-[12px] text-on-surface-variant">
+                        Grace is typing...
+                      </div>
                     </div>
-                  </div>
+                  ) : null}
+                  {aiError ? <p className="text-[11px] text-error">{aiError}</p> : null}
                 </div>
                 <div className="border-t border-border-subtle bg-surface p-3 space-y-3">
                   <div className="space-y-1">
@@ -1753,16 +1867,9 @@ export default function StudentLearningPage() {
                     </p>
                     {suggestionQuestions.slice(0, 2).map((question) => (
                       <button
-                        onClick={() => {
-                          if (examModeActive) {
-                            return;
-                          }
-
-                          setMessage(question);
-                          sendMessage(activeThread.id, question);
-                        }}
+                        onClick={() => void handleAskAiTutor(question)}
                         key={question}
-                        disabled={examModeActive}
+                        disabled={examModeActive || aiSending}
                         className="group flex w-full items-center justify-between rounded-[10px] border border-border-subtle bg-surface p-2 text-left text-[11px] transition hover:border-primary hover:bg-primary/5 disabled:opacity-50"
                       >
                         {question.slice(0, 18)}...
@@ -1776,23 +1883,17 @@ export default function StudentLearningPage() {
                       onChange={(event) => setMessage(event.target.value)}
                       onKeyPress={(e) => {
                         if (e.key === 'Enter' && message.trim()) {
-                          sendMessage(activeThread.id, message);
-                          setMessage('');
+                          void handleAskAiTutor(message);
                         }
                       }}
-                      placeholder="Ask something..."
+                      placeholder="Ask Grace something..."
                       className="h-9 rounded-[10px] pr-9 text-sm flex-1"
-                      disabled={!portalUnlocked || examModeActive}
+                      disabled={!portalUnlocked || examModeActive || aiSending}
                     />
                     <button
                       className="text-primary transition hover:scale-110 disabled:opacity-50 p-1"
-                      disabled={!portalUnlocked || examModeActive || !message.trim()}
-                      onClick={() => {
-                        if (message.trim()) {
-                          sendMessage(activeThread.id, message);
-                          setMessage('');
-                        }
-                      }}
+                      disabled={!portalUnlocked || examModeActive || aiSending || !message.trim()}
+                      onClick={() => void handleAskAiTutor(message)}
                     >
                       <IconSend2 className="size-4" />
                     </button>

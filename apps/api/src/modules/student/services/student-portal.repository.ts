@@ -67,6 +67,7 @@ export class StudentPortalRepository {
         : (modules[0]?.id ?? portal.activeModuleId),
       modules,
       financials,
+      aiTutorConversations: portal.aiTutorConversations ?? [],
     };
   }
 
@@ -168,6 +169,7 @@ export class StudentPortalRepository {
       lessonElapsedMinutes: {},
       activeLearningAttention: undefined,
       activeExamSession: undefined,
+      aiTutorConversations: [],
       textbookIssued: false,
       textbookOpened: false,
       exitSurveyComplete: false,

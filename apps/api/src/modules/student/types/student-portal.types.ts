@@ -185,6 +185,24 @@ export interface StudentThread {
   messages: StudentMessage[];
 }
 
+export interface AiTutorMessage {
+  id: string;
+  role: 'student' | 'tutor';
+  text: string;
+  sentAt: string;
+}
+
+export interface AiTutorConversation {
+  moduleId: string;
+  lessonId: string;
+  updatedAt: string;
+  messages: AiTutorMessage[];
+}
+
+export interface AskAiTutorDto {
+  question: string;
+}
+
 export interface ClinicalLogEntry {
   id: string;
   date: string;
@@ -461,6 +479,7 @@ export interface StudentPortalState {
   activeModuleId: string;
   threads: StudentThread[];
   activeThreadId: string;
+  aiTutorConversations: AiTutorConversation[];
   clinicalSessions: ClinicalSession[];
   clinicalLogs: ClinicalLogEntry[];
   financials: FinancialSummary;

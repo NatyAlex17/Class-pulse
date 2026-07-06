@@ -5,7 +5,10 @@ import type {
   AdvanceLearningDto,
   ActiveLearningAttention,
   ActiveExamSession,
+  AiTutorConversation,
+  AiTutorMessage,
   AnswerOnboardingQuestionDto,
+  AskAiTutorDto,
   AttendanceCheckInDto,
   AttendanceRecord,
   CdphForm,
@@ -49,6 +52,7 @@ import type {
 } from '../types/student-portal.types';
 import { CohortsConfigService } from './cohorts-config.service';
 import { ExamConfigService } from './exam-config.service';
+import { GeminiService } from './gemini.service';
 import { IntakeSubmissionService } from './intake-submission.service';
 import { LearningResourcesConfigService } from './learning-resources-config.service';
 import { StudentPortalRepository } from './student-portal.repository';
@@ -102,6 +106,7 @@ export class StudentPortalService {
     private readonly intakeSubmissionService: IntakeSubmissionService,
     private readonly learningResourcesConfigService: LearningResourcesConfigService,
     private readonly cohortsConfigService: CohortsConfigService,
+    private readonly geminiService: GeminiService,
   ) {}
 
   ensurePortalForLocalUser(localUser: LocalUserRecord) {
@@ -855,6 +860,93 @@ export class StudentPortalService {
       warnings: session.warnings,
     });
     return this.repository.save(portal).activeExamSession;
+  }
+
+  getAiTutorConversation(studentId: string, moduleId: string, lessonId: string): AiTutorConversation {
+    const portal = this.repository.findByStudentId(studentId);
+    return (
+      portal.aiTutorConversations.find(
+        (conversation) => conversation.moduleId === moduleId && conversation.lessonId === lessonId,
+      ) ?? {
+        moduleId,
+        lessonId,
+        updatedAt: new Date().toISOString(),
+        messages: [],
+      }
+    );
+  }
+
+  async askAiTutor(
+    studentId: string,
+    moduleId: string,
+    lessonId: string,
+    payload: AskAiTutorDto,
+  ): Promise<AiTutorConversation> {
+    const portal = this.repository.findByStudentId(studentId);
+    this.assertNoActiveExamSession(portal, 'AI tutor chat is locked during secure exam mode.');
+
+    const activeModule = portal.modules.find((module) => module.id === moduleId);
+    if (!activeModule) {
+      throw new BadRequestException(`Module "${moduleId}" was not found.`);
+    }
+
+    const lesson = activeModule.steps.find((step) => step.id === lessonId);
+    if (!lesson) {
+      throw new BadRequestException(`Lesson "${lessonId}" was not found in module "${moduleId}".`);
+    }
+
+    const question = payload.question?.trim();
+    if (!question) {
+      throw new BadRequestException('A question is required to ask the AI tutor.');
+    }
+
+    let conversation = portal.aiTutorConversations.find(
+      (item) => item.moduleId === moduleId && item.lessonId === lessonId,
+    );
+
+    if (!conversation) {
+      conversation = { moduleId, lessonId, updatedAt: new Date().toISOString(), messages: [] };
+      portal.aiTutorConversations = [...portal.aiTutorConversations, conversation];
+    }
+
+    const lessonContext = [activeModule.title, activeModule.summary, lesson.title, lesson.note, lesson.content]
+      .filter(Boolean)
+      .join('\n\n');
+
+    const history = conversation.messages.map((message) => ({
+      role: message.role === 'student' ? ('user' as const) : ('model' as const),
+      text: message.text,
+    }));
+
+    const studentMessage: AiTutorMessage = {
+      id: `ai-msg-${Date.now()}-${Math.round(Math.random() * 1000)}`,
+      role: 'student',
+      text: question,
+      sentAt: new Date().toISOString(),
+    };
+
+    let replyText: string;
+    try {
+      replyText = await this.geminiService.getTutorReply(history, question, lessonContext);
+    } catch {
+      replyText = "I'm sorry, I'm having trouble responding right now. Please try again in a moment.";
+    }
+
+    const tutorMessage: AiTutorMessage = {
+      id: `ai-msg-${Date.now()}-${Math.round(Math.random() * 1000) + 1}`,
+      role: 'tutor',
+      text: replyText,
+      sentAt: new Date().toISOString(),
+    };
+
+    conversation.messages = [...conversation.messages, studentMessage, tutorMessage];
+    conversation.updatedAt = tutorMessage.sentAt;
+
+    portal.lastAction = `Asked the AI tutor about ${lesson.title}.`;
+    this.recordAudit(portal, 'student.learning.ai-tutor.message', lessonId, { moduleId });
+
+    this.repository.save(portal);
+    return conversation;
   }
 
   recordLessonSessionStart(studentId: string, lessonId: string) {

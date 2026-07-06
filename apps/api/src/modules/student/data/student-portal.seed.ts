@@ -706,6 +706,7 @@ export const studentPortalSeed: StudentPortalState[] = [
       },
     ],
     activeThreadId: 'lisa-wong',
+    aiTutorConversations: [],
     clinicalSessions: [
       {
         id: 'session-1',
