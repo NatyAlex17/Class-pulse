@@ -8,6 +8,7 @@ import type {
   AnswerOnboardingQuestionDto,
   AttendanceCheckInDto,
   LogClinicalHoursDto,
+  ReportExamSecurityEventDto,
   RecordPaymentDto,
   RegisterCohortDto,
   ReplaceStudentDocumentDto,
@@ -15,6 +16,7 @@ import type {
   SelectModuleDto,
   SendStudentMessageDto,
   SetLearningSessionDto,
+  StartModuleExamSessionDto,
   SubmitModuleExamDto,
   SubmitSupportTicketDto,
   TextAnswerDto,
@@ -302,6 +304,30 @@ export class StudentPortalController {
     return createApiResponse(
       this.studentPortalService.recordLessonSessionStart(studentId, lessonId),
       'Lesson session resume point saved successfully.',
+    );
+  }
+
+  @Post('learning/modules/:moduleId/exam/session')
+  startModuleExamSession(
+    @Param('studentId') studentId: string,
+    @Param('moduleId') moduleId: string,
+    @Body() body: StartModuleExamSessionDto,
+  ) {
+    return createApiResponse(
+      this.studentPortalService.startModuleExamSession(studentId, moduleId, body),
+      'Secure exam session started successfully.',
+    );
+  }
+
+  @Post('learning/modules/:moduleId/exam/session/events')
+  reportExamSecurityEvent(
+    @Param('studentId') studentId: string,
+    @Param('moduleId') moduleId: string,
+    @Body() body: ReportExamSecurityEventDto,
+  ) {
+    return createApiResponse(
+      this.studentPortalService.reportExamSecurityEvent(studentId, moduleId, body),
+      'Exam security event recorded successfully.',
     );
   }
 

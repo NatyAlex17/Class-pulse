@@ -14,6 +14,17 @@ describe('StudentPortalService', () => {
   let service: StudentPortalService;
   let intakeSubmissionService: IntakeSubmissionService;
 
+  const prepareModuleThreeForSecureExam = () => {
+    service.selectModule('student-amara-singh', { moduleId: 'm3' });
+    service.setLearningSession('student-amara-singh', { active: true });
+    for (let index = 0; index < 7; index += 1) {
+      service.advanceLearning('student-amara-singh', { minutes: 60 });
+    }
+    service.toggleModuleStep('student-amara-singh', 'm3', 'm3-pdf');
+    service.toggleModuleStep('student-amara-singh', 'm3', 'm3-reading');
+    service.toggleModuleStep('student-amara-singh', 'm3', 'm3-skill');
+  };
+
   beforeEach(() => {
     const intakeSubmissionPath = join(process.cwd(), '.data', 'intake-submissions.json');
     const studentPortalPath = join(process.cwd(), '.data', 'student-portals.json');
@@ -232,6 +243,39 @@ describe('StudentPortalService', () => {
     service.setWorkflowStage('student-amara-singh', 'admin_review');
 
     expect(service.getPortal('student-amara-singh').workflowStage).toBe('orientation_survey');
+  });
+
+  it('requires a secure exam session before module exam submission', () => {
+    prepareModuleThreeForSecureExam();
+
+    expect(() =>
+      service.submitModuleExam('student-amara-singh', 'm3', {
+        stepId: 'm3-quiz',
+        answers: {},
+      }),
+    ).toThrow(BadRequestException);
+  });
+
+  it('tracks secure exam events and blocks module switching while the session is active', () => {
+    prepareModuleThreeForSecureExam();
+
+    const session = service.startModuleExamSession('student-amara-singh', 'm3', {
+      stepId: 'm3-quiz',
+    });
+
+    expect(session?.stepId).toBe('m3-quiz');
+
+    const updatedSession = service.reportExamSecurityEvent('student-amara-singh', 'm3', {
+      type: 'visibility_hidden',
+      detail: 'test-switch-tab',
+    });
+
+    expect(updatedSession?.warnings).toBe(1);
+    expect(updatedSession?.visibilityLossCount).toBe(1);
+
+    expect(() =>
+      service.selectModule('student-amara-singh', { moduleId: 'm1' }),
+    ).toThrow(BadRequestException);
   });
 
   it('preserves completed intake state after service restart', () => {

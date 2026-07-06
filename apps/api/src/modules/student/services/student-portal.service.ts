@@ -3,6 +3,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import type { LocalUserRecord } from '../../auth/types/auth-user.types';
 import type {
   AdvanceLearningDto,
+  ActiveExamSession,
   AnswerOnboardingQuestionDto,
   AttendanceCheckInDto,
   AttendanceRecord,
@@ -12,10 +13,12 @@ import type {
   LogClinicalHoursDto,
   RecordPaymentDto,
   RegisterCohortDto,
+  ReportExamSecurityEventDto,
   ReplaceStudentDocumentDto,
   ReportAbsenceDto,
   SelectModuleDto,
   SetLearningSessionDto,
+  StartModuleExamSessionDto,
   StudentCohortsSnapshot,
   SendStudentMessageDto,
   StudentAttendanceSummary,
@@ -536,6 +539,7 @@ export class StudentPortalService {
       learningSessionActive: portal.learningSessionActive,
       activeLessonId: portal.activeLessonId,
       lessonElapsedMinutes: this.getLessonElapsedMinutes(portal),
+      activeExamSession: portal.activeExamSession,
       examUnlocked: sessionMinutes >= requiredSessionMinutes,
       textbookIssued: portal.textbookIssued,
       textbookOpened: portal.textbookOpened,
@@ -590,6 +594,7 @@ export class StudentPortalService {
       }
     }
 
+    portal.activeExamSession = undefined;
     portal.modules[activeIndex] = this.recalculateModule({
       ...activeModule,
       sessionMinutes: nextSessionMinutes,
@@ -620,6 +625,10 @@ export class StudentPortalService {
       return portal.learningSessionActive;
     }
 
+    if (!payload.active && portal.activeExamSession) {
+      throw new BadRequestException('Secure exam sessions cannot be paused.');
+    }
+
     portal.learningSessionActive = payload.active;
     portal.lastAction = payload.active ? 'Learning session started.' : 'Learning session paused.';
     this.recordAudit(portal, 'student.learning.session.toggled', portal.activeModuleId, {
@@ -633,8 +642,120 @@ export class StudentPortalService {
     return this.setLearningSession(studentId, { active: !portal.learningSessionActive });
   }
 
+  startModuleExamSession(studentId: string, moduleId: string, payload: StartModuleExamSessionDto) {
+    const portal = this.repository.findByStudentId(studentId);
+    const activeModule = portal.modules.find((module) => module.id === moduleId);
+
+    if (!activeModule) {
+      throw new BadRequestException(`Module "${moduleId}" was not found.`);
+    }
+
+    const examStep = this.assertExamSessionReady(activeModule, payload.stepId);
+
+    if (
+      portal.activeExamSession &&
+      (portal.activeExamSession.moduleId !== moduleId || portal.activeExamSession.stepId !== examStep.id)
+    ) {
+      throw new BadRequestException('Finish the current secure exam session before starting another one.');
+    }
+
+    if (
+      portal.activeExamSession &&
+      portal.activeExamSession.moduleId === moduleId &&
+      portal.activeExamSession.stepId === examStep.id
+    ) {
+      return portal.activeExamSession;
+    }
+
+    const now = new Date().toISOString();
+    portal.activeExamSession = {
+      moduleId,
+      stepId: examStep.id,
+      startedAt: now,
+      lastActivityAt: now,
+      focusLossCount: 0,
+      visibilityLossCount: 0,
+      fullscreenExitCount: 0,
+      shortcutBlockCount: 0,
+      copyPasteCount: 0,
+      navigationAttemptCount: 0,
+      warnings: 0,
+      recentEvents: [],
+    };
+    portal.activeModuleId = moduleId;
+    portal.activeLessonId = undefined;
+    portal.lastAction = `Secure exam session started for ${activeModule.title}.`;
+    this.recordAudit(portal, 'student.learning.exam-session.started', examStep.id, {
+      moduleId,
+    });
+    return this.repository.save(portal).activeExamSession;
+  }
+
+  reportExamSecurityEvent(studentId: string, moduleId: string, payload: ReportExamSecurityEventDto) {
+    const portal = this.repository.findByStudentId(studentId);
+    const session = portal.activeExamSession;
+
+    if (!session || session.moduleId !== moduleId) {
+      throw new BadRequestException('No active secure exam session is available for this module.');
+    }
+
+    if (!payload.type) {
+      throw new BadRequestException('Exam security event type is required.');
+    }
+
+    const now = new Date().toISOString();
+    session.lastActivityAt = now;
+    session.warnings += 1;
+
+    switch (payload.type) {
+      case 'visibility_hidden':
+        session.visibilityLossCount += 1;
+        break;
+      case 'window_blur':
+        session.focusLossCount += 1;
+        break;
+      case 'fullscreen_exit':
+        session.fullscreenExitCount += 1;
+        break;
+      case 'copy_attempt':
+      case 'paste_attempt':
+        session.copyPasteCount += 1;
+        break;
+      case 'shortcut_blocked':
+        session.shortcutBlockCount += 1;
+        break;
+      case 'navigation_blocked':
+      case 'back_button_blocked':
+      case 'context_menu':
+        session.navigationAttemptCount += 1;
+        break;
+      default:
+        break;
+    }
+
+    session.recentEvents = [
+      {
+        id: `exam-event-${Date.now()}-${Math.round(Math.random() * 1000)}`,
+        type: payload.type,
+        occurredAt: now,
+        detail: payload.detail?.trim() || undefined,
+      },
+      ...session.recentEvents,
+    ].slice(0, 12);
+
+    portal.activeExamSession = session;
+    portal.lastAction = `Secure exam event recorded: ${payload.type.replaceAll('_', ' ')}.`;
+    this.recordAudit(portal, 'student.learning.exam-session.security-event', session.stepId, {
+      moduleId,
+      type: payload.type,
+      warnings: session.warnings,
+    });
+    return this.repository.save(portal).activeExamSession;
+  }
+
   recordLessonSessionStart(studentId: string, lessonId: string) {
     const portal = this.repository.findByStudentId(studentId);
+    this.assertNoActiveExamSession(portal, 'Learning lessons are locked during secure exam mode.');
     const activeModule = portal.modules.find((module) => module.id === portal.activeModuleId);
 
     if (!activeModule) {
@@ -667,6 +788,7 @@ export class StudentPortalService {
 
   selectModule(studentId: string, payload: SelectModuleDto) {
     const portal = this.repository.findByStudentId(studentId);
+    this.assertNoActiveExamSession(portal, 'Module switching is blocked during secure exam mode.');
     const module = portal.modules.find((item) => item.id === payload.moduleId);
 
     if (!module) {
@@ -683,6 +805,7 @@ export class StudentPortalService {
 
   toggleModuleStep(studentId: string, moduleId: string, stepId: string) {
     const portal = this.repository.findByStudentId(studentId);
+    this.assertNoActiveExamSession(portal, 'Learning activities are locked during secure exam mode.');
     portal.modules = portal.modules.map((module) => {
       if (module.id !== moduleId) {
         return module;
@@ -736,9 +859,24 @@ export class StudentPortalService {
       throw new BadRequestException('Complete all module learning steps before submitting the exam.');
     }
 
+    const examStep =
+      activeModule.steps.find((step) => step.id === payload?.stepId && step.type === 'Quiz') ??
+      activeModule.steps.find((step) => step.type === 'Quiz');
+
+    if (examStep) {
+      if (
+        !portal.activeExamSession ||
+        portal.activeExamSession.moduleId !== moduleId ||
+        portal.activeExamSession.stepId !== examStep.id
+      ) {
+        throw new BadRequestException('Start the secure exam session before submitting this assessment.');
+      }
+    }
+
     const result = this.gradeModuleExam(moduleId, payload);
 
     if (!result.passed) {
+      portal.activeExamSession = undefined;
       portal.lastAction = `${activeModule.title} exam attempted — score below the passing threshold.`;
       this.recordAudit(portal, 'student.learning.module-exam.failed', moduleId, {
         scorePercent: result.scorePercent,
@@ -754,6 +892,7 @@ export class StudentPortalService {
       certificateUnlocked: true,
       steps: activeModule.steps.map((step) => ({ ...step, complete: true })),
     });
+    portal.activeExamSession = undefined;
 
     const nextModule = portal.modules[activeIndex + 1];
     if (nextModule && nextModule.status === 'Locked') {
@@ -762,6 +901,7 @@ export class StudentPortalService {
         status: 'In Progress',
       };
       portal.activeModuleId = nextModule.id;
+      portal.activeLessonId = undefined;
     }
 
     portal.lastAction = `${activeModule.title} exam passed and certificate unlocked.`;
@@ -897,6 +1037,7 @@ export class StudentPortalService {
     }
 
     const portal = this.repository.findByStudentId(studentId);
+    this.assertNoActiveExamSession(portal, 'Messaging is unavailable during secure exam mode.');
     const now = new Date().toISOString();
     const threadId = payload.threadId?.trim() || this.slugify(`${payload.recipientName}-${payload.moduleId}`);
     const message = {
@@ -1367,6 +1508,43 @@ export class StudentPortalService {
 
   private getLessonElapsedMinutes(portal: StudentPortalState) {
     return { ...(portal.lessonElapsedMinutes ?? {}) };
+  }
+
+  private assertNoActiveExamSession(portal: StudentPortalState, message: string) {
+    if (portal.activeExamSession) {
+      throw new BadRequestException(message);
+    }
+  }
+
+  private assertExamSessionReady(module: CurriculumModule, stepId: string) {
+    if (module.status === 'Locked') {
+      throw new BadRequestException('Locked modules cannot start secure exams.');
+    }
+
+    const requiredSessionMinutes = this.getRequiredSessionMinutes(module);
+    const sessionMinutes = this.getModuleSessionMinutes(module);
+
+    if (sessionMinutes < requiredSessionMinutes) {
+      throw new BadRequestException(
+        `Complete the required ${module.requiredHours}h session time for this module before starting the secure exam.`,
+      );
+    }
+
+    const examStep = module.steps.find((step) => step.id === stepId && step.type === 'Quiz');
+
+    if (!examStep) {
+      throw new BadRequestException(`Quiz step "${stepId}" was not found in this module.`);
+    }
+
+    const allLearningStepsComplete = module.steps
+      .filter((step) => step.type !== 'Quiz')
+      .every((step) => step.complete);
+
+    if (!allLearningStepsComplete) {
+      throw new BadRequestException('Complete all module learning steps before starting the secure exam.');
+    }
+
+    return examStep;
   }
 
   private getOverallProgressPercent(portal: StudentPortalState) {

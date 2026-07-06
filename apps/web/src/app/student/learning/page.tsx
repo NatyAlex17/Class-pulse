@@ -107,6 +107,7 @@ export default function StudentLearningPage() {
     sessionMinutes,
     requiredSessionMinutes,
     lessonElapsedMinutes,
+    activeExamSession,
     examUnlocked,
     portalHydrated,
     portalUnlocked,
@@ -116,6 +117,8 @@ export default function StudentLearningPage() {
     advanceLearning,
     setLearningSession,
     recordLessonSessionStart,
+    startModuleExamSession,
+    reportExamSecurityEvent,
     selectModule,
     markStepComplete,
     sendMessage,
@@ -133,7 +136,9 @@ export default function StudentLearningPage() {
   const [examResult, setExamResult] = React.useState<ModuleExamResult | null>(null);
   const [examError, setExamError] = React.useState<string | null>(null);
   const [examSubmitting, setExamSubmitting] = React.useState(false);
+  const [examSecurityNotice, setExamSecurityNotice] = React.useState<string | null>(null);
   const [completedLessons, setCompletedLessons] = React.useState<Set<string>>(new Set());
+  const examEventCooldownRef = React.useRef<Record<string, number>>({});
   const sessionRemainingMinutes = Math.max(requiredSessionMinutes - sessionMinutes, 0);
   const sessionPercent =
     requiredSessionMinutes > 0
@@ -175,6 +180,16 @@ export default function StudentLearningPage() {
   const unansweredCount = quizQuestionSet.filter(
     (question) => !(quizAnswers[question.id] ?? '').trim()
   ).length;
+  const secureExamSession =
+    selectedLesson?.type === 'Quiz' &&
+    activeExamSession?.moduleId === currentModule.id &&
+    activeExamSession?.stepId === selectedLesson.id
+      ? activeExamSession
+      : null;
+  const examModeActive =
+    Boolean(secureExamSession) &&
+    !completedLessons.has(selectedLesson?.id ?? '') &&
+    examResult === null;
   const selectedLessonTargetMinutes = parseDurationToMinutes(selectedLesson?.duration);
   const selectedLessonElapsedMinutes = selectedLesson
     ? Math.max(0, lessonElapsedMinutes[selectedLesson.id] ?? 0)
@@ -204,6 +219,51 @@ export default function StudentLearningPage() {
   React.useEffect(() => {
     void refreshLearning();
   }, [refreshLearning]);
+
+  const reportExamEvent = React.useCallback(
+    (
+      type:
+        | 'visibility_hidden'
+        | 'window_blur'
+        | 'fullscreen_exit'
+        | 'navigation_blocked'
+        | 'shortcut_blocked'
+        | 'context_menu'
+        | 'copy_attempt'
+        | 'paste_attempt'
+        | 'back_button_blocked',
+      detail?: string
+    ) => {
+      if (!activeExamSession) {
+        return;
+      }
+
+      const now = Date.now();
+      const key = `${type}:${detail ?? ''}`;
+      const lastReportedAt = examEventCooldownRef.current[key] ?? 0;
+
+      if (now - lastReportedAt < 1200) {
+        return;
+      }
+
+      examEventCooldownRef.current[key] = now;
+      reportExamSecurityEvent(activeExamSession.moduleId, { type, detail });
+    },
+    [activeExamSession, reportExamSecurityEvent]
+  );
+
+  const blockExamNavigation = React.useCallback(
+    (detail: string) => {
+      if (!examModeActive) {
+        return false;
+      }
+
+      reportExamEvent('navigation_blocked', detail);
+      setExamSecurityNotice('Secure exam mode is active. Submit the assessment before leaving this screen.');
+      return true;
+    },
+    [examModeActive, reportExamEvent]
+  );
 
   React.useEffect(() => {
     return () => setLearningSession(false);
@@ -258,7 +318,87 @@ export default function StudentLearningPage() {
   React.useEffect(() => {
     setQuizAnswers({});
     setExamError(null);
+    setExamSecurityNotice(null);
   }, [selectedLessonId]);
+
+  React.useEffect(() => {
+    if (!activeExamSession) {
+      return;
+    }
+
+    setSelectedLessonId(activeExamSession.stepId);
+    setViewMode('lesson');
+    setSidebarOpen(false);
+  }, [activeExamSession]);
+
+  React.useEffect(() => {
+    if (!examModeActive) {
+      return;
+    }
+
+    window.history.pushState(null, '', window.location.href);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        reportExamEvent('visibility_hidden');
+        setExamSecurityNotice('Exam attention warning recorded because the exam tab lost visibility.');
+      }
+    };
+
+    const handleWindowBlur = () => {
+      reportExamEvent('window_blur');
+      setExamSecurityNotice('Exam attention warning recorded because focus left the exam window.');
+    };
+
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        reportExamEvent('fullscreen_exit');
+        setExamSecurityNotice('Exam attention warning recorded because fullscreen was exited.');
+      }
+    };
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    const handlePopState = () => {
+      window.history.pushState(null, '', window.location.href);
+      reportExamEvent('back_button_blocked');
+      setExamSecurityNotice('Back navigation is blocked during secure exam mode.');
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const blockedShortcut =
+        event.key === 'F5' ||
+        ((event.ctrlKey || event.metaKey) &&
+          ['a', 'c', 'p', 's', 'v', 'x'].includes(event.key.toLowerCase()));
+
+      if (!blockedShortcut) {
+        return;
+      }
+
+      event.preventDefault();
+      reportExamEvent('shortcut_blocked', event.key);
+      setExamSecurityNotice(`Shortcut ${event.key.toUpperCase()} is blocked during secure exam mode.`);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleWindowBlur);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleWindowBlur);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [examModeActive, reportExamEvent]);
 
   const isLessonComplete = (lessonId: string) =>
     completedLessons.has(lessonId) ||
@@ -327,18 +467,50 @@ export default function StudentLearningPage() {
     }
   };
 
+  const handleStartSecureExam = async () => {
+    if (!selectedLesson) {
+      return;
+    }
+
+    setExamSubmitting(true);
+    setExamError(null);
+    const session = await startModuleExamSession(currentModule.id, selectedLesson.id);
+    setExamSubmitting(false);
+
+    if (!session) {
+      setExamError('Secure exam mode could not be started. Please try again.');
+      return;
+    }
+
+    if (document.documentElement.requestFullscreen) {
+      void document.documentElement.requestFullscreen().catch(() => {
+        reportExamEvent('fullscreen_exit', 'fullscreen_request_denied');
+      });
+    }
+
+    setExamSecurityNotice(
+      'Secure exam mode is active. Fullscreen, attention, and navigation attempts are being tracked.'
+    );
+  };
+
   return (
     <main className="h-screen overflow-hidden bg-background text-on-surface">
       <header className="fixed left-0 right-0 top-0 z-50 flex h-[72px] items-center justify-between border-b border-border-subtle bg-surface px-8">
         <div className="flex items-center gap-4">
-          <a href="/student/dashboard">
-            <button
-              className="flex h-10 w-10 items-center justify-center rounded-full text-primary transition hover:bg-surface-high"
-              title="Back to Dashboard"
-            >
-              <IconArrowLeft className="size-5" />
-            </button>
-          </a>
+          <button
+            onClick={() => {
+              if (blockExamNavigation('dashboard_exit')) {
+                return;
+              }
+
+              window.location.href = '/student/dashboard';
+            }}
+            className="flex h-10 w-10 items-center justify-center rounded-full text-primary transition hover:bg-surface-high disabled:opacity-50"
+            title="Back to Dashboard"
+            disabled={examModeActive}
+          >
+            <IconArrowLeft className="size-5" />
+          </button>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="flex h-10 w-10 items-center justify-center rounded-full text-primary transition hover:bg-surface-high"
@@ -415,7 +587,7 @@ export default function StudentLearningPage() {
 
                   setLearningSession(!learningSessionActive);
                 }}
-                disabled={!portalUnlocked}
+                disabled={!portalUnlocked || examModeActive}
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white transition hover:bg-primary/90 disabled:opacity-50"
                 title={learningSessionActive ? 'Pause session' : 'Resume session'}
               >
@@ -480,9 +652,16 @@ export default function StudentLearningPage() {
                         return (
                           <button
                             key={lesson.id}
-                            onClick={() => openLesson(lesson.id)}
+                            onClick={() => {
+                              if (blockExamNavigation(`lesson:${lesson.id}`)) {
+                                return;
+                              }
+
+                              openLesson(lesson.id);
+                            }}
+                            disabled={examModeActive}
                             className={cn(
-                              'w-full text-left rounded-[14px] border p-3 text-sm transition',
+                              'w-full text-left rounded-[14px] border p-3 text-sm transition disabled:cursor-not-allowed disabled:opacity-60',
                               isSelected
                                 ? 'border-primary/30 bg-primary/10'
                                 : 'border-border-subtle bg-surface hover:border-primary/20'
@@ -519,8 +698,12 @@ export default function StudentLearningPage() {
                   return (
                     <button
                       key={mod.id}
-                      disabled={locked}
+                      disabled={locked || examModeActive}
                       onClick={() => {
+                        if (blockExamNavigation(`module:${mod.id}`)) {
+                          return;
+                        }
+
                         selectModule(mod.id);
                         setViewMode('module');
                         setSelectedLessonId(mod.steps[0]?.id ?? '');
@@ -701,13 +884,17 @@ export default function StudentLearningPage() {
                     <Button
                       className="mt-4 h-10 w-full rounded-[12px]"
                       onClick={() => {
+                        if (blockExamNavigation('start-learning')) {
+                          return;
+                        }
+
                         const target =
                           lessons.find((lesson) => !isLessonComplete(lesson.id)) ?? lessons[0];
                         if (target) {
                           openLesson(target.id, { startSession: true });
                         }
                       }}
-                      disabled={lessons.length === 0}
+                      disabled={lessons.length === 0 || examModeActive}
                     >
                       <IconPlayerPlayFilled className="size-4 mr-2" />
                       {currentModule.progressPercent > 0 ? 'Continue Learning' : 'Start Learning'}
@@ -764,7 +951,14 @@ export default function StudentLearningPage() {
                           <Button
                             variant={allDone ? 'secondary' : 'default'}
                             className="rounded-[12px] shrink-0"
-                            onClick={() => openSection(section.id)}
+                            onClick={() => {
+                              if (blockExamNavigation(`section:${section.id}`)) {
+                                return;
+                              }
+
+                              openSection(section.id);
+                            }}
+                            disabled={examModeActive}
                           >
                             {allDone
                               ? 'Review Section'
@@ -781,7 +975,14 @@ export default function StudentLearningPage() {
                             return (
                               <button
                                 key={lesson.id}
-                                onClick={() => openLesson(lesson.id)}
+                                onClick={() => {
+                                  if (blockExamNavigation(`lesson-card:${lesson.id}`)) {
+                                    return;
+                                  }
+
+                                  openLesson(lesson.id);
+                                }}
+                                disabled={examModeActive}
                                 className="flex items-center gap-3 rounded-[14px] border border-border-subtle bg-surface-muted p-3 text-left transition hover:border-primary/30 hover:bg-primary/5"
                               >
                                 <div
@@ -1053,9 +1254,61 @@ export default function StudentLearningPage() {
                           before this assessment unlocks.
                         </p>
                       </div>
+                    ) : !secureExamSession ? (
+                      <>
+                        <div className="rounded-[16px] border border-primary/25 bg-primary/5 p-6">
+                          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-primary">
+                            Secure Exam Mode
+                          </p>
+                          <p className="mt-3 text-sm leading-6 text-on-surface-variant">
+                            Starting this assessment locks navigation, tracks attention and fullscreen
+                            exits, and records blocked shortcuts or copy/paste attempts for review.
+                          </p>
+                        </div>
+                        {examError ? (
+                          <div className="rounded-[12px] border border-error/20 bg-error/5 p-4 text-sm text-error">
+                            {examError}
+                          </div>
+                        ) : null}
+                        <Button
+                          className="h-11 w-full rounded-[14px] bg-success hover:bg-success/90"
+                          disabled={examSubmitting}
+                          onClick={() => void handleStartSecureExam()}
+                        >
+                          {examSubmitting ? 'Starting Secure Exam…' : 'Start Secure Exam'}
+                        </Button>
+                      </>
                     ) : quizQuestionSet.length > 0 ? (
                       <>
-                        <div className="space-y-4">
+                        <div className="rounded-[16px] border border-warning/20 bg-warning/5 p-4 text-sm text-on-surface">
+                          <p className="font-semibold">Secure exam mode is active.</p>
+                          <p className="mt-1 text-on-surface-variant">
+                            Warnings: {secureExamSession.warnings} • Focus exits: {secureExamSession.focusLossCount} •
+                            Hidden tab events: {secureExamSession.visibilityLossCount} • Fullscreen exits:{' '}
+                            {secureExamSession.fullscreenExitCount}
+                          </p>
+                          {examSecurityNotice ? (
+                            <p className="mt-2 text-warning">{examSecurityNotice}</p>
+                          ) : null}
+                        </div>
+                        <div
+                          className="space-y-4"
+                          onCopy={(event) => {
+                            event.preventDefault();
+                            reportExamEvent('copy_attempt');
+                            setExamSecurityNotice('Copy is blocked during secure exam mode.');
+                          }}
+                          onPaste={(event) => {
+                            event.preventDefault();
+                            reportExamEvent('paste_attempt');
+                            setExamSecurityNotice('Paste is blocked during secure exam mode.');
+                          }}
+                          onContextMenu={(event) => {
+                            event.preventDefault();
+                            reportExamEvent('context_menu');
+                            setExamSecurityNotice('Context menu is blocked during secure exam mode.');
+                          }}
+                        >
                           {quizQuestionSet.map((question, index) => (
                             <div
                               key={question.id}
@@ -1132,6 +1385,16 @@ export default function StudentLearningPage() {
                       </>
                     ) : (
                       <>
+                        <div className="rounded-[16px] border border-warning/20 bg-warning/5 p-4 text-sm text-on-surface">
+                          <p className="font-semibold">Secure exam mode is active.</p>
+                          <p className="mt-1 text-on-surface-variant">
+                            Warnings: {secureExamSession.warnings} • Navigation attempts:{' '}
+                            {secureExamSession.navigationAttemptCount}
+                          </p>
+                          {examSecurityNotice ? (
+                            <p className="mt-2 text-warning">{examSecurityNotice}</p>
+                          ) : null}
+                        </div>
                         {examError ? (
                           <div className="rounded-[12px] border border-error/20 bg-error/5 p-4 text-sm text-error">
                             {examError}
@@ -1207,7 +1470,14 @@ export default function StudentLearningPage() {
                 <Button
                   variant="secondary"
                   className="rounded-[14px]"
-                  onClick={() => setViewMode('module')}
+                  onClick={() => {
+                    if (blockExamNavigation('sections')) {
+                      return;
+                    }
+
+                    setViewMode('module');
+                  }}
+                  disabled={examModeActive}
                 >
                   <IconBook2 className="size-4 mr-2" />
                   Sections
@@ -1217,7 +1487,14 @@ export default function StudentLearningPage() {
                   <Button
                     variant="secondary"
                     className="rounded-[14px]"
-                    onClick={() => setSelectedLessonId(lessons[currentLessonIndex - 1].id)}
+                    onClick={() => {
+                      if (blockExamNavigation('previous-lesson')) {
+                        return;
+                      }
+
+                      setSelectedLessonId(lessons[currentLessonIndex - 1].id);
+                    }}
+                    disabled={examModeActive}
                   >
                     <IconArrowLeft className="size-4 mr-2" />
                     Previous
@@ -1227,7 +1504,14 @@ export default function StudentLearningPage() {
                 {nextLesson ? (
                   <Button
                     className="rounded-[14px] ml-auto"
-                    onClick={() => setSelectedLessonId(nextLesson.id)}
+                    onClick={() => {
+                      if (blockExamNavigation('next-lesson')) {
+                        return;
+                      }
+
+                      setSelectedLessonId(nextLesson.id);
+                    }}
+                    disabled={examModeActive}
                   >
                     Next Lesson
                     <IconArrowRight className="size-4 ml-2" />
@@ -1237,7 +1521,14 @@ export default function StudentLearningPage() {
                   !isLessonComplete(quizStep.id) ? (
                   <Button
                     className="rounded-[14px] ml-auto"
-                    onClick={() => openLesson(quizStep.id)}
+                    onClick={() => {
+                      if (blockExamNavigation('go-to-assessment')) {
+                        return;
+                      }
+
+                      openLesson(quizStep.id);
+                    }}
+                    disabled={examModeActive}
                   >
                     Go to Assessment
                     <IconPlayerPlayFilled className="size-4 ml-2" />
@@ -1246,9 +1537,14 @@ export default function StudentLearningPage() {
                   <Button
                     className="rounded-[14px] ml-auto bg-success hover:bg-success/90"
                     onClick={() => {
+                      if (blockExamNavigation('next-module')) {
+                        return;
+                      }
+
                       selectModule(nextModuleId);
                       setViewMode('module');
                     }}
+                    disabled={examModeActive}
                   >
                     Next Module
                     <IconArrowRight className="size-4 ml-2" />
@@ -1322,7 +1618,11 @@ export default function StudentLearningPage() {
                       <IconBolt className="size-3" />
                     </div>
                     <div className="max-w-[80%] rounded-bl-lg rounded-br-lg rounded-tr-lg border border-border-subtle bg-surface p-2 shadow-sm text-[12px]">
-                      <p className="text-on-surface">Ready to help with your lesson!</p>
+                      <p className="text-on-surface">
+                        {examModeActive
+                          ? 'AI help is locked while secure exam mode is active.'
+                          : 'Ready to help with your lesson!'}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -1334,11 +1634,16 @@ export default function StudentLearningPage() {
                     {suggestionQuestions.slice(0, 2).map((question) => (
                       <button
                         onClick={() => {
+                          if (examModeActive) {
+                            return;
+                          }
+
                           setMessage(question);
                           sendMessage(activeThread.id, question);
                         }}
                         key={question}
-                        className="group flex w-full items-center justify-between rounded-[10px] border border-border-subtle bg-surface p-2 text-left text-[11px] transition hover:border-primary hover:bg-primary/5"
+                        disabled={examModeActive}
+                        className="group flex w-full items-center justify-between rounded-[10px] border border-border-subtle bg-surface p-2 text-left text-[11px] transition hover:border-primary hover:bg-primary/5 disabled:opacity-50"
                       >
                         {question.slice(0, 18)}...
                         <IconBrain className="size-3 text-primary opacity-0 group-hover:opacity-100" />
@@ -1357,11 +1662,11 @@ export default function StudentLearningPage() {
                       }}
                       placeholder="Ask something..."
                       className="h-9 rounded-[10px] pr-9 text-sm flex-1"
-                      disabled={!portalUnlocked}
+                      disabled={!portalUnlocked || examModeActive}
                     />
                     <button
                       className="text-primary transition hover:scale-110 disabled:opacity-50 p-1"
-                      disabled={!portalUnlocked || !message.trim()}
+                      disabled={!portalUnlocked || examModeActive || !message.trim()}
                       onClick={() => {
                         if (message.trim()) {
                           sendMessage(activeThread.id, message);

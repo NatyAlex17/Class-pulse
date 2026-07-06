@@ -64,6 +64,39 @@ type ModuleExamResult = {
 
 type ModuleExamOutcome = { ok: true; result: ModuleExamResult } | { ok: false; error: string };
 
+type ExamSecurityEventType =
+  | 'visibility_hidden'
+  | 'window_blur'
+  | 'fullscreen_exit'
+  | 'navigation_blocked'
+  | 'shortcut_blocked'
+  | 'context_menu'
+  | 'copy_attempt'
+  | 'paste_attempt'
+  | 'back_button_blocked';
+
+type ExamSecurityEvent = {
+  id: string;
+  type: ExamSecurityEventType;
+  occurredAt: string;
+  detail?: string;
+};
+
+type ActiveExamSession = {
+  moduleId: string;
+  stepId: string;
+  startedAt: string;
+  lastActivityAt: string;
+  focusLossCount: number;
+  visibilityLossCount: number;
+  fullscreenExitCount: number;
+  shortcutBlockCount: number;
+  copyPasteCount: number;
+  navigationAttemptCount: number;
+  warnings: number;
+  recentEvents: ExamSecurityEvent[];
+};
+
 type ModuleItem = {
   id: string;
   title: string;
@@ -333,6 +366,7 @@ type StudentDemoState = {
   learningSessionActive: boolean;
   activeLessonId?: string;
   lessonElapsedMinutes: Record<string, number>;
+  activeExamSession?: ActiveExamSession;
   attendanceRecords: AttendanceRecord[];
   reflectionResponse: string;
   questionOfDayAnswer: string;
@@ -405,6 +439,11 @@ type StudentDemoContextValue = StudentDemoState & {
   toggleLearningSession: () => void;
   setLearningSession: (active: boolean) => void;
   recordLessonSessionStart: (lessonId: string) => void;
+  startModuleExamSession: (moduleId: string, stepId: string) => Promise<ActiveExamSession | null>;
+  reportExamSecurityEvent: (
+    moduleId: string,
+    payload: { type: ExamSecurityEventType; detail?: string }
+  ) => void;
   selectModule: (moduleId: string) => void;
   markStepComplete: (moduleId: string, stepId: string) => void;
   submitModuleExam: (payload?: {
@@ -489,6 +528,7 @@ type StudentPortalApi = {
   learningSessionActive: boolean;
   activeLessonId?: string;
   lessonElapsedMinutes: Record<string, number>;
+  activeExamSession?: ActiveExamSession;
   reflectionResponse: string;
   questionOfDayAnswer: string;
   lastAction: string;
@@ -504,6 +544,7 @@ type StudentLearningApi = {
   learningSessionActive: boolean;
   activeLessonId?: string;
   lessonElapsedMinutes: Record<string, number>;
+  activeExamSession?: ActiveExamSession;
   examUnlocked: boolean;
   textbookIssued: boolean;
   textbookOpened: boolean;
@@ -588,6 +629,7 @@ function createFallbackState(): StudentDemoState {
     learningSessionActive: false,
     activeLessonId: undefined,
     lessonElapsedMinutes: {},
+    activeExamSession: undefined,
     attendanceRecords: [],
     reflectionResponse: '',
     questionOfDayAnswer: '',
@@ -655,6 +697,7 @@ function mapPortalToState(portal: StudentPortalApi): StudentDemoState {
     learningSessionActive: portal.learningSessionActive,
     activeLessonId: portal.activeLessonId,
     lessonElapsedMinutes: portal.lessonElapsedMinutes ?? {},
+    activeExamSession: portal.activeExamSession,
     attendanceRecords: portal.attendanceRecords,
     reflectionResponse: portal.reflectionResponse,
     questionOfDayAnswer: portal.questionOfDayAnswer,
@@ -692,6 +735,7 @@ function mergeLearningIntoState(
     learningSessionActive: learning.learningSessionActive,
     activeLessonId: learning.activeLessonId,
     lessonElapsedMinutes: learning.lessonElapsedMinutes ?? {},
+    activeExamSession: learning.activeExamSession,
     textbookIssued: learning.textbookIssued,
     textbookOpened: learning.textbookOpened,
     exitSurveyComplete: learning.exitSurveyComplete,
@@ -1121,6 +1165,52 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
     [mutate]
   );
 
+  const startModuleExamSession = React.useCallback(
+    async (moduleId: string, stepId: string) => {
+      try {
+        const session = await callStudentApi<ActiveExamSession>(
+          `/learning/modules/${moduleId}/exam/session`,
+          { method: 'POST', body: JSON.stringify({ stepId }) }
+        );
+        setState((current) => ({
+          ...current,
+          activeModuleId: moduleId,
+          activeLessonId: undefined,
+          activeExamSession: session,
+        }));
+        await refreshLearning().catch(() => undefined);
+        return session;
+      } catch {
+        await refreshLearning().catch(() => undefined);
+        return null;
+      }
+    },
+    [callStudentApi, refreshLearning]
+  );
+
+  const reportExamSecurityEvent = React.useCallback(
+    (moduleId: string, payload: { type: ExamSecurityEventType; detail?: string }) => {
+      setState((current) => {
+        const activeExamSession =
+          current.activeExamSession && current.activeExamSession.moduleId === moduleId
+            ? {
+                ...current.activeExamSession,
+                warnings: current.activeExamSession.warnings + 1,
+                lastActivityAt: new Date().toISOString(),
+              }
+            : current.activeExamSession;
+
+        return {
+          ...current,
+          activeExamSession,
+        };
+      });
+
+      mutate(`/learning/modules/${moduleId}/exam/session/events`, 'POST', payload);
+    },
+    [mutate]
+  );
+
   const selectModule = React.useCallback(
     (moduleId: string) => {
       setState((current) => ({ ...current, activeModuleId: moduleId }));
@@ -1390,6 +1480,8 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       toggleLearningSession,
       setLearningSession,
       recordLessonSessionStart,
+      startModuleExamSession,
+      reportExamSecurityEvent,
       selectModule,
       markStepComplete,
       submitModuleExam,
@@ -1432,11 +1524,13 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       portalHydrated,
       portalUnlocked,
       programCertificateReady,
+      reportExamSecurityEvent,
       refreshLearning,
       readinessCount,
       recordLessonSessionStart,
       replaceDocument,
       reportAbsence,
+      startModuleExamSession,
       requiredSessionMinutes,
       selectModule,
       selectThread,

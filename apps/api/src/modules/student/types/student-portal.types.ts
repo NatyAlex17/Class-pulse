@@ -466,6 +466,7 @@ export interface StudentPortalState {
   activeLessonId?: string;
   /** Per-lesson persisted elapsed learning time, in minutes. */
   lessonElapsedMinutes: Record<string, number>;
+  activeExamSession?: ActiveExamSession;
   reflectionResponse: string;
   questionOfDayAnswer: string;
   lastAction: string;
@@ -506,6 +507,7 @@ export interface StudentLearningSnapshot {
   learningSessionActive: boolean;
   activeLessonId?: string;
   lessonElapsedMinutes: Record<string, number>;
+  activeExamSession?: ActiveExamSession;
   examUnlocked: boolean;
   textbookIssued: boolean;
   textbookOpened: boolean;
@@ -637,8 +639,50 @@ export interface AdvanceLearningDto {
   minutes?: number;
 }
 
+export type ExamSecurityEventType =
+  | 'visibility_hidden'
+  | 'window_blur'
+  | 'fullscreen_exit'
+  | 'navigation_blocked'
+  | 'shortcut_blocked'
+  | 'context_menu'
+  | 'copy_attempt'
+  | 'paste_attempt'
+  | 'back_button_blocked';
+
+export interface ExamSecurityEvent {
+  id: string;
+  type: ExamSecurityEventType;
+  occurredAt: string;
+  detail?: string;
+}
+
+export interface ActiveExamSession {
+  moduleId: string;
+  stepId: string;
+  startedAt: string;
+  lastActivityAt: string;
+  focusLossCount: number;
+  visibilityLossCount: number;
+  fullscreenExitCount: number;
+  shortcutBlockCount: number;
+  copyPasteCount: number;
+  navigationAttemptCount: number;
+  warnings: number;
+  recentEvents: ExamSecurityEvent[];
+}
+
 export interface SetLearningSessionDto {
   active: boolean;
+}
+
+export interface StartModuleExamSessionDto {
+  stepId: string;
+}
+
+export interface ReportExamSecurityEventDto {
+  type: ExamSecurityEventType;
+  detail?: string;
 }
 
 export interface SelectModuleDto {

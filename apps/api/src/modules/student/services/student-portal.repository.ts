@@ -166,6 +166,7 @@ export class StudentPortalRepository {
       learningSessionActive: false,
       activeLessonId: undefined,
       lessonElapsedMinutes: {},
+      activeExamSession: undefined,
       textbookIssued: false,
       textbookOpened: false,
       exitSurveyComplete: false,

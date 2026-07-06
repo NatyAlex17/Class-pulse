@@ -927,6 +927,7 @@ export const studentPortalSeed: StudentPortalState[] = [
     learningSessionActive: false,
     activeLessonId: undefined,
     lessonElapsedMinutes: {},
+    activeExamSession: undefined,
     reflectionResponse: '',
     questionOfDayAnswer: '',
     lastAction: 'Student portal ready for backend integration.',

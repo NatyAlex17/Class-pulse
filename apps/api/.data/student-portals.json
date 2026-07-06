@@ -5045,8 +5045,8 @@
           "status": "In Progress",
           "progressPercent": 0,
           "requiredHours": 4,
-          "completedHours": 0.3,
-          "sessionMinutes": 19,
+          "completedHours": 0.4,
+          "sessionMinutes": 24,
           "certificateUnlocked": false,
           "steps": [
             {
@@ -5394,12 +5394,93 @@
       "textbookIssued": false,
       "textbookOpened": false,
       "exitSurveyComplete": false,
-      "learningMinutes": 74,
+      "learningMinutes": 79,
       "learningSessionActive": true,
       "reflectionResponse": "",
       "questionOfDayAnswer": "",
-      "lastAction": "Learning session started.",
+      "lastAction": "Lesson timer resumed for Overview Video.",
       "auditTrail": [
+        {
+          "id": "audit-1783341027603-933",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.lesson-session.started",
+          "target": "overview-video",
+          "occurredAt": "2026-07-06T12:30:27.603Z",
+          "details": {
+            "moduleId": "foundation-of-patients",
+            "elapsedMinutes": 5
+          }
+        },
+        {
+          "id": "audit-1783341027591-961",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T12:30:27.591Z",
+          "details": {
+            "active": true
+          }
+        },
+        {
+          "id": "audit-1783340683470-340",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T12:24:43.470Z",
+          "details": {
+            "active": false
+          }
+        },
+        {
+          "id": "audit-1783340252693-69",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T12:17:32.693Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783340193030-443",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T12:16:33.030Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783340132686-242",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T12:15:32.686Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783340073243-434",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T12:14:33.243Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783340012892-222",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T12:13:32.892Z",
+          "details": {
+            "minutes": 1
+          }
+        },
         {
           "id": "audit-1783339952904-278",
           "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
@@ -6320,7 +6401,7 @@
       ],
       "activeLessonId": "overview-video",
       "lessonElapsedMinutes": {
-        "overview-video": 0
+        "overview-video": 5
       }
     }
   ]
