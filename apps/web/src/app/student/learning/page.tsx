@@ -66,6 +66,7 @@ export default function StudentLearningPage() {
     learningMinutes,
     learningSessionActive,
     examUnlocked,
+    portalHydrated,
     portalUnlocked,
     workflowStage,
     currentModule,
@@ -95,9 +96,12 @@ export default function StudentLearningPage() {
 
   const lessons = currentModule.steps;
   const selectedLesson = lessons.find((lesson) => lesson.id === selectedLessonId) ?? lessons[0];
-  const currentLessonIndex = selectedLesson ? lessons.findIndex((lesson) => lesson.id === selectedLesson.id) : -1;
+  const currentLessonIndex = selectedLesson
+    ? lessons.findIndex((lesson) => lesson.id === selectedLesson.id)
+    : -1;
   const nextLesson = currentLessonIndex >= 0 ? lessons[currentLessonIndex + 1] : undefined;
-  const nextModuleId = modules[modules.findIndex((module) => module.id === currentModule.id) + 1]?.id;
+  const nextModuleId =
+    modules[modules.findIndex((module) => module.id === currentModule.id) + 1]?.id;
   const quizStep = lessons.find((lesson) => lesson.type === 'Quiz');
   const lessonSections = lessons.reduce<
     Array<{ id: string; title: string; description?: string; lessons: typeof lessons }>
@@ -123,7 +127,7 @@ export default function StudentLearningPage() {
   const quizQuestionSet = selectedLesson?.type === 'Quiz' ? (selectedLesson.questions ?? []) : [];
   const quizPassingPercent = selectedLesson?.passingScore ?? 70;
   const unansweredCount = quizQuestionSet.filter(
-    (question) => !(quizAnswers[question.id] ?? '').trim(),
+    (question) => !(quizAnswers[question.id] ?? '').trim()
   ).length;
 
   React.useEffect(() => {
@@ -131,10 +135,10 @@ export default function StudentLearningPage() {
   }, [refreshLearning]);
 
   React.useEffect(() => {
-    if (!portalUnlocked) {
+    if (portalHydrated && !portalUnlocked) {
       setWorkflowOpen(true);
     }
-  }, [portalUnlocked]);
+  }, [portalHydrated, portalUnlocked]);
 
   React.useEffect(() => {
     setViewMode('module');
@@ -152,7 +156,11 @@ export default function StudentLearningPage() {
 
   React.useEffect(() => {
     setCompletedLessons(
-      new Set(modules.flatMap((module) => module.steps.filter((step) => step.complete).map((step) => step.id))),
+      new Set(
+        modules.flatMap((module) =>
+          module.steps.filter((step) => step.complete).map((step) => step.id)
+        )
+      )
     );
   }, [modules]);
 
@@ -162,7 +170,8 @@ export default function StudentLearningPage() {
   }, [selectedLessonId]);
 
   const isLessonComplete = (lessonId: string) =>
-    completedLessons.has(lessonId) || lessons.find((lesson) => lesson.id === lessonId)?.complete === true;
+    completedLessons.has(lessonId) ||
+    lessons.find((lesson) => lesson.id === lessonId)?.complete === true;
 
   const openLesson = (lessonId: string) => {
     setSelectedLessonId(lessonId);
@@ -175,7 +184,8 @@ export default function StudentLearningPage() {
       return;
     }
 
-    const target = section.lessons.find((lesson) => !isLessonComplete(lesson.id)) ?? section.lessons[0];
+    const target =
+      section.lessons.find((lesson) => !isLessonComplete(lesson.id)) ?? section.lessons[0];
     if (target) {
       openLesson(target.id);
     }
@@ -219,14 +229,17 @@ export default function StudentLearningPage() {
       <header className="fixed left-0 right-0 top-0 z-50 flex h-[72px] items-center justify-between border-b border-border-subtle bg-surface px-8">
         <div className="flex items-center gap-4">
           <a href="/student/dashboard">
-            <button className="flex h-10 w-10 items-center justify-center rounded-full text-primary transition hover:bg-surface-high" title="Back to Dashboard">
+            <button
+              className="flex h-10 w-10 items-center justify-center rounded-full text-primary transition hover:bg-surface-high"
+              title="Back to Dashboard"
+            >
               <IconArrowLeft className="size-5" />
             </button>
           </a>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="flex h-10 w-10 items-center justify-center rounded-full text-primary transition hover:bg-surface-high"
-            title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
+            title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
           >
             {sidebarOpen ? <IconX className="size-5" /> : <IconMenu2 className="size-5" />}
           </button>
@@ -247,9 +260,12 @@ export default function StudentLearningPage() {
             <div className="flex items-center gap-2">
               <IconClockHour4 className="size-5 text-primary" />
               <div className="flex flex-col">
-                <span className="font-mono text-[11px] uppercase tracking-widest text-on-surface-variant">Session Time</span>
+                <span className="font-mono text-[11px] uppercase tracking-widest text-on-surface-variant">
+                  Session Time
+                </span>
                 <span className="font-mono text-[20px] font-bold text-primary">
-                  {Math.floor(learningMinutes / 60)}h {String(learningMinutes % 60).padStart(2, '0')}m
+                  {Math.floor(learningMinutes / 60)}h{' '}
+                  {String(learningMinutes % 60).padStart(2, '0')}m
                 </span>
               </div>
             </div>
@@ -266,7 +282,10 @@ export default function StudentLearningPage() {
                 <span className="font-sans text-xs text-on-surface-variant">/ 8h</span>
               </span>
               <div className="h-2 w-32 overflow-hidden rounded-full bg-surface-high">
-                <div className="h-full rounded-full bg-primary" style={{ width: `${engagementPercent}%` }} />
+                <div
+                  className="h-full rounded-full bg-primary"
+                  style={{ width: `${engagementPercent}%` }}
+                />
               </div>
               <span className="font-mono text-sm font-bold text-success">{engagementPercent}%</span>
             </div>
@@ -304,7 +323,7 @@ export default function StudentLearningPage() {
                     'mb-4 flex w-full items-center gap-2 rounded-[14px] border p-3 text-left transition',
                     viewMode === 'module'
                       ? 'border-primary/30 bg-primary/10'
-                      : 'border-border-subtle bg-surface hover:border-primary/20',
+                      : 'border-border-subtle bg-surface hover:border-primary/20'
                   )}
                 >
                   <IconBook2 className="size-4 shrink-0 text-primary" />
@@ -329,7 +348,7 @@ export default function StudentLearningPage() {
                               'w-full text-left rounded-[14px] border p-3 text-sm transition',
                               isSelected
                                 ? 'border-primary/30 bg-primary/10'
-                                : 'border-border-subtle bg-surface hover:border-primary/20',
+                                : 'border-border-subtle bg-surface hover:border-primary/20'
                             )}
                           >
                             <div className="flex items-start gap-2">
@@ -337,7 +356,9 @@ export default function StudentLearningPage() {
                                 {isComplete ? <IconCheck className="size-4" /> : index + 1}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="truncate font-semibold text-on-surface">{lesson.title}</p>
+                                <p className="truncate font-semibold text-on-surface">
+                                  {lesson.title}
+                                </p>
                                 <p className="mt-0.5 text-[11px] text-on-surface-variant">
                                   {lesson.type} • {lesson.duration}
                                 </p>
@@ -373,7 +394,7 @@ export default function StudentLearningPage() {
                           ? 'border-border-subtle bg-surface-container opacity-60 cursor-not-allowed'
                           : currentModule.id === mod.id
                             ? 'border-primary/30 bg-primary/10'
-                            : 'border-border-subtle bg-surface hover:border-primary/20',
+                            : 'border-border-subtle bg-surface hover:border-primary/20'
                       )}
                     >
                       <div className="flex items-center justify-between gap-2">
@@ -421,7 +442,7 @@ export default function StudentLearningPage() {
                     'rounded-[16px] p-8 text-center',
                     examResult.passed
                       ? 'bg-success/10 border border-success/30'
-                      : 'bg-warning/10 border border-warning/30',
+                      : 'bg-warning/10 border border-warning/30'
                   )}
                 >
                   {examResult.graded ? (
@@ -429,7 +450,7 @@ export default function StudentLearningPage() {
                       <h4
                         className={cn(
                           'font-display text-[42px] font-bold',
-                          examResult.passed ? 'text-success' : 'text-warning',
+                          examResult.passed ? 'text-success' : 'text-warning'
                         )}
                       >
                         {examResult.scorePercent}%
@@ -437,7 +458,7 @@ export default function StudentLearningPage() {
                       <p
                         className={cn(
                           'text-sm font-semibold mt-2',
-                          examResult.passed ? 'text-success' : 'text-warning',
+                          examResult.passed ? 'text-success' : 'text-warning'
                         )}
                       >
                         {examResult.passed ? '✓ PASSED — Great job!' : '✗ Not passed yet'}
@@ -457,10 +478,14 @@ export default function StudentLearningPage() {
                     </>
                   ) : (
                     <>
-                      <h4 className="font-display text-[32px] font-bold text-success">Module Complete</h4>
+                      <h4 className="font-display text-[32px] font-bold text-success">
+                        Module Complete
+                      </h4>
                       <p className="text-sm text-on-surface-variant mt-3">
                         This module&apos;s checkpoint was recorded.{' '}
-                        {nextModuleId ? 'The next module is now unlocked.' : 'You have finished the program modules.'}
+                        {nextModuleId
+                          ? 'The next module is now unlocked.'
+                          : 'You have finished the program modules.'}
                       </p>
                     </>
                   )}
@@ -486,12 +511,17 @@ export default function StudentLearningPage() {
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="max-w-2xl">
                     <p className="font-mono text-[12px] uppercase tracking-[0.12em] text-primary">
-                      Module {String(modules.findIndex((module) => module.id === currentModule.id) + 1).padStart(2, '0')}
+                      Module{' '}
+                      {String(
+                        modules.findIndex((module) => module.id === currentModule.id) + 1
+                      ).padStart(2, '0')}
                     </p>
                     <h2 className="mt-2 font-display text-[32px] font-bold tracking-[-0.02em] text-on-surface">
                       {currentModule.title}
                     </h2>
-                    <p className="mt-2 text-base leading-7 text-on-surface-variant">{currentModule.summary}</p>
+                    <p className="mt-2 text-base leading-7 text-on-surface-variant">
+                      {currentModule.summary}
+                    </p>
                     <div className="mt-4 flex flex-wrap items-center gap-3">
                       <Badge
                         variant={
@@ -505,14 +535,16 @@ export default function StudentLearningPage() {
                         {currentModule.status}
                       </Badge>
                       <span className="text-sm text-on-surface-variant">
-                        {lessonSections.length} section{lessonSections.length === 1 ? '' : 's'} • {lessons.length}{' '}
-                        lesson{lessons.length === 1 ? '' : 's'}
+                        {lessonSections.length} section{lessonSections.length === 1 ? '' : 's'} •{' '}
+                        {lessons.length} lesson{lessons.length === 1 ? '' : 's'}
                       </span>
                       <span className="text-sm text-on-surface-variant">
                         {currentModule.completedHours}/{currentModule.requiredHours} hours
                       </span>
                       {currentModule.examScore ? (
-                        <span className="font-mono text-sm text-success">Exam {currentModule.examScore}</span>
+                        <span className="font-mono text-sm text-success">
+                          Exam {currentModule.examScore}
+                        </span>
                       ) : null}
                     </div>
                   </div>
@@ -532,7 +564,8 @@ export default function StudentLearningPage() {
                     <Button
                       className="mt-4 h-10 w-full rounded-[12px]"
                       onClick={() => {
-                        const target = lessons.find((lesson) => !isLessonComplete(lesson.id)) ?? lessons[0];
+                        const target =
+                          lessons.find((lesson) => !isLessonComplete(lesson.id)) ?? lessons[0];
                         if (target) {
                           openLesson(target.id);
                         }
@@ -557,7 +590,9 @@ export default function StudentLearningPage() {
                   </div>
                 ) : (
                   lessonSections.map((section, sectionIndex) => {
-                    const sectionComplete = section.lessons.filter((lesson) => isLessonComplete(lesson.id)).length;
+                    const sectionComplete = section.lessons.filter((lesson) =>
+                      isLessonComplete(lesson.id)
+                    ).length;
                     const allDone = sectionComplete === section.lessons.length;
 
                     return (
@@ -570,7 +605,7 @@ export default function StudentLearningPage() {
                             <div
                               className={cn(
                                 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold',
-                                allDone ? 'bg-success text-white' : 'bg-primary/10 text-primary',
+                                allDone ? 'bg-success text-white' : 'bg-primary/10 text-primary'
                               )}
                             >
                               {allDone ? <IconCheck className="size-5" /> : sectionIndex + 1}
@@ -580,7 +615,9 @@ export default function StudentLearningPage() {
                                 {section.title}
                               </h3>
                               {section.description ? (
-                                <p className="mt-1 text-sm leading-6 text-on-surface-variant">{section.description}</p>
+                                <p className="mt-1 text-sm leading-6 text-on-surface-variant">
+                                  {section.description}
+                                </p>
                               ) : null}
                               <p className="mt-2 text-sm text-on-surface-variant">
                                 {sectionComplete}/{section.lessons.length} lessons complete
@@ -592,7 +629,11 @@ export default function StudentLearningPage() {
                             className="rounded-[12px] shrink-0"
                             onClick={() => openSection(section.id)}
                           >
-                            {allDone ? 'Review Section' : sectionComplete > 0 ? 'Continue Section' : 'Start Section'}
+                            {allDone
+                              ? 'Review Section'
+                              : sectionComplete > 0
+                                ? 'Continue Section'
+                                : 'Start Section'}
                             <IconArrowRight className="size-4 ml-2" />
                           </Button>
                         </div>
@@ -609,13 +650,21 @@ export default function StudentLearningPage() {
                                 <div
                                   className={cn(
                                     'flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
-                                    isComplete ? 'bg-success text-white' : 'bg-primary/10 text-primary',
+                                    isComplete
+                                      ? 'bg-success text-white'
+                                      : 'bg-primary/10 text-primary'
                                   )}
                                 >
-                                  {isComplete ? <IconCheck className="size-4" /> : <IconPlayerPlayFilled className="size-3" />}
+                                  {isComplete ? (
+                                    <IconCheck className="size-4" />
+                                  ) : (
+                                    <IconPlayerPlayFilled className="size-3" />
+                                  )}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <p className="truncate text-sm font-semibold text-on-surface">{lesson.title}</p>
+                                  <p className="truncate text-sm font-semibold text-on-surface">
+                                    {lesson.title}
+                                  </p>
                                   <p className="text-[11px] text-on-surface-variant">
                                     {lesson.type} • {lesson.duration}
                                   </p>
@@ -649,8 +698,12 @@ export default function StudentLearningPage() {
                   </div>
                   <div className="flex gap-3">
                     <div className="flex-1 rounded-[14px] bg-surface border border-border-subtle p-4">
-                      <p className="text-sm font-semibold text-on-surface">{selectedLesson.title}</p>
-                      <p className="text-[12px] text-on-surface-variant mt-1">{selectedLesson.duration} • {selectedLesson.note}</p>
+                      <p className="text-sm font-semibold text-on-surface">
+                        {selectedLesson.title}
+                      </p>
+                      <p className="text-[12px] text-on-surface-variant mt-1">
+                        {selectedLesson.duration} • {selectedLesson.note}
+                      </p>
                     </div>
                     <Button
                       className="rounded-[14px] bg-success hover:bg-success/90"
@@ -668,7 +721,9 @@ export default function StudentLearningPage() {
                 </div>
               )}
 
-              {(selectedLesson.type === 'PDF' || selectedLesson.type === 'Reading' || selectedLesson.type === 'Link') && (
+              {(selectedLesson.type === 'PDF' ||
+                selectedLesson.type === 'Reading' ||
+                selectedLesson.type === 'Link') && (
                 <div className="rounded-[20px] overflow-hidden border border-border-subtle bg-surface-muted space-y-6">
                   <div className="bg-surface rounded-[20px] p-8 space-y-6">
                     <div className="flex items-start gap-4">
@@ -676,7 +731,9 @@ export default function StudentLearningPage() {
                         <IconFile className="size-8" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-display text-[24px] font-bold text-on-surface">{selectedLesson.title}</h3>
+                        <h3 className="font-display text-[24px] font-bold text-on-surface">
+                          {selectedLesson.title}
+                        </h3>
                         <p className="mt-1 text-on-surface-variant">{selectedLesson.note}</p>
                       </div>
                     </div>
@@ -716,9 +773,15 @@ export default function StudentLearningPage() {
 
                     {selectedLesson.type === 'Reading' ? (
                       <div className="rounded-[16px] border border-border-subtle bg-surface-muted p-6">
-                        <h4 className="font-display text-[20px] font-semibold text-on-surface">Reading Content</h4>
+                        <h4 className="font-display text-[20px] font-semibold text-on-surface">
+                          Reading Content
+                        </h4>
                         <div className="mt-4 space-y-4 text-sm leading-7 text-on-surface-variant">
-                          {(selectedLesson.content || selectedLesson.note || 'No lesson text was configured yet.')
+                          {(
+                            selectedLesson.content ||
+                            selectedLesson.note ||
+                            'No lesson text was configured yet.'
+                          )
                             .split('\n')
                             .filter(Boolean)
                             .map((paragraph) => (
@@ -734,7 +797,9 @@ export default function StudentLearningPage() {
                           External Learning Resource
                         </h4>
                         <p className="mt-4 text-sm leading-7 text-on-surface-variant">
-                          {selectedLesson.content || selectedLesson.note || 'Open the configured link to continue this lesson.'}
+                          {selectedLesson.content ||
+                            selectedLesson.note ||
+                            'Open the configured link to continue this lesson.'}
                         </p>
                         {selectedLesson.resourceUrl ? (
                           <div className="mt-4 rounded-[12px] border border-border-subtle bg-surface p-4 text-sm text-on-surface">
@@ -753,7 +818,11 @@ export default function StudentLearningPage() {
                       onClick={() => window.open(selectedLesson.resourceUrl || '#', '_blank')}
                     >
                       <IconFile className="size-4 mr-2" />
-                      {selectedLesson.type === 'PDF' ? 'Open PDF' : selectedLesson.type === 'Link' ? 'Open Link' : 'Open Resource'}
+                      {selectedLesson.type === 'PDF'
+                        ? 'Open PDF'
+                        : selectedLesson.type === 'Link'
+                          ? 'Open Link'
+                          : 'Open Resource'}
                     </Button>
                     <Button
                       className="flex-1 rounded-[14px] h-11 bg-success hover:bg-success/90"
@@ -778,7 +847,9 @@ export default function StudentLearningPage() {
                       <IconCircleCheckFilled className="size-8" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-display text-[24px] font-bold text-on-surface">{selectedLesson.title}</h3>
+                      <h3 className="font-display text-[24px] font-bold text-on-surface">
+                        {selectedLesson.title}
+                      </h3>
                       <p className="mt-1 text-on-surface-variant">{selectedLesson.note}</p>
                     </div>
                   </div>
@@ -790,7 +861,9 @@ export default function StudentLearningPage() {
                           Assessment Brief
                         </p>
                         <p className="mt-2 text-sm leading-6 text-on-surface-variant">
-                          {selectedLesson.content || selectedLesson.note || 'Complete the configured module assessment to move forward.'}
+                          {selectedLesson.content ||
+                            selectedLesson.note ||
+                            'Complete the configured module assessment to move forward.'}
                         </p>
                       </div>
                       <div className="rounded-[14px] border border-border-subtle bg-surface-muted p-4">
@@ -798,7 +871,9 @@ export default function StudentLearningPage() {
                           Passing Score
                         </p>
                         <p className="mt-2 text-sm font-semibold text-on-surface">
-                          {quizQuestionSet.length > 0 ? `${quizPassingPercent}%` : 'Completion checkpoint'}
+                          {quizQuestionSet.length > 0
+                            ? `${quizPassingPercent}%`
+                            : 'Completion checkpoint'}
                         </p>
                         <p className="mt-1 text-[11px] text-on-surface-variant">
                           {quizQuestionSet.length > 0
@@ -812,14 +887,19 @@ export default function StudentLearningPage() {
                       <div className="rounded-[16px] border border-success/30 bg-success/10 p-5 text-center">
                         <p className="text-sm font-semibold text-success">✓ Assessment completed</p>
                         {currentModule.examScore ? (
-                          <p className="mt-1 text-sm text-on-surface-variant">Score: {currentModule.examScore}</p>
+                          <p className="mt-1 text-sm text-on-surface-variant">
+                            Score: {currentModule.examScore}
+                          </p>
                         ) : null}
                       </div>
                     ) : quizQuestionSet.length > 0 ? (
                       <>
                         <div className="space-y-4">
                           {quizQuestionSet.map((question, index) => (
-                            <div key={question.id} className="p-4 border border-border-subtle rounded-[12px] hover:bg-surface-low transition">
+                            <div
+                              key={question.id}
+                              className="p-4 border border-border-subtle rounded-[12px] hover:bg-surface-low transition"
+                            >
                               <div className="mb-3 flex items-start justify-between gap-3">
                                 <p className="font-semibold text-sm text-on-surface">
                                   Question {index + 1}: {question.prompt}
@@ -831,18 +911,26 @@ export default function StudentLearningPage() {
                               {question.options && question.options.length > 0 ? (
                                 <div className="space-y-2">
                                   {question.options.map((option, optionIndex) => (
-                                    <label key={`${question.id}-${optionIndex}`} className="flex items-center gap-3 cursor-pointer">
+                                    <label
+                                      key={`${question.id}-${optionIndex}`}
+                                      className="flex items-center gap-3 cursor-pointer"
+                                    >
                                       <input
                                         type="radio"
                                         name={question.id}
                                         value={String(optionIndex)}
                                         checked={quizAnswers[question.id] === String(optionIndex)}
                                         onChange={(event) =>
-                                          setQuizAnswers({ ...quizAnswers, [question.id]: event.target.value })
+                                          setQuizAnswers({
+                                            ...quizAnswers,
+                                            [question.id]: event.target.value,
+                                          })
                                         }
                                         className="w-4 h-4"
                                       />
-                                      <span className="text-sm text-on-surface-variant">{option}</span>
+                                      <span className="text-sm text-on-surface-variant">
+                                        {option}
+                                      </span>
                                     </label>
                                   ))}
                                 </div>
@@ -850,7 +938,10 @@ export default function StudentLearningPage() {
                                 <Input
                                   value={quizAnswers[question.id] ?? ''}
                                   onChange={(event) =>
-                                    setQuizAnswers({ ...quizAnswers, [question.id]: event.target.value })
+                                    setQuizAnswers({
+                                      ...quizAnswers,
+                                      [question.id]: event.target.value,
+                                    })
                                   }
                                   placeholder="Type your answer"
                                   className="h-11"
@@ -905,7 +996,9 @@ export default function StudentLearningPage() {
                       <IconUserCircle className="size-8" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-display text-[24px] font-bold text-on-surface">{selectedLesson.title}</h3>
+                      <h3 className="font-display text-[24px] font-bold text-on-surface">
+                        {selectedLesson.title}
+                      </h3>
                       <p className="mt-1 text-on-surface-variant">{selectedLesson.note}</p>
                     </div>
                   </div>
@@ -917,7 +1010,9 @@ export default function StudentLearningPage() {
                           Submission Guidance
                         </p>
                         <p className="mt-2 text-sm leading-6 text-on-surface-variant">
-                          {selectedLesson.content || selectedLesson.note || 'Upload the required skill evidence for instructor review.'}
+                          {selectedLesson.content ||
+                            selectedLesson.note ||
+                            'Upload the required skill evidence for instructor review.'}
                         </p>
                       </div>
                       <div className="rounded-[14px] border border-border-subtle bg-surface-muted p-4">
@@ -939,7 +1034,9 @@ export default function StudentLearningPage() {
                         advanceLearning(20);
                       }}
                     >
-                      {completedLessons.has(selectedLesson.id) ? 'Submission Recorded' : 'Mark Submission Complete'}
+                      {completedLessons.has(selectedLesson.id)
+                        ? 'Submission Recorded'
+                        : 'Mark Submission Complete'}
                     </Button>
                   </div>
                 </div>
@@ -978,7 +1075,9 @@ export default function StudentLearningPage() {
                     Next Lesson
                     <IconArrowRight className="size-4 ml-2" />
                   </Button>
-                ) : quizStep && quizStep.id !== selectedLesson.id && !isLessonComplete(quizStep.id) ? (
+                ) : quizStep &&
+                  quizStep.id !== selectedLesson.id &&
+                  !isLessonComplete(quizStep.id) ? (
                   <Button
                     className="rounded-[14px] ml-auto"
                     onClick={() => openLesson(quizStep.id)}
@@ -1018,10 +1117,12 @@ export default function StudentLearningPage() {
         </section>
 
         {/* AI Assistant Panel */}
-        <aside className={cn(
-          'border-l border-border-subtle bg-surface-low transition-all duration-300 flex flex-col overflow-hidden',
-          sidebarOpen ? 'w-[300px]' : 'w-[350px]'
-        )}>
+        <aside
+          className={cn(
+            'border-l border-border-subtle bg-surface-low transition-all duration-300 flex flex-col overflow-hidden',
+            sidebarOpen ? 'w-[300px]' : 'w-[350px]'
+          )}
+        >
           <div className="flex border-b border-border-subtle px-4 pt-4">
             <button
               className={`flex flex-1 items-center justify-center gap-2 pb-4 text-xs ${
@@ -1062,7 +1163,9 @@ export default function StudentLearningPage() {
                 </div>
                 <div className="border-t border-border-subtle bg-surface p-3 space-y-3">
                   <div className="space-y-1">
-                    <p className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant">Quick Help</p>
+                    <p className="font-mono text-[10px] uppercase tracking-widest text-on-surface-variant">
+                      Quick Help
+                    </p>
                     {suggestionQuestions.slice(0, 2).map((question) => (
                       <button
                         onClick={() => {
@@ -1118,16 +1221,22 @@ export default function StudentLearningPage() {
       <footer className="fixed bottom-0 left-0 right-0 z-[60] flex h-20 items-center justify-between border-t border-border-subtle bg-surface/80 px-8 backdrop-blur-xl">
         <div className="flex items-center gap-8 text-sm">
           <div className="flex flex-col">
-            <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant">Session Time</span>
+            <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant">
+              Session Time
+            </span>
             <div className="flex items-center gap-2 font-mono text-lg font-semibold text-primary">
               <IconClockHour4 className="size-4" />
               {Math.floor(learningMinutes / 60)}h {String(learningMinutes % 60).padStart(2, '0')}m
             </div>
           </div>
           <div className="flex flex-col">
-            <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant">Progress</span>
+            <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant">
+              Progress
+            </span>
             <span className="font-mono text-sm text-on-surface">
-              {examUnlocked ? '✓ Ready for exam' : `${(remainingMinutes / 60).toFixed(1)}h to unlock`}
+              {examUnlocked
+                ? '✓ Ready for exam'
+                : `${(remainingMinutes / 60).toFixed(1)}h to unlock`}
             </span>
           </div>
         </div>

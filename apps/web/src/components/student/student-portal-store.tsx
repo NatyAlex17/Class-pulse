@@ -62,9 +62,7 @@ type ModuleExamResult = {
   totalQuestions: number;
 };
 
-type ModuleExamOutcome =
-  | { ok: true; result: ModuleExamResult }
-  | { ok: false; error: string };
+type ModuleExamOutcome = { ok: true; result: ModuleExamResult } | { ok: false; error: string };
 
 type ModuleItem = {
   id: string;
@@ -350,6 +348,7 @@ type StudentDemoState = {
 };
 
 type StudentDemoContextValue = StudentDemoState & {
+  portalHydrated: boolean;
   unreadCount: number;
   urgentTaskCount: number;
   completedOnboardingCount: number;
@@ -375,7 +374,7 @@ type StudentDemoContextValue = StudentDemoState & {
   submitEntranceExam: () => void;
   updateEnrollmentWizardField: (
     key: 'hhaAddon' | 'scrubTop' | 'scrubBottom' | 'shipping' | 'wantsToTestAtDaisy' | 'signature',
-    value: string | boolean | null,
+    value: string | boolean | null
   ) => void;
   toggleEnrollmentAgreement: (key: keyof EnrollmentWizardState['agreements']) => void;
   setEnrollmentWizardStep: (step: number) => void;
@@ -393,7 +392,10 @@ type StudentDemoContextValue = StudentDemoState & {
   sendMessage: (threadId: string, text: string) => void;
   uploadDocument: () => void;
   replaceDocument: (uploadId: string) => void;
-  updateSetting: <TKey extends keyof StudentSettings>(key: TKey, value: StudentSettings[TKey]) => void;
+  updateSetting: <TKey extends keyof StudentSettings>(
+    key: TKey,
+    value: StudentSettings[TKey]
+  ) => void;
   advanceLearning: (minutes?: number) => void;
   toggleLearningSession: () => void;
   selectModule: (moduleId: string) => void;
@@ -512,7 +514,14 @@ function createFallbackState(): StudentDemoState {
   return {
     workflowStage: 'entrance_exam',
     intakeJourney: null,
-    entranceExam: { answers: {}, score: null, totalQuestions: 0, rank: null, taken: false, passed: false },
+    entranceExam: {
+      answers: {},
+      score: null,
+      totalQuestions: 0,
+      rank: null,
+      taken: false,
+      passed: false,
+    },
     enrollmentWizard: {
       step: 1,
       hhaAddon: false,
@@ -653,7 +662,10 @@ function mapPortalToState(portal: StudentPortalApi): StudentDemoState {
   };
 }
 
-function mergeLearningIntoState(current: StudentDemoState, learning: StudentLearningApi): StudentDemoState {
+function mergeLearningIntoState(
+  current: StudentDemoState,
+  learning: StudentLearningApi
+): StudentDemoState {
   return {
     ...current,
     activeModuleId: learning.activeModuleId,
@@ -669,6 +681,7 @@ function mergeLearningIntoState(current: StudentDemoState, learning: StudentLear
 export function StudentDemoProvider({ children }: { children: React.ReactNode }) {
   const { session, syncedUser, isSupabaseEnabled, isLoading, refreshSyncedUser } = useAuth();
   const [state, setState] = React.useState<StudentDemoState>(() => createFallbackState());
+  const [portalHydrated, setPortalHydrated] = React.useState(false);
 
   const studentId = syncedUser?.localUserId;
   const accessToken = session?.access_token;
@@ -678,7 +691,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
     async <TData,>(
       path: string,
       init?: RequestInit,
-      options?: { studentId?: string; accessToken?: string; isStudentUser?: boolean },
+      options?: { studentId?: string; accessToken?: string; isStudentUser?: boolean }
     ) => {
       const resolvedStudentId = options?.studentId ?? studentId;
       const resolvedAccessToken = options?.accessToken ?? accessToken;
@@ -714,17 +727,19 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       const payload = (await response.json()) as ApiEnvelope<TData>;
       return payload.data;
     },
-    [accessToken, isStudentUser, studentId],
+    [accessToken, isStudentUser, studentId]
   );
 
   const refreshPortal = React.useCallback(async () => {
     if (!studentId || !accessToken || !isStudentUser) {
       setState(createFallbackState());
+      setPortalHydrated(true);
       return;
     }
 
     const portal = await callStudentApi<StudentPortalApi>('/portal', { method: 'GET' });
     setState(mapPortalToState(portal));
+    setPortalHydrated(true);
   }, [accessToken, callStudentApi, isStudentUser, studentId]);
 
   const refreshLearning = React.useCallback(async () => {
@@ -743,8 +758,11 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
 
     if (!isSupabaseEnabled || !accessToken) {
       setState(createFallbackState());
+      setPortalHydrated(true);
       return;
     }
+
+    setPortalHydrated(false);
 
     const hydratePortal = async () => {
       try {
@@ -753,6 +771,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
 
         if (!resolvedSyncedUser || resolvedSyncedUser.role !== 'student') {
           setState(createFallbackState());
+          setPortalHydrated(true);
           return;
         }
 
@@ -766,13 +785,23 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
           callStudentApi<StudentLearningApi>('/learning', { method: 'GET' }, options),
         ]);
         setState(mergeLearningIntoState(mapPortalToState(portal), learning));
+        setPortalHydrated(true);
       } catch {
         setState(createFallbackState());
+        setPortalHydrated(true);
       }
     };
 
     void hydratePortal();
-  }, [accessToken, callStudentApi, isLoading, isSupabaseEnabled, refreshPortal, refreshSyncedUser, syncedUser]);
+  }, [
+    accessToken,
+    callStudentApi,
+    isLoading,
+    isSupabaseEnabled,
+    refreshPortal,
+    refreshSyncedUser,
+    syncedUser,
+  ]);
 
   const mutate = React.useCallback(
     (path: string, method: 'POST' | 'PATCH', body?: unknown) => {
@@ -785,7 +814,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
         .then(() => refresh())
         .catch(() => refresh());
     },
-    [callStudentApi, refreshLearning, refreshPortal],
+    [callStudentApi, refreshLearning, refreshPortal]
   );
 
   const setWorkflowStage = React.useCallback(
@@ -793,7 +822,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       setState((current) => ({ ...current, workflowStage }));
       mutate('/intake/workflow-stage', 'PATCH', { workflowStage });
     },
-    [mutate],
+    [mutate]
   );
 
   const answerEntranceExamQuestion = React.useCallback(
@@ -807,7 +836,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       }));
       mutate(`/intake/entrance-exam/questions/${questionId}`, 'PATCH', { answer });
     },
-    [mutate],
+    [mutate]
   );
 
   const submitEntranceExam = React.useCallback(() => {
@@ -816,8 +845,14 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
 
   const updateEnrollmentWizardField = React.useCallback(
     (
-      key: 'hhaAddon' | 'scrubTop' | 'scrubBottom' | 'shipping' | 'wantsToTestAtDaisy' | 'signature',
-      value: string | boolean | null,
+      key:
+        | 'hhaAddon'
+        | 'scrubTop'
+        | 'scrubBottom'
+        | 'shipping'
+        | 'wantsToTestAtDaisy'
+        | 'signature',
+      value: string | boolean | null
     ) => {
       setState((current) => ({
         ...current,
@@ -828,7 +863,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       }));
       mutate('/intake/enrollment-wizard', 'PATCH', { [key]: value });
     },
-    [mutate],
+    [mutate]
   );
 
   const toggleEnrollmentAgreement = React.useCallback(
@@ -846,7 +881,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       }));
       mutate('/intake/enrollment-wizard/agreements', 'PATCH', { [key]: value });
     },
-    [mutate, state.enrollmentWizard.agreements],
+    [mutate, state.enrollmentWizard.agreements]
   );
 
   const setEnrollmentWizardStep = React.useCallback(
@@ -861,7 +896,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       }));
       mutate('/intake/enrollment-wizard/step', 'PATCH', { step });
     },
-    [mutate, state.intakeJourney],
+    [mutate, state.intakeJourney]
   );
 
   const submitEnrollmentWizard = React.useCallback(() => {
@@ -879,7 +914,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       }));
       mutate(`/intake/entrance-survey/questions/${questionId}`, 'PATCH', { answer });
     },
-    [mutate],
+    [mutate]
   );
 
   const setEntranceSurveyStep = React.useCallback(
@@ -894,32 +929,38 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       }));
       mutate('/intake/entrance-survey/step', 'PATCH', { step });
     },
-    [mutate, state.intakeJourney],
+    [mutate, state.intakeJourney]
   );
 
   const submitEntranceSurvey = React.useCallback(() => {
     mutate('/intake/entrance-survey/submit', 'POST');
   }, [mutate]);
 
-  const toggleTask = React.useCallback((taskId: string) => {
-    mutate(`/tasks/${taskId}/toggle`, 'PATCH');
-  }, [mutate]);
+  const toggleTask = React.useCallback(
+    (taskId: string) => {
+      mutate(`/tasks/${taskId}/toggle`, 'PATCH');
+    },
+    [mutate]
+  );
 
-  const completeOnboardingStep = React.useCallback((stepId: string) => {
-    mutate(`/onboarding/steps/${stepId}/toggle`, 'PATCH');
-  }, [mutate]);
+  const completeOnboardingStep = React.useCallback(
+    (stepId: string) => {
+      mutate(`/onboarding/steps/${stepId}/toggle`, 'PATCH');
+    },
+    [mutate]
+  );
 
   const answerOnboardingQuestion = React.useCallback(
     (questionId: string, answer: string) => {
       setState((current) => ({
         ...current,
         onboardingQuestions: current.onboardingQuestions.map((question) =>
-          question.id === questionId ? { ...question, answer } : question,
+          question.id === questionId ? { ...question, answer } : question
         ),
       }));
       mutate(`/onboarding/questions/${questionId}`, 'PATCH', { answer });
     },
-    [mutate],
+    [mutate]
   );
 
   const toggleAcknowledgement = React.useCallback(
@@ -934,7 +975,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       }));
       mutate('/onboarding/acknowledgements', 'PATCH', { [key]: value });
     },
-    [mutate, state.acknowledgements],
+    [mutate, state.acknowledgements]
   );
 
   const toggleReadinessUpload = React.useCallback(
@@ -949,16 +990,19 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       }));
       mutate('/onboarding/uploads', 'PATCH', { [key]: value });
     },
-    [mutate, state.readinessUploads],
+    [mutate, state.readinessUploads]
   );
 
   const submitOnboardingPackage = React.useCallback(() => {
     mutate('/onboarding/submit', 'POST');
   }, [mutate]);
 
-  const selectThread = React.useCallback((threadId: string) => {
-    mutate(`/messages/${threadId}/select`, 'PATCH');
-  }, [mutate]);
+  const selectThread = React.useCallback(
+    (threadId: string) => {
+      mutate(`/messages/${threadId}/select`, 'PATCH');
+    },
+    [mutate]
+  );
 
   const sendMessage = React.useCallback(
     (threadId: string, text: string) => {
@@ -974,11 +1018,13 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
         recipientName: thread.name,
         recipientRole: thread.role,
         moduleId: state.activeModuleId,
-        moduleName: state.modules.find((module) => module.id === state.activeModuleId)?.title ?? 'Student Support',
+        moduleName:
+          state.modules.find((module) => module.id === state.activeModuleId)?.title ??
+          'Student Support',
         text: cleanText,
       });
     },
-    [mutate, state.activeModuleId, state.modules, state.threads],
+    [mutate, state.activeModuleId, state.modules, state.threads]
   );
 
   const uploadDocument = React.useCallback(() => {
@@ -1002,7 +1048,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
         fileName: `${upload.id}-replacement.pdf`,
       });
     },
-    [mutate, state.uploads],
+    [mutate, state.uploads]
   );
 
   const updateSetting = React.useCallback(
@@ -1016,12 +1062,15 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       }));
       mutate('/settings', 'PATCH', { [key]: value });
     },
-    [mutate],
+    [mutate]
   );
 
-  const advanceLearning = React.useCallback((minutes = 30) => {
-    mutate('/learning/advance', 'POST', { minutes });
-  }, [mutate]);
+  const advanceLearning = React.useCallback(
+    (minutes = 30) => {
+      mutate('/learning/advance', 'POST', { minutes });
+    },
+    [mutate]
+  );
 
   const toggleLearningSession = React.useCallback(() => {
     mutate('/learning/session/toggle', 'POST');
@@ -1032,19 +1081,25 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       setState((current) => ({ ...current, activeModuleId: moduleId }));
       mutate('/learning/modules/active', 'PATCH', { moduleId });
     },
-    [mutate],
+    [mutate]
   );
 
-  const markStepComplete = React.useCallback((moduleId: string, stepId: string) => {
-    mutate(`/learning/modules/${moduleId}/steps/${stepId}/toggle`, 'PATCH');
-  }, [mutate]);
+  const markStepComplete = React.useCallback(
+    (moduleId: string, stepId: string) => {
+      mutate(`/learning/modules/${moduleId}/steps/${stepId}/toggle`, 'PATCH');
+    },
+    [mutate]
+  );
 
   const submitModuleExam = React.useCallback(
-    async (payload?: { stepId?: string; answers?: Record<string, string> }): Promise<ModuleExamOutcome> => {
+    async (payload?: {
+      stepId?: string;
+      answers?: Record<string, string>;
+    }): Promise<ModuleExamOutcome> => {
       try {
         const response = await callStudentApi<{ module: ModuleItem; result: ModuleExamResult }>(
           `/learning/modules/${state.activeModuleId}/exam`,
-          { method: 'POST', body: JSON.stringify(payload ?? {}) },
+          { method: 'POST', body: JSON.stringify(payload ?? {}) }
         );
         await refreshLearning().catch(() => undefined);
         return { ok: true, result: response.result };
@@ -1056,7 +1111,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
         };
       }
     },
-    [callStudentApi, refreshLearning, state.activeModuleId],
+    [callStudentApi, refreshLearning, state.activeModuleId]
   );
 
   const issueTextbook = React.useCallback(() => {
@@ -1071,13 +1126,19 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
     mutate('/financials/payments/next', 'POST');
   }, [mutate]);
 
-  const checkIn = React.useCallback((type: 'Theory' | 'Clinical') => {
-    mutate('/attendance/check-in', 'POST', { type });
-  }, [mutate]);
+  const checkIn = React.useCallback(
+    (type: 'Theory' | 'Clinical') => {
+      mutate('/attendance/check-in', 'POST', { type });
+    },
+    [mutate]
+  );
 
-  const reportAbsence = React.useCallback((kind: 'today' | 'future') => {
-    mutate('/attendance/absences', 'POST', { kind });
-  }, [mutate]);
+  const reportAbsence = React.useCallback(
+    (kind: 'today' | 'future') => {
+      mutate('/attendance/absences', 'POST', { kind });
+    },
+    [mutate]
+  );
 
   const submitReflection = React.useCallback(
     (text: string) => {
@@ -1086,7 +1147,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
         mutate('/reflections', 'POST', { answer });
       }
     },
-    [mutate],
+    [mutate]
   );
 
   const submitQuestionAnswer = React.useCallback(
@@ -1096,7 +1157,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
         mutate('/daily-question', 'POST', { answer });
       }
     },
-    [mutate],
+    [mutate]
   );
 
   const generateLiveScan = React.useCallback(() => {
@@ -1118,7 +1179,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       }));
       mutate('/forms/cdph-283b', 'PATCH', { [key]: value });
     },
-    [mutate],
+    [mutate]
   );
 
   const signCdphForm = React.useCallback(() => {
@@ -1129,16 +1190,21 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
     mutate('/clinical-hours/logs', 'POST', {
       date: new Date().toISOString().slice(0, 10),
       moduleId: state.activeModuleId,
-      moduleTitle: state.modules.find((module) => module.id === state.activeModuleId)?.title ?? 'Clinical Practice',
+      moduleTitle:
+        state.modules.find((module) => module.id === state.activeModuleId)?.title ??
+        'Clinical Practice',
       hours: 4,
       instructor: 'James Miller',
       note: 'Logged from the student clinical hours workspace.',
     });
   }, [mutate, state.activeModuleId, state.modules]);
 
-  const submitAssignment = React.useCallback((assignmentId: string) => {
-    mutate(`/assignments/${assignmentId}/submit`, 'POST');
-  }, [mutate]);
+  const submitAssignment = React.useCallback(
+    (assignmentId: string) => {
+      mutate(`/assignments/${assignmentId}/submit`, 'POST');
+    },
+    [mutate]
+  );
 
   const submitSupportTicket = React.useCallback(
     (ticket: { subject: string; category: string; message: string }) => {
@@ -1155,7 +1221,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
         message,
       });
     },
-    [mutate],
+    [mutate]
   );
 
   const currentModule =
@@ -1167,16 +1233,19 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
   const completedOnboardingCount = state.onboardingSteps.filter((step) => step.complete).length;
   const theoryHoursCompleted = state.modules.reduce(
     (total, module) => total + Math.min(module.completedHours, module.requiredHours),
-    0,
+    0
   );
-  const theoryHoursRequired = state.modules.reduce((total, module) => total + module.requiredHours, 0);
+  const theoryHoursRequired = state.modules.reduce(
+    (total, module) => total + module.requiredHours,
+    0
+  );
   const clinicalHoursCompleted = state.clinicalLogs.reduce((total, log) => total + log.hours, 0);
   const overallProgressPercent =
     theoryHoursRequired + CLINICAL_HOURS_REQUIRED > 0
       ? Math.round(
           ((theoryHoursCompleted + clinicalHoursCompleted) /
             (theoryHoursRequired + CLINICAL_HOURS_REQUIRED)) *
-            100,
+            100
         )
       : 0;
   const unreadCount = state.threads.filter((thread) => thread.unread).length;
@@ -1185,17 +1254,21 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
   const readinessCount =
     Object.values(state.acknowledgements).filter(Boolean).length +
     Object.values(state.readinessUploads).filter(Boolean).length;
-  const answeredQuestions = state.onboardingQuestions.filter((question) => question.answer.trim()).length;
+  const answeredQuestions = state.onboardingQuestions.filter((question) =>
+    question.answer.trim()
+  ).length;
   const onboardingProgressPercent =
     state.onboardingSteps.length + 6 + state.onboardingQuestions.length > 0
       ? Math.round(
           ((completedOnboardingCount + readinessCount + answeredQuestions) /
             (state.onboardingSteps.length + 6 + state.onboardingQuestions.length)) *
-            100,
+            100
         )
       : 0;
   const examUnlocked = state.learningMinutes >= 480;
-  const moduleCertificatesReady = state.modules.filter((module) => module.certificateUnlocked).length;
+  const moduleCertificatesReady = state.modules.filter(
+    (module) => module.certificateUnlocked
+  ).length;
   const paymentCompleted = state.paymentHistory
     .filter((payment) => payment.status === 'Completed')
     .reduce((total, payment) => total + payment.amount, 0);
@@ -1206,15 +1279,16 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
     state.exitSurveyComplete;
   const today = new Date().toISOString().slice(0, 10);
   const todayTheoryCheckedIn = state.attendanceRecords.some(
-    (record) => record.date === today && record.type === 'Theory' && record.status === 'Present',
+    (record) => record.date === today && record.type === 'Theory' && record.status === 'Present'
   );
   const todayClinicalCheckedIn = state.attendanceRecords.some(
-    (record) => record.date === today && record.type === 'Clinical' && record.status === 'Present',
+    (record) => record.date === today && record.type === 'Clinical' && record.status === 'Present'
   );
 
   const value = React.useMemo<StudentDemoContextValue>(
     () => ({
       ...state,
+      portalHydrated,
       unreadCount,
       urgentTaskCount,
       completedOnboardingCount,
@@ -1297,6 +1371,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       onboardingProgressPercent,
       overallProgressPercent,
       paymentBalance,
+      portalHydrated,
       portalUnlocked,
       programCertificateReady,
       refreshLearning,
@@ -1336,7 +1411,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       updateSetting,
       uploadDocument,
       urgentTaskCount,
-    ],
+    ]
   );
 
   return <StudentDemoContext.Provider value={value}>{children}</StudentDemoContext.Provider>;

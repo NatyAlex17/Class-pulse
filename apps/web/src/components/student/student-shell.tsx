@@ -42,9 +42,19 @@ const navItems: StudentNavItem[] = [
   { label: 'Learning', href: '/student/learning', icon: IconBook2, mobileLabel: 'Learn' },
   { label: 'Inbox', href: '/student/inbox', icon: IconMail, mobileLabel: 'Inbox' },
   { label: 'Progress', href: '/student/progress', icon: IconChartLine, mobileLabel: 'Stats' },
-  { label: 'Clinical Hours', href: '/student/clinical-hours', icon: IconStethoscope, mobileLabel: 'Hours' },
+  {
+    label: 'Clinical Hours',
+    href: '/student/clinical-hours',
+    icon: IconStethoscope,
+    mobileLabel: 'Hours',
+  },
   { label: 'Financials', href: '/student/financials', icon: IconCreditCard, mobileLabel: 'Money' },
-  { label: 'Documents', href: '/student/documents', icon: IconFileDescription, mobileLabel: 'Docs' },
+  {
+    label: 'Documents',
+    href: '/student/documents',
+    icon: IconFileDescription,
+    mobileLabel: 'Docs',
+  },
   { label: 'Onboarding', href: '/student/onboarding', icon: IconUserCheck, mobileLabel: 'Start' },
   { label: 'Forms', href: '/student/forms', icon: IconFileText, mobileLabel: 'Forms' },
 ];
@@ -66,11 +76,7 @@ function formatRoleLabel(role?: string) {
 }
 
 function getInitials(name: string) {
-  const parts = name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2);
+  const parts = name.trim().split(/\s+/).filter(Boolean).slice(0, 2);
 
   if (parts.length === 0) {
     return 'S';
@@ -114,7 +120,7 @@ export function StudentShell({
   patternedCanvas = false,
 }: StudentShellProps) {
   const pathname = usePathname();
-  const { workflowStage, portalUnlocked } = useStudentDemo();
+  const { workflowStage, portalHydrated, portalUnlocked } = useStudentDemo();
   const { user, syncedUser } = useAuth();
   const [workflowOpen, setWorkflowOpen] = React.useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = React.useState(false);
@@ -139,10 +145,10 @@ export function StudentShell({
         : profileImageUrl;
 
   React.useEffect(() => {
-    if (!portalUnlocked) {
+    if (portalHydrated && !portalUnlocked) {
       setWorkflowOpen(true);
     }
-  }, [portalUnlocked]);
+  }, [portalHydrated, portalUnlocked]);
 
   React.useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -190,7 +196,7 @@ export function StudentShell({
                   'flex items-center gap-3 rounded-[16px] px-3 py-2.5 text-sm transition-colors',
                   active
                     ? 'border-r-4 border-primary bg-primary-container/10 font-semibold text-primary'
-                    : 'text-on-surface-variant hover:bg-surface-high hover:text-primary',
+                    : 'text-on-surface-variant hover:bg-surface-high hover:text-primary'
                 )}
               >
                 <Icon className="size-5" />
@@ -262,7 +268,7 @@ export function StudentShell({
                       'flex items-center gap-3 rounded-[16px] px-3 py-3 text-sm transition-colors',
                       active
                         ? 'bg-primary-container/10 font-semibold text-primary'
-                        : 'text-on-surface-variant hover:bg-surface-high hover:text-primary',
+                        : 'text-on-surface-variant hover:bg-surface-high hover:text-primary'
                     )}
                   >
                     <Icon className="size-5" />
@@ -330,7 +336,10 @@ export function StudentShell({
           <div className="flex items-center gap-2 sm:gap-4">
             {topActions}
             <ThemeToggle />
-            <button suppressHydrationWarning className="text-on-surface-variant transition hover:text-primary">
+            <button
+              suppressHydrationWarning
+              className="text-on-surface-variant transition hover:text-primary"
+            >
               <IconBell className="size-5" />
             </button>
             <div className="relative" data-profile-menu>
@@ -414,16 +423,14 @@ export function StudentShell({
         <div
           className={cn(
             'min-h-[calc(100vh-4rem)] px-4 py-6 sm:px-6 lg:px-8',
-            patternedCanvas && 'cp-grid-pattern',
+            patternedCanvas && 'cp-grid-pattern'
           )}
         >
           <div className="mx-auto w-full max-w-[1200px]">
             <div
               className={cn(
                 'mb-6 flex flex-col gap-3 rounded-[18px] border px-5 py-4 sm:flex-row sm:items-center sm:justify-between',
-                portalUnlocked
-                  ? 'border-success/20 bg-success/5'
-                  : 'border-warning/20 bg-warning/5',
+                portalUnlocked ? 'border-success/20 bg-success/5' : 'border-warning/20 bg-warning/5'
               )}
             >
               <div>
@@ -475,7 +482,7 @@ export function StudentShell({
               href={item.href}
               className={cn(
                 'flex flex-col items-center gap-1 text-[10px] font-medium',
-                active ? 'text-primary' : 'text-on-surface-variant',
+                active ? 'text-primary' : 'text-on-surface-variant'
               )}
             >
               <Icon className="size-5" />
