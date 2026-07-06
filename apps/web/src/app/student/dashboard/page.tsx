@@ -8,7 +8,6 @@ import {
   IconCalendarEvent,
   IconCheck,
   IconCircleCheckFilled,
-  IconClockHour4,
   IconLocation,
   IconMail,
   IconMessageCircle,
@@ -53,7 +52,6 @@ export default function StudentDashboardPage() {
     lastAction,
     toggleTask,
     completeOnboardingStep,
-    advanceLearning,
     checkIn,
     reportAbsence,
     submitReflection,
@@ -86,7 +84,11 @@ export default function StudentDashboardPage() {
     {
       label: 'ENGAGEMENT',
       value: `${(learningMinutes / 60).toFixed(1)} hrs`,
-      width: `${Math.round((learningMinutes / 480) * 100)}%`,
+      width: `${
+        theoryHoursRequired > 0
+          ? Math.min(100, Math.round((learningMinutes / 60 / theoryHoursRequired) * 100))
+          : 0
+      }%`,
       tone: 'bg-info',
     },
   ] as const;
@@ -133,14 +135,6 @@ export default function StudentDashboardPage() {
                       {portalUnlocked ? 'Continue Learning' : 'Learning Locked'}
                     </Button>
                   </Link>
-                  <Button
-                    variant="secondary"
-                    className="h-12 rounded-[16px] px-6"
-                    onClick={() => advanceLearning(30)}
-                    disabled={!portalUnlocked}
-                  >
-                    Simulate 30 Minutes
-                  </Button>
                 </div>
               </div>
 

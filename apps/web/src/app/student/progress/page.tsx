@@ -1,6 +1,7 @@
  'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import {
   IconArrowRight,
   IconBook2,
@@ -39,10 +40,8 @@ export default function StudentProgressPage() {
     clinicalHoursRequired,
     currentModule,
     learningMinutes,
-    advanceLearning,
     examUnlocked,
     selectModule,
-    submitModuleExam,
   } = useStudentDemo();
 
   const [filterView, setFilterView] = React.useState<'all' | 'completed' | 'inprogress'>('all');
@@ -219,10 +218,12 @@ export default function StudentProgressPage() {
               <p className="mb-6 mt-3 text-on-surface-variant">
                 You are currently focused on {currentModule.title}. This page reflects backend-driven progress from the dashboard, learning flow, and onboarding steps.
               </p>
-              <Button className="h-12 rounded-[16px] px-6" onClick={() => advanceLearning(30)}>
-                Resume Current Module
-                <IconArrowRight className="size-4" />
-              </Button>
+              <Link href="/student/learning">
+                <Button className="h-12 rounded-[16px] px-6">
+                  Resume Current Module
+                  <IconArrowRight className="size-4" />
+                </Button>
+              </Link>
             </div>
           </div>
         </section>

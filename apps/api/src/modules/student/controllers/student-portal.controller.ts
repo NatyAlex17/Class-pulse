@@ -14,6 +14,7 @@ import type {
   ReportAbsenceDto,
   SelectModuleDto,
   SendStudentMessageDto,
+  SetLearningSessionDto,
   SubmitModuleExamDto,
   SubmitSupportTicketDto,
   TextAnswerDto,
@@ -282,6 +283,14 @@ export class StudentPortalController {
     return createApiResponse(
       this.studentPortalService.toggleLearningSession(studentId),
       'Learning session toggled successfully.',
+    );
+  }
+
+  @Patch('learning/session')
+  setLearningSession(@Param('studentId') studentId: string, @Body() body: SetLearningSessionDto) {
+    return createApiResponse(
+      this.studentPortalService.setLearningSession(studentId, body),
+      'Learning session updated successfully.',
     );
   }
 

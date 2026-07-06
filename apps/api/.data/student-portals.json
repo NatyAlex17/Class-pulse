@@ -4955,17 +4955,19 @@
           "title": "Introduction",
           "summary": "Introduction",
           "status": "Complete",
-          "progressPercent": 67,
+          "progressPercent": 100,
           "requiredHours": 10,
           "completedHours": 10,
-          "certificateUnlocked": false,
+          "sessionMinutes": 600,
+          "examScore": "100/100",
+          "certificateUnlocked": true,
           "steps": [
             {
               "id": "introduction-video",
               "title": "Introduction video",
               "type": "Video",
               "duration": "15",
-              "note": "this is for introduction",
+              "note": "this is for introductionss",
               "complete": true,
               "resourceUrl": "http://localhost:4000/uploads/learning-resources/1783050742765-compliance-platform.mp4",
               "sectionId": "section-one",
@@ -4990,7 +4992,7 @@
               "type": "Quiz",
               "duration": "30",
               "note": "this should be completed in order to finalize this course",
-              "complete": false,
+              "complete": true,
               "content": "this should be completed in order to finalize this course",
               "sectionId": "section-one",
               "sectionTitle": "Section one",
@@ -5040,10 +5042,11 @@
           "id": "foundation-of-patients",
           "title": "Foundation of Patients",
           "summary": "Foundation of Patients",
-          "status": "Locked",
+          "status": "In Progress",
           "progressPercent": 0,
           "requiredHours": 4,
-          "completedHours": 0,
+          "completedHours": 0.3,
+          "sessionMinutes": 17,
           "certificateUnlocked": false,
           "steps": [
             {
@@ -5123,7 +5126,7 @@
           ]
         }
       ],
-      "activeModuleId": "introduction",
+      "activeModuleId": "foundation-of-patients",
       "threads": [
         {
           "id": "lisa-wong",
@@ -5131,10 +5134,10 @@
           "recipientRole": "Senior Instructor",
           "moduleId": "m3",
           "moduleName": "Vital Signs & Monitoring",
-          "status": "Unread",
-          "preview": "Great progress on your vital signs drill. I've left feedback on your charting.",
-          "time": "2026-06-30T10:45:00.000Z",
-          "unread": true,
+          "status": "Read",
+          "preview": "How do I take an accurate pulse?",
+          "time": "2026-07-06T11:58:36.824Z",
+          "unread": false,
           "messages": [
             {
               "id": "lw-1",
@@ -5147,6 +5150,18 @@
               "sender": "student",
               "text": "Thank you. I'm reviewing the charting notes before I upload the skill check.",
               "time": "2026-06-30T11:02:00.000Z"
+            },
+            {
+              "id": "msg-1783339115617",
+              "sender": "student",
+              "text": "How do I take an accurate pulse?",
+              "time": "2026-07-06T11:58:35.617Z"
+            },
+            {
+              "id": "msg-1783339116824",
+              "sender": "student",
+              "text": "How do I take an accurate pulse?",
+              "time": "2026-07-06T11:58:36.824Z"
             }
           ]
         },
@@ -5379,12 +5394,452 @@
       "textbookIssued": false,
       "textbookOpened": false,
       "exitSurveyComplete": false,
-      "learningMinutes": 25,
-      "learningSessionActive": false,
+      "learningMinutes": 72,
+      "learningSessionActive": true,
       "reflectionResponse": "",
       "questionOfDayAnswer": "",
-      "lastAction": "Introduction exam attempted — score below the passing threshold.",
+      "lastAction": "Reply sent to Lisa Wong.",
       "auditTrail": [
+        {
+          "id": "audit-1783339116830-198",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.message.sent",
+          "target": "lisa-wong",
+          "occurredAt": "2026-07-06T11:58:36.830Z",
+          "details": {
+            "moduleId": "foundation-of-patients"
+          }
+        },
+        {
+          "id": "audit-1783339115622-711",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.message.sent",
+          "target": "lisa-wong",
+          "occurredAt": "2026-07-06T11:58:35.622Z",
+          "details": {
+            "moduleId": "foundation-of-patients"
+          }
+        },
+        {
+          "id": "audit-1783339103512-810",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:58:23.512Z",
+          "details": {
+            "active": true
+          }
+        },
+        {
+          "id": "audit-1783339023824-647",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:57:03.824Z",
+          "details": {
+            "active": false
+          }
+        },
+        {
+          "id": "audit-1783338965104-7",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:56:05.104Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783338857465-661",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:54:17.465Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783338797406-598",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:53:17.406Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783338737465-991",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:52:17.465Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783338677251-555",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:51:17.251Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783338617525-764",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:50:17.525Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783338557152-221",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:49:17.152Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783338497441-366",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:48:17.441Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783338437227-241",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:47:17.227Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783338377462-852",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:46:17.462Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783338317432-399",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:45:17.432Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783338257588-433",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:44:17.588Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783338197190-775",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:43:17.190Z",
+          "details": {
+            "active": true
+          }
+        },
+        {
+          "id": "audit-1783337899911-557",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:38:19.911Z",
+          "details": {
+            "active": false
+          }
+        },
+        {
+          "id": "audit-1783337674900-353",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:34:34.900Z",
+          "details": {
+            "active": true
+          }
+        },
+        {
+          "id": "audit-1783337674552-50",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:34:34.552Z",
+          "details": {
+            "active": false
+          }
+        },
+        {
+          "id": "audit-1783337651728-21",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:34:11.728Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783337591309-661",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:33:11.309Z",
+          "details": {
+            "active": true
+          }
+        },
+        {
+          "id": "audit-1783337591052-751",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:33:11.052Z",
+          "details": {
+            "active": false
+          }
+        },
+        {
+          "id": "audit-1783336103874-629",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:08:23.874Z",
+          "details": {
+            "active": true
+          }
+        },
+        {
+          "id": "audit-1783336103825-227",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:08:23.825Z",
+          "details": {
+            "active": false
+          }
+        },
+        {
+          "id": "audit-1783335960349-298",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:06:00.349Z",
+          "details": {
+            "active": true
+          }
+        },
+        {
+          "id": "audit-1783335959968-226",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:05:59.968Z",
+          "details": {
+            "active": false
+          }
+        },
+        {
+          "id": "audit-1783329733561-489",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T09:22:13.561Z",
+          "details": {
+            "active": true
+          }
+        },
+        {
+          "id": "audit-1783329733543-566",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T09:22:13.543Z",
+          "details": {
+            "active": false
+          }
+        },
+        {
+          "id": "audit-1783329705155-581",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T09:21:45.155Z",
+          "details": {
+            "active": true
+          }
+        },
+        {
+          "id": "audit-1783329705087-775",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T09:21:45.087Z",
+          "details": {
+            "active": false
+          }
+        },
+        {
+          "id": "audit-1783329163033-744",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T09:12:43.033Z",
+          "details": {
+            "active": true
+          }
+        },
+        {
+          "id": "audit-1783329162372-109",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T09:12:42.372Z",
+          "details": {
+            "active": false
+          }
+        },
+        {
+          "id": "audit-1783327802904-586",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T08:50:02.904Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783327742880-189",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T08:49:02.880Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783327682482-434",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T08:48:02.482Z",
+          "details": {
+            "active": true
+          }
+        },
+        {
+          "id": "audit-1783327680160-81",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T08:48:00.160Z",
+          "details": {
+            "active": false
+          }
+        },
+        {
+          "id": "audit-1783327652597-8",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T08:47:32.597Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783327566140-295",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T08:46:06.140Z",
+          "details": {
+            "active": true
+          }
+        },
+        {
+          "id": "audit-1783327565774-980",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T08:46:05.774Z",
+          "details": {
+            "active": false
+          }
+        },
+        {
+          "id": "audit-1783327565395-757",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T08:46:05.395Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783327384025-485",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T08:43:04.025Z",
+          "details": {
+            "active": true
+          }
+        },
+        {
+          "id": "audit-1783326454469-510",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T08:27:34.469Z",
+          "details": {
+            "minutes": 30
+          }
+        },
+        {
+          "id": "audit-1783326453765-856",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.module-exam.submitted",
+          "target": "introduction",
+          "occurredAt": "2026-07-06T08:27:33.765Z",
+          "details": {
+            "scorePercent": 100
+          }
+        },
         {
           "id": "audit-1783170507725-773",
           "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",

@@ -115,6 +115,8 @@ export interface CurriculumModule {
   progressPercent: number;
   requiredHours: number;
   completedHours: number;
+  /** Real learning time recorded against this module, in minutes. */
+  sessionMinutes?: number;
   examScore?: string;
   certificateUnlocked: boolean;
   steps: LearningStep[];
@@ -495,6 +497,8 @@ export interface StudentLearningSnapshot {
   currentModule: CurriculumModule;
   modules: CurriculumModule[];
   learningMinutes: number;
+  sessionMinutes: number;
+  requiredSessionMinutes: number;
   learningSessionActive: boolean;
   examUnlocked: boolean;
   textbookIssued: boolean;
@@ -625,6 +629,10 @@ export interface UpdateSettingDto {
 
 export interface AdvanceLearningDto {
   minutes?: number;
+}
+
+export interface SetLearningSessionDto {
+  active: boolean;
 }
 
 export interface SelectModuleDto {

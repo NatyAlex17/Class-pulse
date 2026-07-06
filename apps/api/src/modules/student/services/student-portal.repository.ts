@@ -335,6 +335,10 @@ export class StudentPortalRepository {
         progressPercent,
         requiredHours: configuredModule.requiredHours,
         completedHours: Math.min(existingModule?.completedHours ?? 0, configuredModule.requiredHours),
+        sessionMinutes: Math.min(
+          existingModule?.sessionMinutes ?? Math.round((existingModule?.completedHours ?? 0) * 60),
+          Math.round(configuredModule.requiredHours * 60),
+        ),
         examScore: existingModule?.examScore,
         certificateUnlocked: existingModule?.certificateUnlocked ?? false,
         steps,

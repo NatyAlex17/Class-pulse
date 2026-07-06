@@ -72,6 +72,7 @@ type ModuleItem = {
   progressPercent: number;
   requiredHours: number;
   completedHours: number;
+  sessionMinutes?: number;
   examScore?: string;
   certificateUnlocked: boolean;
   steps: LearningStep[];
@@ -362,6 +363,8 @@ type StudentDemoContextValue = StudentDemoState & {
   clinicalHoursCompleted: number;
   clinicalHoursRequired: number;
   overallProgressPercent: number;
+  sessionMinutes: number;
+  requiredSessionMinutes: number;
   examUnlocked: boolean;
   moduleCertificatesReady: number;
   programCertificateReady: boolean;
@@ -398,6 +401,7 @@ type StudentDemoContextValue = StudentDemoState & {
   ) => void;
   advanceLearning: (minutes?: number) => void;
   toggleLearningSession: () => void;
+  setLearningSession: (active: boolean) => void;
   selectModule: (moduleId: string) => void;
   markStepComplete: (moduleId: string, stepId: string) => void;
   submitModuleExam: (payload?: {
@@ -490,6 +494,8 @@ type StudentLearningApi = {
   currentModule: ModuleItem;
   modules: ModuleItem[];
   learningMinutes: number;
+  sessionMinutes: number;
+  requiredSessionMinutes: number;
   learningSessionActive: boolean;
   examUnlocked: boolean;
   textbookIssued: boolean;
@@ -549,6 +555,7 @@ function createFallbackState(): StudentDemoState {
         progressPercent: 0,
         requiredHours: 15,
         completedHours: 0,
+        sessionMinutes: 0,
         certificateUnlocked: false,
         steps: [],
       },
@@ -1066,7 +1073,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
   );
 
   const advanceLearning = React.useCallback(
-    (minutes = 30) => {
+    (minutes = 1) => {
       mutate('/learning/advance', 'POST', { minutes });
     },
     [mutate]
@@ -1075,6 +1082,14 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
   const toggleLearningSession = React.useCallback(() => {
     mutate('/learning/session/toggle', 'POST');
   }, [mutate]);
+
+  const setLearningSession = React.useCallback(
+    (active: boolean) => {
+      setState((current) => ({ ...current, learningSessionActive: active }));
+      mutate('/learning/session', 'PATCH', { active });
+    },
+    [mutate]
+  );
 
   const selectModule = React.useCallback(
     (moduleId: string) => {
@@ -1265,7 +1280,16 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
             100
         )
       : 0;
-  const examUnlocked = state.learningMinutes >= 480;
+  // Session target comes from the configured module hours fetched from the API.
+  const requiredSessionMinutes = Math.max(0, Math.round((currentModule?.requiredHours ?? 0) * 60));
+  const sessionMinutes = Math.min(
+    Math.max(
+      0,
+      Math.round(currentModule?.sessionMinutes ?? (currentModule?.completedHours ?? 0) * 60)
+    ),
+    requiredSessionMinutes
+  );
+  const examUnlocked = sessionMinutes >= requiredSessionMinutes;
   const moduleCertificatesReady = state.modules.filter(
     (module) => module.certificateUnlocked
   ).length;
@@ -1302,6 +1326,8 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       clinicalHoursCompleted,
       clinicalHoursRequired: CLINICAL_HOURS_REQUIRED,
       overallProgressPercent,
+      sessionMinutes,
+      requiredSessionMinutes,
       examUnlocked,
       moduleCertificatesReady,
       programCertificateReady,
@@ -1332,6 +1358,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       updateSetting,
       advanceLearning,
       toggleLearningSession,
+      setLearningSession,
       selectModule,
       markStepComplete,
       submitModuleExam,
@@ -1378,11 +1405,14 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       readinessCount,
       replaceDocument,
       reportAbsence,
+      requiredSessionMinutes,
       selectModule,
       selectThread,
       sendMessage,
+      sessionMinutes,
       setEnrollmentWizardStep,
       setEntranceSurveyStep,
+      setLearningSession,
       setWorkflowStage,
       signCdphForm,
       state,

@@ -10,10 +10,10 @@ import {
   IconBrain,
   IconCheck,
   IconCircleCheckFilled,
-  IconClockHour4,
   IconFile,
   IconLock,
   IconMenu2,
+  IconPlayerPauseFilled,
   IconPlayerPlayFilled,
   IconSend2,
   IconUserCircle,
@@ -42,6 +42,47 @@ const suggestionQuestions = [
   'What are normal BP ranges for elderly?',
   'Explain respiratory rhythm vs depth.',
 ];
+const LESSON_SESSION_STORAGE_KEY = 'student-learning-lesson-session-starts';
+
+function formatSessionTime(totalMinutes: number) {
+  const minutes = Math.max(0, Math.round(totalMinutes));
+  return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`;
+}
+
+function parseDurationToMinutes(duration?: string) {
+  if (!duration) {
+    return null;
+  }
+
+  const normalized = duration.trim().toLowerCase();
+  const match = normalized.match(/(\d+(?:\.\d+)?)/);
+
+  if (!match) {
+    return null;
+  }
+
+  const value = Number(match[1]);
+
+  if (!Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+
+  if (
+    normalized.includes('hour') ||
+    normalized.includes(' hr') ||
+    normalized.endsWith('hr') ||
+    normalized.endsWith('hrs') ||
+    normalized.includes('hrs')
+  ) {
+    return Math.round(value * 60);
+  }
+
+  if (normalized.includes('min') || /^\d+(?:\.\d+)?$/.test(normalized)) {
+    return Math.round(value);
+  }
+
+  return null;
+}
 
 function toEmbedUrl(url?: string) {
   if (!url) {
@@ -63,8 +104,9 @@ function toEmbedUrl(url?: string) {
 
 export default function StudentLearningPage() {
   const {
-    learningMinutes,
     learningSessionActive,
+    sessionMinutes,
+    requiredSessionMinutes,
     examUnlocked,
     portalHydrated,
     portalUnlocked,
@@ -72,7 +114,7 @@ export default function StudentLearningPage() {
     currentModule,
     modules,
     advanceLearning,
-    toggleLearningSession,
+    setLearningSession,
     selectModule,
     markStepComplete,
     sendMessage,
@@ -91,8 +133,12 @@ export default function StudentLearningPage() {
   const [examError, setExamError] = React.useState<string | null>(null);
   const [examSubmitting, setExamSubmitting] = React.useState(false);
   const [completedLessons, setCompletedLessons] = React.useState<Set<string>>(new Set());
-  const remainingMinutes = Math.max(480 - learningMinutes, 0);
-  const engagementPercent = Math.round((learningMinutes / 480) * 100);
+  const [lessonSessionStarts, setLessonSessionStarts] = React.useState<Record<string, number>>({});
+  const sessionRemainingMinutes = Math.max(requiredSessionMinutes - sessionMinutes, 0);
+  const sessionPercent =
+    requiredSessionMinutes > 0
+      ? Math.min(100, Math.round((sessionMinutes / requiredSessionMinutes) * 100))
+      : 100;
 
   const lessons = currentModule.steps;
   const selectedLesson = lessons.find((lesson) => lesson.id === selectedLessonId) ?? lessons[0];
@@ -129,10 +175,131 @@ export default function StudentLearningPage() {
   const unansweredCount = quizQuestionSet.filter(
     (question) => !(quizAnswers[question.id] ?? '').trim()
   ).length;
+  const selectedLessonTargetMinutes = parseDurationToMinutes(selectedLesson?.duration);
+  const selectedLessonStartMinutes =
+    selectedLesson ? lessonSessionStarts[selectedLesson.id] ?? null : null;
+  const selectedLessonElapsedMinutes =
+    selectedLessonStartMinutes === null ? 0 : Math.max(0, sessionMinutes - selectedLessonStartMinutes);
+  const selectedLessonRemainingMinutes =
+    selectedLessonTargetMinutes === null
+      ? 0
+      : Math.max(0, selectedLessonTargetMinutes - selectedLessonElapsedMinutes);
+  const selectedLessonPercent =
+    selectedLessonTargetMinutes && selectedLessonTargetMinutes > 0
+      ? Math.min(100, Math.round((selectedLessonElapsedMinutes / selectedLessonTargetMinutes) * 100))
+      : null;
+  const showingLessonTimer =
+    viewMode === 'lesson' && selectedLesson?.type !== 'Quiz' && selectedLessonTargetMinutes !== null;
+  const displaySessionMinutes = showingLessonTimer ? selectedLessonElapsedMinutes : sessionMinutes;
+  const displayRequiredSessionMinutes = showingLessonTimer
+    ? selectedLessonTargetMinutes ?? requiredSessionMinutes
+    : requiredSessionMinutes;
+  const displaySessionPercent = showingLessonTimer ? selectedLessonPercent ?? 0 : sessionPercent;
+  const canMarkCurrentLessonComplete =
+    !selectedLesson ||
+    completedLessons.has(selectedLesson.id) ||
+    (selectedLessonTargetMinutes !== null
+      ? selectedLessonElapsedMinutes >= selectedLessonTargetMinutes
+      : learningSessionActive);
 
   React.useEffect(() => {
     void refreshLearning();
   }, [refreshLearning]);
+
+  React.useEffect(() => {
+    if (!portalHydrated || typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const storedValue = window.localStorage.getItem(LESSON_SESSION_STORAGE_KEY);
+
+      if (!storedValue) {
+        return;
+      }
+
+      const parsed = JSON.parse(storedValue) as Record<string, number>;
+
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return;
+      }
+
+      const normalizedEntries = Object.entries(parsed).filter(
+        ([lessonId, minute]) =>
+          typeof lessonId === 'string' &&
+          Number.isFinite(minute) &&
+          minute >= 0 &&
+          lessons.some((lesson) => lesson.id === lessonId)
+      );
+
+      setLessonSessionStarts(Object.fromEntries(normalizedEntries));
+    } catch {
+      window.localStorage.removeItem(LESSON_SESSION_STORAGE_KEY);
+    }
+  }, [lessons, portalHydrated]);
+
+  React.useEffect(() => {
+    if (!portalHydrated || typeof window === 'undefined') {
+      return;
+    }
+
+    const validLessonIds = new Set(lessons.map((lesson) => lesson.id));
+    const filteredEntries = Object.entries(lessonSessionStarts).filter(
+      ([lessonId]) => validLessonIds.has(lessonId)
+    );
+    const normalizedStarts = Object.fromEntries(filteredEntries);
+
+    let storedStarts: Record<string, number> = {};
+
+    try {
+      const storedValue = window.localStorage.getItem(LESSON_SESSION_STORAGE_KEY);
+      const parsed = storedValue ? (JSON.parse(storedValue) as Record<string, number>) : {};
+
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        storedStarts = Object.fromEntries(
+          Object.entries(parsed).filter(
+            ([lessonId, minute]) =>
+              typeof lessonId === 'string' && Number.isFinite(minute) && minute >= 0
+          )
+        );
+      }
+    } catch {
+      storedStarts = {};
+    }
+
+    const mergedStarts = {
+      ...Object.fromEntries(
+        Object.entries(storedStarts).filter(([lessonId]) => !validLessonIds.has(lessonId))
+      ),
+      ...normalizedStarts,
+    };
+
+    window.localStorage.setItem(LESSON_SESSION_STORAGE_KEY, JSON.stringify(mergedStarts));
+
+    if (filteredEntries.length !== Object.keys(lessonSessionStarts).length) {
+      setLessonSessionStarts(normalizedStarts);
+    }
+  }, [lessonSessionStarts, lessons, portalHydrated]);
+
+  React.useEffect(() => {
+    return () => setLearningSession(false);
+  }, [setLearningSession]);
+
+  // Session time is recorded server-side one real minute at a time — only while
+  // the session is running, the tab is visible, and the target is not yet met.
+  React.useEffect(() => {
+    if (!portalUnlocked || !learningSessionActive || examUnlocked) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        advanceLearning(1);
+      }
+    }, 60_000);
+
+    return () => window.clearInterval(interval);
+  }, [advanceLearning, examUnlocked, learningSessionActive, portalUnlocked]);
 
   React.useEffect(() => {
     if (portalHydrated && !portalUnlocked) {
@@ -173,7 +340,24 @@ export default function StudentLearningPage() {
     completedLessons.has(lessonId) ||
     lessons.find((lesson) => lesson.id === lessonId)?.complete === true;
 
-  const openLesson = (lessonId: string) => {
+  const startLessonSession = React.useCallback(
+    (lessonId: string) => {
+      setLessonSessionStarts((current) =>
+        current[lessonId] !== undefined ? current : { ...current, [lessonId]: sessionMinutes }
+      );
+
+      if (!learningSessionActive) {
+        setLearningSession(true);
+      }
+    },
+    [learningSessionActive, sessionMinutes, setLearningSession]
+  );
+
+  const openLesson = (lessonId: string, options?: { startSession?: boolean }) => {
+    if (options?.startSession) {
+      startLessonSession(lessonId);
+    }
+
     setSelectedLessonId(lessonId);
     setViewMode('lesson');
   };
@@ -187,7 +371,7 @@ export default function StudentLearningPage() {
     const target =
       section.lessons.find((lesson) => !isLessonComplete(lesson.id)) ?? section.lessons[0];
     if (target) {
-      openLesson(target.id);
+      openLesson(target.id, { startSession: true });
     }
   };
 
@@ -203,9 +387,6 @@ export default function StudentLearningPage() {
 
     if (outcome.ok) {
       setExamResult(outcome.result);
-      if (outcome.result.passed) {
-        advanceLearning(30);
-      }
     } else {
       setExamError(outcome.error);
     }
@@ -254,44 +435,78 @@ export default function StudentLearningPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-8">
-          {/* Session Time Display */}
-          <div className="flex items-center gap-4 px-4 py-2 rounded-[14px] bg-primary/10 border border-primary/20">
-            <div className="flex items-center gap-2">
-              <IconClockHour4 className="size-5 text-primary" />
-              <div className="flex flex-col">
-                <span className="font-mono text-[11px] uppercase tracking-widest text-on-surface-variant">
-                  Session Time
-                </span>
-                <span className="font-mono text-[20px] font-bold text-primary">
-                  {Math.floor(learningMinutes / 60)}h{' '}
-                  {String(learningMinutes % 60).padStart(2, '0')}m
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Engagement Progress */}
-          <div className="flex flex-col items-end">
-            <span className="font-mono text-[12px] uppercase tracking-widest text-on-surface-variant">
-              Engagement Progress
-            </span>
-            <div className="flex items-center gap-3">
-              <span className="font-mono text-[20px] font-semibold text-primary">
-                {(learningMinutes / 60).toFixed(1)}{' '}
-                <span className="font-sans text-xs text-on-surface-variant">/ 8h</span>
+        <div className="flex items-center gap-4">
+          {/* Session timer — the target comes from the module's configured hours */}
+          <div className="flex items-center gap-3 rounded-[14px] border border-primary/20 bg-primary/10 px-4 py-2">
+            <span
+              className={cn(
+                'h-2.5 w-2.5 shrink-0 rounded-full',
+                examUnlocked
+                  ? 'bg-success'
+                  : learningSessionActive
+                    ? 'animate-pulse bg-success'
+                    : 'bg-on-surface-variant/40'
+              )}
+            />
+            <div>
+              <span className="block font-mono text-[10px] uppercase tracking-widest text-on-surface-variant">
+                {showingLessonTimer
+                  ? learningSessionActive
+                    ? 'Lesson running'
+                    : 'Lesson paused'
+                  : examUnlocked
+                    ? 'Session complete'
+                    : learningSessionActive
+                      ? 'Session running'
+                      : 'Session paused'}
               </span>
-              <div className="h-2 w-32 overflow-hidden rounded-full bg-surface-high">
+              <span className="font-mono text-[18px] font-bold leading-tight text-primary">
+                {formatSessionTime(displaySessionMinutes)}
+                <span className="ml-1 font-sans text-xs font-medium text-on-surface-variant">
+                  / {formatSessionTime(displayRequiredSessionMinutes)}
+                </span>
+              </span>
+              {showingLessonTimer ? (
+                <span className="mt-0.5 block text-[11px] text-on-surface-variant">
+                  Module total {formatSessionTime(sessionMinutes)} / {formatSessionTime(requiredSessionMinutes)}
+                </span>
+              ) : null}
+            </div>
+            <div className="hidden w-28 flex-col gap-1 md:flex">
+              <div className="h-2 overflow-hidden rounded-full bg-surface-high">
                 <div
-                  className="h-full rounded-full bg-primary"
-                  style={{ width: `${engagementPercent}%` }}
+                  className="h-full rounded-full bg-primary transition-all duration-500"
+                  style={{ width: `${displaySessionPercent}%` }}
                 />
               </div>
-              <span className="font-mono text-sm font-bold text-success">{engagementPercent}%</span>
+              <span className="text-right font-mono text-[10px] text-on-surface-variant">
+                {displaySessionPercent}%
+              </span>
             </div>
+            {!examUnlocked && (
+              <button
+                onClick={() => {
+                  if (!learningSessionActive && selectedLesson) {
+                    startLessonSession(selectedLesson.id);
+                    return;
+                  }
+
+                  setLearningSession(!learningSessionActive);
+                }}
+                disabled={!portalUnlocked}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white transition hover:bg-primary/90 disabled:opacity-50"
+                title={learningSessionActive ? 'Pause session' : 'Resume session'}
+              >
+                {learningSessionActive ? (
+                  <IconPlayerPauseFilled className="size-4" />
+                ) : (
+                  <IconPlayerPlayFilled className="size-4" />
+                )}
+              </button>
+            )}
           </div>
 
-          <div className="flex items-center gap-3 border-l border-border-subtle pl-8">
+          <div className="flex items-center gap-3 border-l border-border-subtle pl-4">
             <button className="text-on-surface-variant transition hover:text-primary">
               <IconBell className="size-5" />
             </button>
@@ -567,7 +782,7 @@ export default function StudentLearningPage() {
                         const target =
                           lessons.find((lesson) => !isLessonComplete(lesson.id)) ?? lessons[0];
                         if (target) {
-                          openLesson(target.id);
+                          openLesson(target.id, { startSession: true });
                         }
                       }}
                       disabled={lessons.length === 0}
@@ -707,17 +922,23 @@ export default function StudentLearningPage() {
                     </div>
                     <Button
                       className="rounded-[14px] bg-success hover:bg-success/90"
-                      disabled={completedLessons.has(selectedLesson.id)}
+                      disabled={!canMarkCurrentLessonComplete}
                       onClick={() => {
-                        setCompletedLessons(new Set([...completedLessons, selectedLesson.id]));
+                        setCompletedLessons((current) => new Set([...current, selectedLesson.id]));
                         markStepComplete(currentModule.id, selectedLesson.id);
-                        advanceLearning(10);
                       }}
                     >
                       <IconCheck className="size-4 mr-2" />
                       {completedLessons.has(selectedLesson.id) ? 'Done ✓' : 'Complete'}
                     </Button>
                   </div>
+                  {!completedLessons.has(selectedLesson.id) &&
+                  selectedLessonTargetMinutes !== null &&
+                  selectedLessonRemainingMinutes > 0 ? (
+                    <p className="text-xs text-on-surface-variant">
+                      Complete unlocks after the configured lesson time has run.
+                    </p>
+                  ) : null}
                 </div>
               )}
 
@@ -826,17 +1047,23 @@ export default function StudentLearningPage() {
                     </Button>
                     <Button
                       className="flex-1 rounded-[14px] h-11 bg-success hover:bg-success/90"
-                      disabled={completedLessons.has(selectedLesson.id)}
+                      disabled={!canMarkCurrentLessonComplete}
                       onClick={() => {
-                        setCompletedLessons(new Set([...completedLessons, selectedLesson.id]));
+                        setCompletedLessons((current) => new Set([...current, selectedLesson.id]));
                         markStepComplete(currentModule.id, selectedLesson.id);
-                        advanceLearning(15);
                       }}
                     >
                       <IconCheck className="size-4 mr-2" />
                       {completedLessons.has(selectedLesson.id) ? 'Completed' : 'Mark as Complete'}
                     </Button>
                   </div>
+                  {!completedLessons.has(selectedLesson.id) &&
+                  selectedLessonTargetMinutes !== null &&
+                  selectedLessonRemainingMinutes > 0 ? (
+                    <div className="px-8 pb-8 -mt-4 text-xs text-on-surface-variant">
+                      Finish the configured lesson time before marking this lesson complete.
+                    </div>
+                  ) : null}
                 </div>
               )}
 
@@ -891,6 +1118,18 @@ export default function StudentLearningPage() {
                             Score: {currentModule.examScore}
                           </p>
                         ) : null}
+                      </div>
+                    ) : !examUnlocked ? (
+                      <div className="rounded-[16px] border border-warning/30 bg-warning/10 p-6 text-center">
+                        <IconLock className="mx-auto size-8 text-warning" />
+                        <p className="mt-3 text-sm font-semibold text-on-surface">
+                          Assessment locked
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-on-surface-variant">
+                          Keep learning — {formatSessionTime(sessionRemainingMinutes)} of your
+                          required {formatSessionTime(requiredSessionMinutes)} session time is left
+                          before this assessment unlocks.
+                        </p>
                       </div>
                     ) : quizQuestionSet.length > 0 ? (
                       <>
@@ -1029,9 +1268,8 @@ export default function StudentLearningPage() {
                       className="w-full rounded-[14px] h-11 bg-success hover:bg-success/90"
                       disabled={completedLessons.has(selectedLesson.id)}
                       onClick={() => {
-                        setCompletedLessons(new Set([...completedLessons, selectedLesson.id]));
+                        setCompletedLessons((current) => new Set([...current, selectedLesson.id]));
                         markStepComplete(currentModule.id, selectedLesson.id);
-                        advanceLearning(20);
                       }}
                     >
                       {completedLessons.has(selectedLesson.id)
@@ -1067,10 +1305,7 @@ export default function StudentLearningPage() {
                 {nextLesson ? (
                   <Button
                     className="rounded-[14px] ml-auto"
-                    onClick={() => {
-                      setSelectedLessonId(nextLesson.id);
-                      advanceLearning(15);
-                    }}
+                    onClick={() => setSelectedLessonId(nextLesson.id)}
                   >
                     Next Lesson
                     <IconArrowRight className="size-4 ml-2" />
@@ -1099,11 +1334,19 @@ export default function StudentLearningPage() {
                 ) : !quizStep && currentModule.status !== 'Complete' ? (
                   <Button
                     className="rounded-[14px] ml-auto bg-success hover:bg-success/90"
-                    disabled={examSubmitting}
+                    disabled={examSubmitting || !examUnlocked}
                     onClick={() => void handleCompleteModuleWithoutExam()}
                   >
-                    {examSubmitting ? 'Completing…' : 'Complete Module'}
-                    <IconCheck className="size-4 ml-2" />
+                    {examSubmitting
+                      ? 'Completing…'
+                      : examUnlocked
+                        ? 'Complete Module'
+                        : `${formatSessionTime(sessionRemainingMinutes)} of session time left`}
+                    {examUnlocked ? (
+                      <IconCheck className="size-4 ml-2" />
+                    ) : (
+                      <IconLock className="size-4 ml-2" />
+                    )}
                   </Button>
                 ) : null}
               </div>
@@ -1217,50 +1460,6 @@ export default function StudentLearningPage() {
           </div>
         </aside>
       </div>
-
-      <footer className="fixed bottom-0 left-0 right-0 z-[60] flex h-20 items-center justify-between border-t border-border-subtle bg-surface/80 px-8 backdrop-blur-xl">
-        <div className="flex items-center gap-8 text-sm">
-          <div className="flex flex-col">
-            <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant">
-              Session Time
-            </span>
-            <div className="flex items-center gap-2 font-mono text-lg font-semibold text-primary">
-              <IconClockHour4 className="size-4" />
-              {Math.floor(learningMinutes / 60)}h {String(learningMinutes % 60).padStart(2, '0')}m
-            </div>
-          </div>
-          <div className="flex flex-col">
-            <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant">
-              Progress
-            </span>
-            <span className="font-mono text-sm text-on-surface">
-              {examUnlocked
-                ? '✓ Ready for exam'
-                : `${(remainingMinutes / 60).toFixed(1)}h to unlock`}
-            </span>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            className="h-10 rounded-[12px] border-2 border-primary text-primary text-sm"
-            onClick={toggleLearningSession}
-            disabled={!portalUnlocked}
-          >
-            {learningSessionActive ? 'Pause' : 'Resume'}
-          </Button>
-          <Button
-            className="h-10 rounded-[12px] px-6 shadow-lg shadow-primary/20 text-sm"
-            disabled={!portalUnlocked}
-            onClick={() => {
-              advanceLearning(30);
-            }}
-          >
-            +30 Min
-            <IconArrowRight className="size-3 ml-1" />
-          </Button>
-        </div>
-      </footer>
 
       <StudentIntakeModal open={workflowOpen} onClose={() => setWorkflowOpen(false)} />
     </main>
