@@ -331,6 +331,8 @@ type StudentDemoState = {
   settings: StudentSettings;
   learningMinutes: number;
   learningSessionActive: boolean;
+  activeLessonId?: string;
+  lessonElapsedMinutes: Record<string, number>;
   attendanceRecords: AttendanceRecord[];
   reflectionResponse: string;
   questionOfDayAnswer: string;
@@ -402,6 +404,7 @@ type StudentDemoContextValue = StudentDemoState & {
   advanceLearning: (minutes?: number) => void;
   toggleLearningSession: () => void;
   setLearningSession: (active: boolean) => void;
+  recordLessonSessionStart: (lessonId: string) => void;
   selectModule: (moduleId: string) => void;
   markStepComplete: (moduleId: string, stepId: string) => void;
   submitModuleExam: (payload?: {
@@ -484,6 +487,8 @@ type StudentPortalApi = {
   exitSurveyComplete: boolean;
   learningMinutes: number;
   learningSessionActive: boolean;
+  activeLessonId?: string;
+  lessonElapsedMinutes: Record<string, number>;
   reflectionResponse: string;
   questionOfDayAnswer: string;
   lastAction: string;
@@ -497,6 +502,8 @@ type StudentLearningApi = {
   sessionMinutes: number;
   requiredSessionMinutes: number;
   learningSessionActive: boolean;
+  activeLessonId?: string;
+  lessonElapsedMinutes: Record<string, number>;
   examUnlocked: boolean;
   textbookIssued: boolean;
   textbookOpened: boolean;
@@ -579,6 +586,8 @@ function createFallbackState(): StudentDemoState {
     settings: { email_updates: true, sms_alerts: false, remember_device: true },
     learningMinutes: 0,
     learningSessionActive: false,
+    activeLessonId: undefined,
+    lessonElapsedMinutes: {},
     attendanceRecords: [],
     reflectionResponse: '',
     questionOfDayAnswer: '',
@@ -644,6 +653,8 @@ function mapPortalToState(portal: StudentPortalApi): StudentDemoState {
     settings: portal.settings,
     learningMinutes: portal.learningMinutes,
     learningSessionActive: portal.learningSessionActive,
+    activeLessonId: portal.activeLessonId,
+    lessonElapsedMinutes: portal.lessonElapsedMinutes ?? {},
     attendanceRecords: portal.attendanceRecords,
     reflectionResponse: portal.reflectionResponse,
     questionOfDayAnswer: portal.questionOfDayAnswer,
@@ -679,6 +690,8 @@ function mergeLearningIntoState(
     modules: learning.modules,
     learningMinutes: learning.learningMinutes,
     learningSessionActive: learning.learningSessionActive,
+    activeLessonId: learning.activeLessonId,
+    lessonElapsedMinutes: learning.lessonElapsedMinutes ?? {},
     textbookIssued: learning.textbookIssued,
     textbookOpened: learning.textbookOpened,
     exitSurveyComplete: learning.exitSurveyComplete,
@@ -1091,6 +1104,23 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
     [mutate]
   );
 
+  const recordLessonSessionStart = React.useCallback(
+    (lessonId: string) => {
+      setState((current) => {
+        return {
+          ...current,
+          activeLessonId: lessonId,
+          lessonElapsedMinutes: {
+            ...current.lessonElapsedMinutes,
+            [lessonId]: Math.max(0, current.lessonElapsedMinutes[lessonId] ?? 0),
+          },
+        };
+      });
+      mutate(`/learning/lessons/${lessonId}/session-start`, 'PATCH');
+    },
+    [mutate]
+  );
+
   const selectModule = React.useCallback(
     (moduleId: string) => {
       setState((current) => ({ ...current, activeModuleId: moduleId }));
@@ -1359,6 +1389,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       advanceLearning,
       toggleLearningSession,
       setLearningSession,
+      recordLessonSessionStart,
       selectModule,
       markStepComplete,
       submitModuleExam,
@@ -1403,6 +1434,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       programCertificateReady,
       refreshLearning,
       readinessCount,
+      recordLessonSessionStart,
       replaceDocument,
       reportAbsence,
       requiredSessionMinutes,

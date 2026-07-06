@@ -294,6 +294,17 @@ export class StudentPortalController {
     );
   }
 
+  @Patch('learning/lessons/:lessonId/session-start')
+  recordLessonSessionStart(
+    @Param('studentId') studentId: string,
+    @Param('lessonId') lessonId: string,
+  ) {
+    return createApiResponse(
+      this.studentPortalService.recordLessonSessionStart(studentId, lessonId),
+      'Lesson session resume point saved successfully.',
+    );
+  }
+
   @Patch('learning/modules/active')
   selectModule(@Param('studentId') studentId: string, @Body() body: SelectModuleDto) {
     return createApiResponse(

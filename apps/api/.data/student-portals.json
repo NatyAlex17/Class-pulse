@@ -5046,7 +5046,7 @@
           "progressPercent": 0,
           "requiredHours": 4,
           "completedHours": 0.3,
-          "sessionMinutes": 17,
+          "sessionMinutes": 19,
           "certificateUnlocked": false,
           "steps": [
             {
@@ -5394,12 +5394,63 @@
       "textbookIssued": false,
       "textbookOpened": false,
       "exitSurveyComplete": false,
-      "learningMinutes": 72,
+      "learningMinutes": 74,
       "learningSessionActive": true,
       "reflectionResponse": "",
       "questionOfDayAnswer": "",
-      "lastAction": "Reply sent to Lisa Wong.",
+      "lastAction": "Learning session started.",
       "auditTrail": [
+        {
+          "id": "audit-1783339952904-278",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T12:12:32.904Z",
+          "details": {
+            "active": true
+          }
+        },
+        {
+          "id": "audit-1783339952887-814",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.lesson-session.started",
+          "target": "overview-video",
+          "occurredAt": "2026-07-06T12:12:32.887Z",
+          "details": {
+            "moduleId": "foundation-of-patients",
+            "elapsedMinutes": 0
+          }
+        },
+        {
+          "id": "audit-1783339493530-991",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T12:04:53.530Z",
+          "details": {
+            "active": false
+          }
+        },
+        {
+          "id": "audit-1783339223348-154",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T12:00:23.348Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783339163807-925",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T11:59:23.807Z",
+          "details": {
+            "minutes": 1
+          }
+        },
         {
           "id": "audit-1783339116830-198",
           "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
@@ -6266,7 +6317,11 @@
             "source": "student-portal-seed"
           }
         }
-      ]
+      ],
+      "activeLessonId": "overview-video",
+      "lessonElapsedMinutes": {
+        "overview-video": 0
+      }
     }
   ]
 }

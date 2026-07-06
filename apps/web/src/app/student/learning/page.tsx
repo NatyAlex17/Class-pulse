@@ -42,7 +42,6 @@ const suggestionQuestions = [
   'What are normal BP ranges for elderly?',
   'Explain respiratory rhythm vs depth.',
 ];
-const LESSON_SESSION_STORAGE_KEY = 'student-learning-lesson-session-starts';
 
 function formatSessionTime(totalMinutes: number) {
   const minutes = Math.max(0, Math.round(totalMinutes));
@@ -107,6 +106,7 @@ export default function StudentLearningPage() {
     learningSessionActive,
     sessionMinutes,
     requiredSessionMinutes,
+    lessonElapsedMinutes,
     examUnlocked,
     portalHydrated,
     portalUnlocked,
@@ -115,6 +115,7 @@ export default function StudentLearningPage() {
     modules,
     advanceLearning,
     setLearningSession,
+    recordLessonSessionStart,
     selectModule,
     markStepComplete,
     sendMessage,
@@ -133,7 +134,6 @@ export default function StudentLearningPage() {
   const [examError, setExamError] = React.useState<string | null>(null);
   const [examSubmitting, setExamSubmitting] = React.useState(false);
   const [completedLessons, setCompletedLessons] = React.useState<Set<string>>(new Set());
-  const [lessonSessionStarts, setLessonSessionStarts] = React.useState<Record<string, number>>({});
   const sessionRemainingMinutes = Math.max(requiredSessionMinutes - sessionMinutes, 0);
   const sessionPercent =
     requiredSessionMinutes > 0
@@ -176,10 +176,9 @@ export default function StudentLearningPage() {
     (question) => !(quizAnswers[question.id] ?? '').trim()
   ).length;
   const selectedLessonTargetMinutes = parseDurationToMinutes(selectedLesson?.duration);
-  const selectedLessonStartMinutes =
-    selectedLesson ? lessonSessionStarts[selectedLesson.id] ?? null : null;
-  const selectedLessonElapsedMinutes =
-    selectedLessonStartMinutes === null ? 0 : Math.max(0, sessionMinutes - selectedLessonStartMinutes);
+  const selectedLessonElapsedMinutes = selectedLesson
+    ? Math.max(0, lessonElapsedMinutes[selectedLesson.id] ?? 0)
+    : 0;
   const selectedLessonRemainingMinutes =
     selectedLessonTargetMinutes === null
       ? 0
@@ -205,81 +204,6 @@ export default function StudentLearningPage() {
   React.useEffect(() => {
     void refreshLearning();
   }, [refreshLearning]);
-
-  React.useEffect(() => {
-    if (!portalHydrated || typeof window === 'undefined') {
-      return;
-    }
-
-    try {
-      const storedValue = window.localStorage.getItem(LESSON_SESSION_STORAGE_KEY);
-
-      if (!storedValue) {
-        return;
-      }
-
-      const parsed = JSON.parse(storedValue) as Record<string, number>;
-
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-        return;
-      }
-
-      const normalizedEntries = Object.entries(parsed).filter(
-        ([lessonId, minute]) =>
-          typeof lessonId === 'string' &&
-          Number.isFinite(minute) &&
-          minute >= 0 &&
-          lessons.some((lesson) => lesson.id === lessonId)
-      );
-
-      setLessonSessionStarts(Object.fromEntries(normalizedEntries));
-    } catch {
-      window.localStorage.removeItem(LESSON_SESSION_STORAGE_KEY);
-    }
-  }, [lessons, portalHydrated]);
-
-  React.useEffect(() => {
-    if (!portalHydrated || typeof window === 'undefined') {
-      return;
-    }
-
-    const validLessonIds = new Set(lessons.map((lesson) => lesson.id));
-    const filteredEntries = Object.entries(lessonSessionStarts).filter(
-      ([lessonId]) => validLessonIds.has(lessonId)
-    );
-    const normalizedStarts = Object.fromEntries(filteredEntries);
-
-    let storedStarts: Record<string, number> = {};
-
-    try {
-      const storedValue = window.localStorage.getItem(LESSON_SESSION_STORAGE_KEY);
-      const parsed = storedValue ? (JSON.parse(storedValue) as Record<string, number>) : {};
-
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        storedStarts = Object.fromEntries(
-          Object.entries(parsed).filter(
-            ([lessonId, minute]) =>
-              typeof lessonId === 'string' && Number.isFinite(minute) && minute >= 0
-          )
-        );
-      }
-    } catch {
-      storedStarts = {};
-    }
-
-    const mergedStarts = {
-      ...Object.fromEntries(
-        Object.entries(storedStarts).filter(([lessonId]) => !validLessonIds.has(lessonId))
-      ),
-      ...normalizedStarts,
-    };
-
-    window.localStorage.setItem(LESSON_SESSION_STORAGE_KEY, JSON.stringify(mergedStarts));
-
-    if (filteredEntries.length !== Object.keys(lessonSessionStarts).length) {
-      setLessonSessionStarts(normalizedStarts);
-    }
-  }, [lessonSessionStarts, lessons, portalHydrated]);
 
   React.useEffect(() => {
     return () => setLearningSession(false);
@@ -342,15 +266,13 @@ export default function StudentLearningPage() {
 
   const startLessonSession = React.useCallback(
     (lessonId: string) => {
-      setLessonSessionStarts((current) =>
-        current[lessonId] !== undefined ? current : { ...current, [lessonId]: sessionMinutes }
-      );
+      recordLessonSessionStart(lessonId);
 
       if (!learningSessionActive) {
         setLearningSession(true);
       }
     },
-    [learningSessionActive, sessionMinutes, setLearningSession]
+    [learningSessionActive, recordLessonSessionStart, setLearningSession]
   );
 
   const openLesson = (lessonId: string, options?: { startSession?: boolean }) => {

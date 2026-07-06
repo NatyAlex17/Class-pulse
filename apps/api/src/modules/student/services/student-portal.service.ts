@@ -534,6 +534,8 @@ export class StudentPortalService {
       sessionMinutes,
       requiredSessionMinutes,
       learningSessionActive: portal.learningSessionActive,
+      activeLessonId: portal.activeLessonId,
+      lessonElapsedMinutes: this.getLessonElapsedMinutes(portal),
       examUnlocked: sessionMinutes >= requiredSessionMinutes,
       textbookIssued: portal.textbookIssued,
       textbookOpened: portal.textbookOpened,
@@ -576,6 +578,18 @@ export class StudentPortalService {
     const creditedMinutes = Math.max(0, nextSessionMinutes - currentSessionMinutes);
 
     portal.learningMinutes += creditedMinutes;
+    const lessonElapsedMinutes = this.getLessonElapsedMinutes(portal);
+
+    if (creditedMinutes > 0 && portal.activeLessonId) {
+      const activeLessonExists = activeModule.steps.some((step) => step.id === portal.activeLessonId);
+
+      if (activeLessonExists) {
+        lessonElapsedMinutes[portal.activeLessonId] =
+          Math.max(0, lessonElapsedMinutes[portal.activeLessonId] ?? 0) + creditedMinutes;
+        portal.lessonElapsedMinutes = lessonElapsedMinutes;
+      }
+    }
+
     portal.modules[activeIndex] = this.recalculateModule({
       ...activeModule,
       sessionMinutes: nextSessionMinutes,
@@ -619,6 +633,38 @@ export class StudentPortalService {
     return this.setLearningSession(studentId, { active: !portal.learningSessionActive });
   }
 
+  recordLessonSessionStart(studentId: string, lessonId: string) {
+    const portal = this.repository.findByStudentId(studentId);
+    const activeModule = portal.modules.find((module) => module.id === portal.activeModuleId);
+
+    if (!activeModule) {
+      throw new BadRequestException('Active learning module was not found.');
+    }
+
+    const lesson = activeModule.steps.find((step) => step.id === lessonId);
+
+    if (!lesson) {
+      throw new BadRequestException(`Lesson "${lessonId}" was not found in the active module.`);
+    }
+
+    const lessonElapsedMinutes = this.getLessonElapsedMinutes(portal);
+    portal.activeLessonId = lessonId;
+    portal.lessonElapsedMinutes = {
+      ...lessonElapsedMinutes,
+      [lessonId]: Math.max(0, lessonElapsedMinutes[lessonId] ?? 0),
+    };
+    portal.lastAction = `Lesson timer resumed for ${lesson.title}.`;
+    this.recordAudit(portal, 'student.learning.lesson-session.started', lessonId, {
+      moduleId: activeModule.id,
+      elapsedMinutes: portal.lessonElapsedMinutes[lessonId],
+    });
+    const savedPortal = this.repository.save(portal);
+    return {
+      activeLessonId: savedPortal.activeLessonId,
+      lessonElapsedMinutes: savedPortal.lessonElapsedMinutes,
+    };
+  }
+
   selectModule(studentId: string, payload: SelectModuleDto) {
     const portal = this.repository.findByStudentId(studentId);
     const module = portal.modules.find((item) => item.id === payload.moduleId);
@@ -628,6 +674,9 @@ export class StudentPortalService {
     }
 
     portal.activeModuleId = payload.moduleId;
+    if (!module.steps.some((step) => step.id === portal.activeLessonId)) {
+      portal.activeLessonId = undefined;
+    }
     portal.lastAction = 'Learning viewer switched to a different module.';
     return this.repository.save(portal).activeModuleId;
   }
@@ -1314,6 +1363,10 @@ export class StudentPortalService {
 
   private getPaymentBalance(portal: StudentPortalState) {
     return Math.max(portal.financials.balance, 0);
+  }
+
+  private getLessonElapsedMinutes(portal: StudentPortalState) {
+    return { ...(portal.lessonElapsedMinutes ?? {}) };
   }
 
   private getOverallProgressPercent(portal: StudentPortalState) {

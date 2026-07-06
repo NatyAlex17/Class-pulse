@@ -164,6 +164,8 @@ export class StudentPortalRepository {
       attendanceRecords: [],
       learningMinutes: 0,
       learningSessionActive: false,
+      activeLessonId: undefined,
+      lessonElapsedMinutes: {},
       textbookIssued: false,
       textbookOpened: false,
       exitSurveyComplete: false,

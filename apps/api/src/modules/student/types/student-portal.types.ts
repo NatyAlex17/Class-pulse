@@ -462,6 +462,10 @@ export interface StudentPortalState {
   exitSurveyComplete: boolean;
   learningMinutes: number;
   learningSessionActive: boolean;
+  /** Currently active lesson receiving elapsed learning time. */
+  activeLessonId?: string;
+  /** Per-lesson persisted elapsed learning time, in minutes. */
+  lessonElapsedMinutes: Record<string, number>;
   reflectionResponse: string;
   questionOfDayAnswer: string;
   lastAction: string;
@@ -500,6 +504,8 @@ export interface StudentLearningSnapshot {
   sessionMinutes: number;
   requiredSessionMinutes: number;
   learningSessionActive: boolean;
+  activeLessonId?: string;
+  lessonElapsedMinutes: Record<string, number>;
   examUnlocked: boolean;
   textbookIssued: boolean;
   textbookOpened: boolean;
