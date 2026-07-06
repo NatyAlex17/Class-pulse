@@ -5035,6 +5035,92 @@
               ]
             }
           ]
+        },
+        {
+          "id": "foundation-of-patients",
+          "title": "Foundation of Patients",
+          "summary": "Foundation of Patients",
+          "status": "Locked",
+          "progressPercent": 0,
+          "requiredHours": 4,
+          "completedHours": 0,
+          "certificateUnlocked": false,
+          "steps": [
+            {
+              "id": "overview-video",
+              "title": "Overview Video",
+              "type": "Video",
+              "duration": "15",
+              "note": "something",
+              "complete": false,
+              "resourceUrl": "http://localhost:4000/uploads/learning-resources/1783169763877-screencast-from-03-06-2026-04-39-42-pm.webm",
+              "sectionId": "lesson-one",
+              "sectionTitle": "Lesson One",
+              "sectionDescription": "Lesson One"
+            },
+            {
+              "id": "pdf-content",
+              "title": "Pdf content",
+              "type": "PDF",
+              "duration": "12",
+              "note": "done",
+              "complete": false,
+              "resourceUrl": "http://localhost:4000/uploads/learning-resources/1783169825389-shipment-cmr53vk2j000h97zaainsg8dh.pdf",
+              "sectionId": "lesson-one",
+              "sectionTitle": "Lesson One",
+              "sectionDescription": "Lesson One"
+            },
+            {
+              "id": "final-exam",
+              "title": "final exam",
+              "type": "Quiz",
+              "duration": "20 min",
+              "note": "sample desc",
+              "complete": false,
+              "content": "instructions should be here",
+              "sectionId": "lesson-one",
+              "sectionTitle": "Lesson One",
+              "sectionDescription": "Lesson One",
+              "examFormat": "multiple-choice",
+              "passingScore": 90,
+              "questionCount": 3,
+              "questions": [
+                {
+                  "id": "final-exam-q1",
+                  "prompt": "first question",
+                  "points": 1,
+                  "options": [
+                    "a",
+                    "b",
+                    "c",
+                    "d"
+                  ]
+                },
+                {
+                  "id": "final-exam-q2",
+                  "prompt": "question 2",
+                  "points": 1,
+                  "options": [
+                    "e",
+                    "f",
+                    "g",
+                    "h"
+                  ]
+                },
+                {
+                  "id": "final-exam-q3",
+                  "prompt": "question three",
+                  "points": 1,
+                  "options": [
+                    "i",
+                    "j",
+                    "k",
+                    "l"
+                  ]
+                }
+              ]
+            }
+          ]
         }
       ],
       "activeModuleId": "introduction",
@@ -5299,6 +5385,28 @@
       "questionOfDayAnswer": "",
       "lastAction": "Introduction exam attempted — score below the passing threshold.",
       "auditTrail": [
+        {
+          "id": "audit-1783170507725-773",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.module-exam.failed",
+          "target": "introduction",
+          "occurredAt": "2026-07-04T13:08:27.725Z",
+          "details": {
+            "scorePercent": 67,
+            "passingScore": 70
+          }
+        },
+        {
+          "id": "audit-1783170471278-773",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.module-exam.failed",
+          "target": "introduction",
+          "occurredAt": "2026-07-04T13:07:51.278Z",
+          "details": {
+            "scorePercent": 67,
+            "passingScore": 70
+          }
+        },
         {
           "id": "audit-1783089196994-560",
           "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",

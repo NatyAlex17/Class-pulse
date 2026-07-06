@@ -80,6 +80,94 @@
           ]
         }
       ]
+    },
+    {
+      "id": "foundation-of-patients",
+      "title": "Foundation of Patients",
+      "summary": "Foundation of Patients",
+      "requiredHours": 4,
+      "order": 1,
+      "minimumHoursForCertification": 3,
+      "sections": [
+        {
+          "id": "lesson-one",
+          "title": "Lesson One",
+          "description": "Lesson One",
+          "resources": [
+            {
+              "id": "overview-video",
+              "title": "Overview Video",
+              "type": "video",
+              "duration": "15",
+              "description": "something",
+              "url": "http://localhost:4000/uploads/learning-resources/1783169763877-screencast-from-03-06-2026-04-39-42-pm.webm"
+            },
+            {
+              "id": "pdf-content",
+              "title": "Pdf content",
+              "type": "pdf",
+              "duration": "12",
+              "description": "done",
+              "url": "http://localhost:4000/uploads/learning-resources/1783169825389-shipment-cmr53vk2j000h97zaainsg8dh.pdf"
+            },
+            {
+              "id": "final-exam",
+              "title": "final exam",
+              "type": "exam",
+              "duration": "20 min",
+              "description": "sample desc",
+              "content": "instructions should be here",
+              "questionCount": 3,
+              "passingScore": 90,
+              "examFormat": "multiple-choice",
+              "questions": [
+                {
+                  "id": "final-exam-q1",
+                  "prompt": "first question",
+                  "points": 1,
+                  "options": [
+                    "a",
+                    "b",
+                    "c",
+                    "d"
+                  ],
+                  "correctOption": 0
+                },
+                {
+                  "id": "final-exam-q2",
+                  "prompt": "question 2",
+                  "points": 1,
+                  "options": [
+                    "e",
+                    "f",
+                    "g",
+                    "h"
+                  ],
+                  "correctOption": 1
+                },
+                {
+                  "id": "final-exam-q3",
+                  "prompt": "question three",
+                  "points": 1,
+                  "options": [
+                    "i",
+                    "j",
+                    "k",
+                    "l"
+                  ],
+                  "correctOption": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "lesson-two",
+          "title": "Lesson Two",
+          "description": "Lesson Two",
+          "resources": []
+        }
+      ]
     }
   ],
   "globalSettings": {

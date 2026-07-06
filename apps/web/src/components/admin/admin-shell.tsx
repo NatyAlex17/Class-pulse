@@ -152,13 +152,18 @@ export function AdminShell({
             const hasChildren = item.children && item.children.length > 0;
 
             if (hasChildren) {
+              const hasActiveChild = (item.children ?? []).some((child) =>
+                isActiveOrChild(pathname, child.href || ''),
+              );
               return (
                 <div key={item.label}>
                   <button
                     onClick={() => toggleMenu(item.label)}
                     className={cn(
-                      'flex w-full items-center justify-between gap-3 rounded-[16px] px-3 py-2.5 text-sm transition-colors',
-                      'text-on-surface-variant hover:bg-surface-high hover:text-primary',
+                      'flex w-full items-center justify-between gap-3 rounded-[16px] px-3 py-2.5 text-sm transition-colors hover:bg-surface-high',
+                      hasActiveChild
+                        ? 'font-semibold text-primary'
+                        : 'text-on-surface-variant hover:text-primary',
                     )}
                   >
                     <div className="flex items-center gap-3">
@@ -170,21 +175,36 @@ export function AdminShell({
                     />
                   </button>
                   {isExpanded && (
-                    <div className="mt-1 space-y-1 pl-4">
-                      {(item.children ?? []).map((child) => (
-                        <Link
-                          key={`${child.label}-${child.href ?? 'child'}`}
-                          href={child.href || '#'}
-                          className={cn(
-                            'flex items-center gap-3 rounded-[12px] px-3 py-2 text-xs transition-colors',
-                            isActiveOrChild(pathname, child.href || '')
-                              ? 'bg-primary/5 font-semibold text-primary'
-                              : 'text-on-surface-variant hover:bg-surface-high hover:text-primary',
-                          )}
-                        >
-                          <span>{child.label}</span>
-                        </Link>
-                      ))}
+                    <div className="relative mt-1 space-y-0.5 pl-7">
+                      <span
+                        aria-hidden
+                        className="absolute bottom-2 left-5.5 top-1 w-px bg-border-subtle"
+                      />
+                      {(item.children ?? []).map((child) => {
+                        const ChildIcon = child.icon;
+                        const childActive = isActiveOrChild(pathname, child.href || '');
+                        return (
+                          <Link
+                            key={`${child.label}-${child.href ?? 'child'}`}
+                            href={child.href || '#'}
+                            className={cn(
+                              'relative flex items-center gap-2.5 rounded-[12px] px-3 py-2 text-[13px] transition-colors',
+                              childActive
+                                ? 'bg-primary/10 font-semibold text-primary'
+                                : 'text-on-surface-variant hover:bg-surface-high hover:text-primary',
+                            )}
+                          >
+                            {childActive && (
+                              <span
+                                aria-hidden
+                                className="absolute -left-1.5 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-primary"
+                              />
+                            )}
+                            <ChildIcon className="size-4 shrink-0" />
+                            <span className="truncate">{child.label}</span>
+                          </Link>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -255,13 +275,18 @@ export function AdminShell({
                 const hasChildren = item.children && item.children.length > 0;
 
                 if (hasChildren) {
+                  const hasActiveChild = (item.children ?? []).some((child) =>
+                    isActiveOrChild(pathname, child.href || ''),
+                  );
                   return (
                     <div key={item.label}>
                       <button
                         onClick={() => toggleMenu(item.label)}
                         className={cn(
-                          'flex w-full items-center justify-between gap-3 rounded-[16px] px-3 py-3 text-sm transition-colors',
-                          'text-on-surface-variant hover:bg-surface-high hover:text-primary',
+                          'flex w-full items-center justify-between gap-3 rounded-[16px] px-3 py-3 text-sm transition-colors hover:bg-surface-high',
+                          hasActiveChild
+                            ? 'font-semibold text-primary'
+                            : 'text-on-surface-variant hover:text-primary',
                         )}
                       >
                         <div className="flex items-center gap-3">
@@ -273,22 +298,37 @@ export function AdminShell({
                         />
                       </button>
                       {isExpanded && (
-                        <div className="mt-1 space-y-1 pl-6">
-                          {(item.children ?? []).map((child) => (
-                            <Link
-                              key={`${child.label}-${child.href ?? 'child'}`}
-                              href={child.href || '#'}
-                              onClick={() => setMobileMenuOpen(false)}
-                              className={cn(
-                                'flex items-center gap-3 rounded-[12px] px-3 py-2 text-xs transition-colors',
-                                isActiveOrChild(pathname, child.href || '')
-                                  ? 'bg-primary/5 font-semibold text-primary'
-                                  : 'text-on-surface-variant hover:bg-surface-high hover:text-primary',
-                              )}
-                            >
-                              <span>{child.label}</span>
-                            </Link>
-                          ))}
+                        <div className="relative mt-1 space-y-0.5 pl-7">
+                          <span
+                            aria-hidden
+                            className="absolute bottom-2 left-5.5 top-1 w-px bg-border-subtle"
+                          />
+                          {(item.children ?? []).map((child) => {
+                            const ChildIcon = child.icon;
+                            const childActive = isActiveOrChild(pathname, child.href || '');
+                            return (
+                              <Link
+                                key={`${child.label}-${child.href ?? 'child'}`}
+                                href={child.href || '#'}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className={cn(
+                                  'relative flex items-center gap-2.5 rounded-[12px] px-3 py-2.5 text-[13px] transition-colors',
+                                  childActive
+                                    ? 'bg-primary/10 font-semibold text-primary'
+                                    : 'text-on-surface-variant hover:bg-surface-high hover:text-primary',
+                                )}
+                              >
+                                {childActive && (
+                                  <span
+                                    aria-hidden
+                                    className="absolute -left-1.5 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-primary"
+                                  />
+                                )}
+                                <ChildIcon className="size-4 shrink-0" />
+                                <span className="truncate">{child.label}</span>
+                              </Link>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
