@@ -3470,164 +3470,181 @@
       },
       "modules": [
         {
-          "id": "m1",
-          "title": "Foundation of Patient Care",
-          "summary": "Program kickoff, communication basics, safety expectations, and first readiness check.",
+          "id": "introduction",
+          "title": "Introduction",
+          "summary": "Introduction",
           "status": "In Progress",
-          "progressPercent": 50,
-          "requiredHours": 20,
+          "progressPercent": 0,
+          "requiredHours": 10,
           "completedHours": 0,
+          "sessionMinutes": 0,
           "certificateUnlocked": false,
           "steps": [
             {
-              "id": "m1-video",
-              "title": "Program welcome lecture",
+              "id": "introduction-video",
+              "title": "Introduction video",
               "type": "Video",
-              "duration": "18 min",
-              "note": "Recorded orientation-style lecture introducing expectations and navigation.",
-              "complete": true,
-              "resourceUrl": "https://www.youtube.com/watch?v=gUWJ-6nL5-8",
-              "sectionId": "m1-welcome",
-              "sectionTitle": "Welcome and Orientation"
+              "duration": "15",
+              "note": "this is for introductionss",
+              "complete": false,
+              "resourceUrl": "http://localhost:4000/uploads/learning-resources/1783050742765-compliance-platform.mp4",
+              "sectionId": "section-one",
+              "sectionTitle": "Section one",
+              "sectionDescription": "Section one"
             },
             {
-              "id": "m1-pdf",
-              "title": "Student handbook packet",
+              "id": "pdf-introduction",
+              "title": "pdf introduction",
               "type": "PDF",
-              "duration": "6 pages",
-              "note": "Attendance, FERPA, professionalism, and escalation guidance.",
-              "complete": true,
-              "resourceUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-              "sectionId": "m1-welcome",
-              "sectionTitle": "Welcome and Orientation"
-            },
-            {
-              "id": "m1-text",
-              "title": "How to succeed in self-paced study",
-              "type": "Reading",
-              "duration": "12 min",
-              "note": "Instructor-authored lesson text for study habits and accountability.",
+              "duration": "10",
+              "note": "",
               "complete": false,
-              "content": "Successful students check the module roadmap before starting, take notes during each lesson, and complete every section in sequence. Treat each section as a required checkpoint, not just optional reading.",
-              "sectionId": "m1-welcome",
-              "sectionTitle": "Welcome and Orientation"
+              "resourceUrl": "http://localhost:4000/uploads/learning-resources/1783050819018-module-3-writing-ground-truth-solutions.pdf",
+              "sectionId": "section-one",
+              "sectionTitle": "Section one",
+              "sectionDescription": "Section one"
             },
             {
-              "id": "m1-exam",
-              "title": "Patient care readiness checkpoint",
+              "id": "module-exam",
+              "title": "Module Exam",
               "type": "Quiz",
-              "duration": "10 questions",
-              "note": "Gate assessment covering orientation, communication, and policy understanding.",
+              "duration": "30",
+              "note": "this should be completed in order to finalize this course",
               "complete": false,
-              "content": "Students must score at least 70% before progressing to the next module.",
-              "sectionId": "m1-readiness",
-              "sectionTitle": "Readiness Check"
+              "content": "this should be completed in order to finalize this course",
+              "sectionId": "section-one",
+              "sectionTitle": "Section one",
+              "sectionDescription": "Section one",
+              "examFormat": "multiple-choice",
+              "passingScore": 70,
+              "questionCount": 3,
+              "questions": [
+                {
+                  "id": "module-exam-q1",
+                  "prompt": "who is abebe",
+                  "points": 1,
+                  "options": [
+                    "kebede",
+                    "abebe",
+                    "chala",
+                    "chube"
+                  ]
+                },
+                {
+                  "id": "module-exam-q2",
+                  "prompt": "who is the developer of gta",
+                  "points": 1,
+                  "options": [
+                    "rockstar",
+                    "gameloft",
+                    "cd project",
+                    "none"
+                  ]
+                },
+                {
+                  "id": "module-exam-q3",
+                  "prompt": "is this an exam",
+                  "points": 1,
+                  "options": [
+                    "no",
+                    "yes",
+                    "maybe",
+                    "idk"
+                  ]
+                }
+              ]
             }
           ]
         },
         {
-          "id": "m2",
-          "title": "Anatomy and Physiology",
-          "summary": "Major body systems, healthcare terminology, and learner-guided reference materials.",
+          "id": "foundation-of-patients",
+          "title": "Foundation of Patients",
+          "summary": "Foundation of Patients",
           "status": "Locked",
-          "progressPercent": 33,
-          "requiredHours": 15,
+          "progressPercent": 0,
+          "requiredHours": 4,
           "completedHours": 0,
+          "sessionMinutes": 0,
           "certificateUnlocked": false,
           "steps": [
             {
-              "id": "m2-video",
-              "title": "Body systems overview",
+              "id": "overview-video",
+              "title": "Overview Video",
               "type": "Video",
-              "duration": "22 min",
-              "note": "Module recording introducing the major systems and their functions.",
-              "complete": true,
-              "resourceUrl": "https://www.youtube.com/watch?v=gUWJ-6nL5-8",
-              "sectionId": "m2-systems",
-              "sectionTitle": "Systems Overview"
-            },
-            {
-              "id": "m2-text",
-              "title": "Medical terminology fundamentals",
-              "type": "Reading",
-              "duration": "15 min",
-              "note": "Text lesson covering prefixes, suffixes, and charting language.",
+              "duration": "15",
+              "note": "something",
               "complete": false,
-              "content": "Terminology should be learned in patterns. Focus on prefixes for location and quantity, roots for structure or function, and suffixes for procedures or conditions.",
-              "sectionId": "m2-systems",
-              "sectionTitle": "Systems Overview"
+              "resourceUrl": "http://localhost:4000/uploads/learning-resources/1783169763877-screencast-from-03-06-2026-04-39-42-pm.webm",
+              "sectionId": "lesson-one",
+              "sectionTitle": "Lesson One",
+              "sectionDescription": "Lesson One"
             },
             {
-              "id": "m2-link",
-              "title": "External anatomy reference",
-              "type": "Link",
-              "duration": "12 min",
-              "note": "Self-paced reference material for body-system review.",
-              "complete": false,
-              "resourceUrl": "https://medlineplus.gov/anatomy.html",
-              "sectionId": "m2-systems",
-              "sectionTitle": "Systems Overview"
-            }
-          ]
-        },
-        {
-          "id": "m3",
-          "title": "Vital Signs and Monitoring",
-          "summary": "Temperature, pulse, respiration, blood pressure, charting, and skill validation.",
-          "status": "Locked",
-          "progressPercent": 25,
-          "requiredHours": 25,
-          "completedHours": 0,
-          "certificateUnlocked": false,
-          "steps": [
-            {
-              "id": "m3-video",
-              "title": "Vital signs lecture",
-              "type": "Video",
-              "duration": "24 min",
-              "note": "Core lecture on obtaining and documenting vital signs correctly.",
-              "complete": true,
-              "resourceUrl": "https://www.youtube.com/watch?v=gUWJ-6nL5-8",
-              "sectionId": "m3-theory",
-              "sectionTitle": "Theory and Demonstration"
-            },
-            {
-              "id": "m3-pdf",
-              "title": "Procedure checklist PDF",
+              "id": "pdf-content",
+              "title": "Pdf content",
               "type": "PDF",
-              "duration": "8 pages",
-              "note": "Printable bedside checklist and validation standard.",
+              "duration": "12",
+              "note": "done",
               "complete": false,
-              "resourceUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-              "sectionId": "m3-theory",
-              "sectionTitle": "Theory and Demonstration"
+              "resourceUrl": "http://localhost:4000/uploads/learning-resources/1783169825389-shipment-cmr53vk2j000h97zaainsg8dh.pdf",
+              "sectionId": "lesson-one",
+              "sectionTitle": "Lesson One",
+              "sectionDescription": "Lesson One"
             },
             {
-              "id": "m3-link",
-              "title": "Clinical reference link",
-              "type": "Link",
-              "duration": "14 min",
-              "note": "Reference ranges and documentation standards.",
-              "complete": false,
-              "resourceUrl": "https://medlineplus.gov/vitalsigns.html",
-              "sectionId": "m3-theory",
-              "sectionTitle": "Theory and Demonstration"
-            },
-            {
-              "id": "m3-exam",
-              "title": "Vital signs module exam",
+              "id": "final-exam",
+              "title": "final exam",
               "type": "Quiz",
-              "duration": "20 questions",
-              "note": "Final assessment for the vital-signs module.",
+              "duration": "20 min",
+              "note": "sample desc",
               "complete": false,
-              "content": "Review the checklist and notes before launching this exam.",
-              "sectionId": "m3-assessment",
-              "sectionTitle": "Assessment and Signoff"
+              "content": "instructions should be here",
+              "sectionId": "lesson-one",
+              "sectionTitle": "Lesson One",
+              "sectionDescription": "Lesson One",
+              "examFormat": "multiple-choice",
+              "passingScore": 90,
+              "questionCount": 3,
+              "questions": [
+                {
+                  "id": "final-exam-q1",
+                  "prompt": "first question",
+                  "points": 1,
+                  "options": [
+                    "a",
+                    "b",
+                    "c",
+                    "d"
+                  ]
+                },
+                {
+                  "id": "final-exam-q2",
+                  "prompt": "question 2",
+                  "points": 1,
+                  "options": [
+                    "e",
+                    "f",
+                    "g",
+                    "h"
+                  ]
+                },
+                {
+                  "id": "final-exam-q3",
+                  "prompt": "question three",
+                  "points": 1,
+                  "options": [
+                    "i",
+                    "j",
+                    "k",
+                    "l"
+                  ]
+                }
+              ]
             }
           ]
         }
       ],
-      "activeModuleId": "m1",
+      "activeModuleId": "introduction",
       "threads": [
         {
           "id": "lisa-wong",
@@ -3887,8 +3904,107 @@
       "learningSessionActive": false,
       "reflectionResponse": "",
       "questionOfDayAnswer": "",
-      "lastAction": "Workflow stage synchronized to active.",
+      "lastAction": "Learning attention event recorded: session paused.",
       "auditTrail": [
+        {
+          "id": "audit-1783354730919-320",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.learning.attention-event.recorded",
+          "target": "introduction-video",
+          "occurredAt": "2026-07-06T16:18:50.919Z",
+          "details": {
+            "moduleId": "introduction",
+            "type": "session_paused",
+            "warnings": 3
+          }
+        },
+        {
+          "id": "audit-1783354727602-345",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.learning.session.toggled",
+          "target": "introduction",
+          "occurredAt": "2026-07-06T16:18:47.602Z",
+          "details": {
+            "active": true
+          }
+        },
+        {
+          "id": "audit-1783354727359-237",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.learning.lesson-session.started",
+          "target": "introduction-video",
+          "occurredAt": "2026-07-06T16:18:47.359Z",
+          "details": {
+            "moduleId": "introduction",
+            "elapsedMinutes": 0
+          }
+        },
+        {
+          "id": "audit-1783354722554-367",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.learning.attention-event.recorded",
+          "target": "introduction-video",
+          "occurredAt": "2026-07-06T16:18:42.554Z",
+          "details": {
+            "moduleId": "introduction",
+            "type": "session_paused",
+            "warnings": 2
+          }
+        },
+        {
+          "id": "audit-1783354719232-239",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.learning.session.toggled",
+          "target": "introduction",
+          "occurredAt": "2026-07-06T16:18:39.232Z",
+          "details": {
+            "active": true
+          }
+        },
+        {
+          "id": "audit-1783354719149-988",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.learning.lesson-session.started",
+          "target": "introduction-video",
+          "occurredAt": "2026-07-06T16:18:39.149Z",
+          "details": {
+            "moduleId": "introduction",
+            "elapsedMinutes": 0
+          }
+        },
+        {
+          "id": "audit-1783354610641-751",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.learning.attention-event.recorded",
+          "target": "introduction-video",
+          "occurredAt": "2026-07-06T16:16:50.641Z",
+          "details": {
+            "moduleId": "introduction",
+            "type": "window_blur",
+            "warnings": 1
+          }
+        },
+        {
+          "id": "audit-1783354605175-166",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.learning.session.toggled",
+          "target": "introduction",
+          "occurredAt": "2026-07-06T16:16:45.176Z",
+          "details": {
+            "active": true
+          }
+        },
+        {
+          "id": "audit-1783354605151-30",
+          "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
+          "action": "student.learning.lesson-session.started",
+          "target": "introduction-video",
+          "occurredAt": "2026-07-06T16:16:45.151Z",
+          "details": {
+            "moduleId": "introduction",
+            "elapsedMinutes": 0
+          }
+        },
         {
           "id": "audit-1783025057592-217",
           "actor": "86749b18-386e-484e-bd6a-cf5fb938a6be",
@@ -4262,7 +4378,41 @@
             "source": "student-portal-seed"
           }
         }
-      ]
+      ],
+      "activeLessonId": "introduction-video",
+      "lessonElapsedMinutes": {
+        "introduction-video": 0
+      },
+      "activeLearningAttention": {
+        "moduleId": "introduction",
+        "lessonId": "introduction-video",
+        "startedAt": "2026-07-06T16:16:45.150Z",
+        "lastActivityAt": "2026-07-06T16:18:50.919Z",
+        "focusLossCount": 1,
+        "visibilityLossCount": 0,
+        "manualPauseCount": 2,
+        "warnings": 3,
+        "recentEvents": [
+          {
+            "id": "learning-event-1783354730919-223",
+            "type": "session_paused",
+            "occurredAt": "2026-07-06T16:18:50.919Z",
+            "detail": "introduction-video"
+          },
+          {
+            "id": "learning-event-1783354722554-796",
+            "type": "session_paused",
+            "occurredAt": "2026-07-06T16:18:42.554Z",
+            "detail": "introduction-video"
+          },
+          {
+            "id": "learning-event-1783354610641-836",
+            "type": "window_blur",
+            "occurredAt": "2026-07-06T16:16:50.641Z",
+            "detail": "introduction-video"
+          }
+        ]
+      }
     },
     {
       "profile": {
@@ -5046,7 +5196,7 @@
           "progressPercent": 0,
           "requiredHours": 4,
           "completedHours": 0.4,
-          "sessionMinutes": 24,
+          "sessionMinutes": 25,
           "certificateUnlocked": false,
           "steps": [
             {
@@ -5394,12 +5544,54 @@
       "textbookIssued": false,
       "textbookOpened": false,
       "exitSurveyComplete": false,
-      "learningMinutes": 79,
-      "learningSessionActive": true,
+      "learningMinutes": 80,
+      "learningSessionActive": false,
       "reflectionResponse": "",
       "questionOfDayAnswer": "",
-      "lastAction": "Lesson timer resumed for Overview Video.",
+      "lastAction": "Learning viewer switched to a different module.",
       "auditTrail": [
+        {
+          "id": "audit-1783342204535-848",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.session.toggled",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T12:50:04.535Z",
+          "details": {
+            "active": false
+          }
+        },
+        {
+          "id": "audit-1783341928754-524",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.advanced",
+          "target": "foundation-of-patients",
+          "occurredAt": "2026-07-06T12:45:28.754Z",
+          "details": {
+            "minutes": 1
+          }
+        },
+        {
+          "id": "audit-1783341884827-87",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.lesson-session.started",
+          "target": "overview-video",
+          "occurredAt": "2026-07-06T12:44:44.827Z",
+          "details": {
+            "moduleId": "foundation-of-patients",
+            "elapsedMinutes": 5
+          }
+        },
+        {
+          "id": "audit-1783341878357-771",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.learning.lesson-session.started",
+          "target": "overview-video",
+          "occurredAt": "2026-07-06T12:44:38.357Z",
+          "details": {
+            "moduleId": "foundation-of-patients",
+            "elapsedMinutes": 5
+          }
+        },
         {
           "id": "audit-1783341027603-933",
           "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
@@ -6399,9 +6591,8 @@
           }
         }
       ],
-      "activeLessonId": "overview-video",
       "lessonElapsedMinutes": {
-        "overview-video": 5
+        "overview-video": 6
       }
     }
   ]

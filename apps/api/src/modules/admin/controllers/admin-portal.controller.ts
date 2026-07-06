@@ -430,4 +430,13 @@ export class AdminPortalController {
       );
     }
   }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('security-violations')
+  getSecurityViolationsLog() {
+    return createApiResponse(
+      this.studentPortalService.getSecurityViolationsLog(),
+      'Student security violation log retrieved successfully.',
+    );
+  }
 }

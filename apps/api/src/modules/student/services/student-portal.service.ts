@@ -3,6 +3,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import type { LocalUserRecord } from '../../auth/types/auth-user.types';
 import type {
   AdvanceLearningDto,
+  ActiveLearningAttention,
   ActiveExamSession,
   AnswerOnboardingQuestionDto,
   AttendanceCheckInDto,
@@ -13,6 +14,7 @@ import type {
   LogClinicalHoursDto,
   RecordPaymentDto,
   RegisterCohortDto,
+  ReportLearningAttentionEventDto,
   ReportExamSecurityEventDto,
   ReplaceStudentDocumentDto,
   ReportAbsenceDto,
@@ -30,6 +32,7 @@ import type {
   StudentLearningSnapshot,
   StudentPortalState,
   StudentThread,
+  StudentViolationLogEntry,
   SubmitModuleExamDto,
   SubmitModuleExamResponse,
   SubmitSupportTicketDto,
@@ -51,6 +54,45 @@ import { LearningResourcesConfigService } from './learning-resources-config.serv
 import { StudentPortalRepository } from './student-portal.repository';
 
 const CLINICAL_HOURS_REQUIRED = 40;
+
+const EXAM_SECURITY_EVENT_ACTION = 'student.learning.exam-session.security-event';
+const LEARNING_ATTENTION_EVENT_ACTION = 'student.learning.attention-event.recorded';
+
+const EXAM_VIOLATION_LABELS: Record<string, string> = {
+  visibility_hidden: 'Exam tab switched / hidden',
+  window_blur: 'Exam window focus lost',
+  fullscreen_exit: 'Exited fullscreen during exam',
+  navigation_blocked: 'Blocked navigation attempt',
+  shortcut_blocked: 'Blocked keyboard shortcut',
+  context_menu: 'Right-click / context menu opened',
+  copy_attempt: 'Copy attempt blocked',
+  paste_attempt: 'Paste attempt blocked',
+  back_button_blocked: 'Back button blocked',
+};
+
+const EXAM_VIOLATION_TONES: Record<string, 'warning' | 'error' | 'info'> = {
+  visibility_hidden: 'warning',
+  window_blur: 'warning',
+  fullscreen_exit: 'error',
+  navigation_blocked: 'warning',
+  shortcut_blocked: 'warning',
+  context_menu: 'warning',
+  copy_attempt: 'error',
+  paste_attempt: 'error',
+  back_button_blocked: 'warning',
+};
+
+const LEARNING_VIOLATION_LABELS: Record<string, string> = {
+  visibility_hidden: 'Lesson tab switched / hidden',
+  window_blur: 'Lesson window focus lost',
+  session_paused: 'Learning session manually paused',
+};
+
+const LEARNING_VIOLATION_TONES: Record<string, 'warning' | 'error' | 'info'> = {
+  visibility_hidden: 'warning',
+  window_blur: 'warning',
+  session_paused: 'info',
+};
 
 @Injectable()
 export class StudentPortalService {
@@ -539,6 +581,7 @@ export class StudentPortalService {
       learningSessionActive: portal.learningSessionActive,
       activeLessonId: portal.activeLessonId,
       lessonElapsedMinutes: this.getLessonElapsedMinutes(portal),
+      activeLearningAttention: portal.activeLearningAttention,
       activeExamSession: portal.activeExamSession,
       examUnlocked: sessionMinutes >= requiredSessionMinutes,
       textbookIssued: portal.textbookIssued,
@@ -635,6 +678,67 @@ export class StudentPortalService {
       active: portal.learningSessionActive,
     });
     return this.repository.save(portal).learningSessionActive;
+  }
+
+  reportLearningAttentionEvent(studentId: string, payload: ReportLearningAttentionEventDto) {
+    const portal = this.repository.findByStudentId(studentId);
+    const activeModule = portal.modules.find((module) => module.id === portal.activeModuleId);
+    const lessonId = portal.activeLessonId;
+
+    if (!activeModule || !lessonId) {
+      throw new BadRequestException('Start a lesson session before recording learning attention events.');
+    }
+
+    if (!payload.type) {
+      throw new BadRequestException('Learning attention event type is required.');
+    }
+
+    const lesson = activeModule.steps.find((step) => step.id === lessonId);
+
+    if (!lesson) {
+      throw new BadRequestException('Active lesson was not found for learning attention tracking.');
+    }
+
+    const session = this.ensureLearningAttentionSession(portal, activeModule.id, lessonId);
+    const now = new Date().toISOString();
+    session.lastActivityAt = now;
+    session.warnings += 1;
+
+    switch (payload.type) {
+      case 'visibility_hidden':
+        session.visibilityLossCount += 1;
+        portal.learningSessionActive = false;
+        break;
+      case 'window_blur':
+        session.focusLossCount += 1;
+        portal.learningSessionActive = false;
+        break;
+      case 'session_paused':
+        session.manualPauseCount += 1;
+        portal.learningSessionActive = false;
+        break;
+      default:
+        break;
+    }
+
+    session.recentEvents = [
+      {
+        id: `learning-event-${Date.now()}-${Math.round(Math.random() * 1000)}`,
+        type: payload.type,
+        occurredAt: now,
+        detail: payload.detail?.trim() || undefined,
+      },
+      ...session.recentEvents,
+    ].slice(0, 12);
+
+    portal.activeLearningAttention = session;
+    portal.lastAction = `Learning attention event recorded: ${payload.type.replaceAll('_', ' ')}.`;
+    this.recordAudit(portal, 'student.learning.attention-event.recorded', lessonId, {
+      moduleId: activeModule.id,
+      type: payload.type,
+      warnings: session.warnings,
+    });
+    return this.repository.save(portal).activeLearningAttention;
   }
 
   toggleLearningSession(studentId: string) {
@@ -774,6 +878,7 @@ export class StudentPortalService {
       ...lessonElapsedMinutes,
       [lessonId]: Math.max(0, lessonElapsedMinutes[lessonId] ?? 0),
     };
+    portal.activeLearningAttention = this.ensureLearningAttentionSession(portal, activeModule.id, lessonId);
     portal.lastAction = `Lesson timer resumed for ${lesson.title}.`;
     this.recordAudit(portal, 'student.learning.lesson-session.started', lessonId, {
       moduleId: activeModule.id,
@@ -798,6 +903,7 @@ export class StudentPortalService {
     portal.activeModuleId = payload.moduleId;
     if (!module.steps.some((step) => step.id === portal.activeLessonId)) {
       portal.activeLessonId = undefined;
+      portal.activeLearningAttention = undefined;
     }
     portal.lastAction = 'Learning viewer switched to a different module.';
     return this.repository.save(portal).activeModuleId;
@@ -1417,6 +1523,49 @@ export class StudentPortalService {
     return this.repository.save(portal).workflowStage;
   }
 
+  getSecurityViolationsLog(): StudentViolationLogEntry[] {
+    const entries: StudentViolationLogEntry[] = [];
+
+    for (const portal of this.repository.findAll()) {
+      for (const audit of portal.auditTrail) {
+        const isExamEvent = audit.action === EXAM_SECURITY_EVENT_ACTION;
+        const isLearningEvent = audit.action === LEARNING_ATTENTION_EVENT_ACTION;
+
+        if (!isExamEvent && !isLearningEvent) {
+          continue;
+        }
+
+        const type = String(audit.details?.type ?? 'unknown');
+        const moduleId = audit.details?.moduleId ? String(audit.details.moduleId) : undefined;
+        const moduleTitle = moduleId
+          ? portal.modules.find((module) => module.id === moduleId)?.title
+          : undefined;
+        const labels = isExamEvent ? EXAM_VIOLATION_LABELS : LEARNING_VIOLATION_LABELS;
+        const tones = isExamEvent ? EXAM_VIOLATION_TONES : LEARNING_VIOLATION_TONES;
+        const warnings = audit.details?.warnings;
+
+        entries.push({
+          id: audit.id,
+          studentId: portal.profile.id,
+          studentName: portal.profile.fullName,
+          studentNumber: portal.profile.studentNumber,
+          context: isExamEvent ? 'secure_exam' : 'learning_session',
+          contextLabel: isExamEvent ? 'Secure Exam' : 'Learning Session',
+          type,
+          label: labels[type] ?? type.replaceAll('_', ' '),
+          tone: tones[type] ?? 'warning',
+          moduleId,
+          moduleTitle,
+          stepId: audit.target,
+          warningsAtEvent: typeof warnings === 'number' ? warnings : undefined,
+          occurredAt: audit.occurredAt,
+        });
+      }
+    }
+
+    return entries.sort((a, b) => (a.occurredAt < b.occurredAt ? 1 : -1));
+  }
+
   submitAssignment(studentId: string, assignmentId: string) {
     const portal = this.repository.findByStudentId(studentId);
     const assignment = portal.assignments.find((item) => item.id === assignmentId);
@@ -1508,6 +1657,33 @@ export class StudentPortalService {
 
   private getLessonElapsedMinutes(portal: StudentPortalState) {
     return { ...(portal.lessonElapsedMinutes ?? {}) };
+  }
+
+  private ensureLearningAttentionSession(
+    portal: StudentPortalState,
+    moduleId: string,
+    lessonId: string,
+  ): ActiveLearningAttention {
+    if (
+      portal.activeLearningAttention &&
+      portal.activeLearningAttention.moduleId === moduleId &&
+      portal.activeLearningAttention.lessonId === lessonId
+    ) {
+      return portal.activeLearningAttention;
+    }
+
+    const now = new Date().toISOString();
+    return {
+      moduleId,
+      lessonId,
+      startedAt: now,
+      lastActivityAt: now,
+      focusLossCount: 0,
+      visibilityLossCount: 0,
+      manualPauseCount: 0,
+      warnings: 0,
+      recentEvents: [],
+    };
   }
 
   private assertNoActiveExamSession(portal: StudentPortalState, message: string) {

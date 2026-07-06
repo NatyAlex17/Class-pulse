@@ -8,6 +8,7 @@ import type {
   AnswerOnboardingQuestionDto,
   AttendanceCheckInDto,
   LogClinicalHoursDto,
+  ReportLearningAttentionEventDto,
   ReportExamSecurityEventDto,
   RecordPaymentDto,
   RegisterCohortDto,
@@ -304,6 +305,17 @@ export class StudentPortalController {
     return createApiResponse(
       this.studentPortalService.recordLessonSessionStart(studentId, lessonId),
       'Lesson session resume point saved successfully.',
+    );
+  }
+
+  @Post('learning/attention-events')
+  reportLearningAttentionEvent(
+    @Param('studentId') studentId: string,
+    @Body() body: ReportLearningAttentionEventDto,
+  ) {
+    return createApiResponse(
+      this.studentPortalService.reportLearningAttentionEvent(studentId, body),
+      'Learning attention event recorded successfully.',
     );
   }
 

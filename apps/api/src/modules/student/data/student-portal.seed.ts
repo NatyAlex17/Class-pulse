@@ -927,6 +927,7 @@ export const studentPortalSeed: StudentPortalState[] = [
     learningSessionActive: false,
     activeLessonId: undefined,
     lessonElapsedMinutes: {},
+    activeLearningAttention: undefined,
     activeExamSession: undefined,
     reflectionResponse: '',
     questionOfDayAnswer: '',

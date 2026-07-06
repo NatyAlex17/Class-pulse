@@ -107,6 +107,7 @@ export default function StudentLearningPage() {
     sessionMinutes,
     requiredSessionMinutes,
     lessonElapsedMinutes,
+    activeLearningAttention,
     activeExamSession,
     examUnlocked,
     portalHydrated,
@@ -117,6 +118,7 @@ export default function StudentLearningPage() {
     advanceLearning,
     setLearningSession,
     recordLessonSessionStart,
+    reportLearningAttentionEvent,
     startModuleExamSession,
     reportExamSecurityEvent,
     selectModule,
@@ -137,8 +139,10 @@ export default function StudentLearningPage() {
   const [examError, setExamError] = React.useState<string | null>(null);
   const [examSubmitting, setExamSubmitting] = React.useState(false);
   const [examSecurityNotice, setExamSecurityNotice] = React.useState<string | null>(null);
+  const [learningSecurityNotice, setLearningSecurityNotice] = React.useState<string | null>(null);
   const [completedLessons, setCompletedLessons] = React.useState<Set<string>>(new Set());
   const examEventCooldownRef = React.useRef<Record<string, number>>({});
+  const learningEventCooldownRef = React.useRef<Record<string, number>>({});
   const sessionRemainingMinutes = Math.max(requiredSessionMinutes - sessionMinutes, 0);
   const sessionPercent =
     requiredSessionMinutes > 0
@@ -190,6 +194,13 @@ export default function StudentLearningPage() {
     Boolean(secureExamSession) &&
     !completedLessons.has(selectedLesson?.id ?? '') &&
     examResult === null;
+  const currentLearningAttention =
+    selectedLesson &&
+    selectedLesson.type !== 'Quiz' &&
+    activeLearningAttention?.moduleId === currentModule.id &&
+    activeLearningAttention?.lessonId === selectedLesson.id
+      ? activeLearningAttention
+      : null;
   const selectedLessonTargetMinutes = parseDurationToMinutes(selectedLesson?.duration);
   const selectedLessonElapsedMinutes = selectedLesson
     ? Math.max(0, lessonElapsedMinutes[selectedLesson.id] ?? 0)
@@ -250,6 +261,26 @@ export default function StudentLearningPage() {
       reportExamSecurityEvent(activeExamSession.moduleId, { type, detail });
     },
     [activeExamSession, reportExamSecurityEvent]
+  );
+
+  const reportLearningEvent = React.useCallback(
+    (type: 'visibility_hidden' | 'window_blur' | 'session_paused', detail?: string) => {
+      if (!learningSessionActive || !selectedLesson || selectedLesson.type === 'Quiz') {
+        return;
+      }
+
+      const now = Date.now();
+      const key = `${type}:${detail ?? ''}`;
+      const lastReportedAt = learningEventCooldownRef.current[key] ?? 0;
+
+      if (now - lastReportedAt < 1200) {
+        return;
+      }
+
+      learningEventCooldownRef.current[key] = now;
+      reportLearningAttentionEvent({ type, detail });
+    },
+    [learningSessionActive, reportLearningAttentionEvent, selectedLesson]
   );
 
   const blockExamNavigation = React.useCallback(
@@ -319,6 +350,7 @@ export default function StudentLearningPage() {
     setQuizAnswers({});
     setExamError(null);
     setExamSecurityNotice(null);
+    setLearningSecurityNotice(null);
   }, [selectedLessonId]);
 
   React.useEffect(() => {
@@ -399,6 +431,44 @@ export default function StudentLearningPage() {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [examModeActive, reportExamEvent]);
+
+  React.useEffect(() => {
+    if (!learningSessionActive || examModeActive || !selectedLesson || selectedLesson.type === 'Quiz') {
+      return;
+    }
+
+    const pauseLearningForAttentionLoss = (
+      type: 'visibility_hidden' | 'window_blur',
+      message: string
+    ) => {
+      reportLearningEvent(type, selectedLesson.id);
+      setLearningSecurityNotice(message);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        pauseLearningForAttentionLoss(
+          'visibility_hidden',
+          'Learning time was paused because the lesson tab was hidden. Resume when you are back.'
+        );
+      }
+    };
+
+    const handleWindowBlur = () => {
+      pauseLearningForAttentionLoss(
+        'window_blur',
+        'Learning time was paused because focus left the lesson window. Resume when ready.'
+      );
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleWindowBlur);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleWindowBlur);
+    };
+  }, [examModeActive, learningSessionActive, reportLearningEvent, selectedLesson]);
 
   const isLessonComplete = (lessonId: string) =>
     completedLessons.has(lessonId) ||
@@ -585,6 +655,14 @@ export default function StudentLearningPage() {
                     return;
                   }
 
+                  if (learningSessionActive && selectedLesson?.type !== 'Quiz') {
+                    reportLearningEvent('session_paused', selectedLesson.id);
+                    setLearningSecurityNotice(
+                      'Learning time was paused. Resume the lesson when you are ready to continue.'
+                    );
+                    return;
+                  }
+
                   setLearningSession(!learningSessionActive);
                 }}
                 disabled={!portalUnlocked || examModeActive}
@@ -599,6 +677,18 @@ export default function StudentLearningPage() {
               </button>
             )}
           </div>
+
+          {showingLessonTimer && currentLearningAttention ? (
+            <div className="hidden max-w-[280px] rounded-[14px] border border-warning/20 bg-warning/5 px-3 py-2 lg:block">
+              <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-warning">
+                Attention Tracking
+              </p>
+              <p className="mt-1 text-xs text-on-surface">
+                {currentLearningAttention.warnings} warning(s), {currentLearningAttention.focusLossCount} focus exits,{' '}
+                {currentLearningAttention.visibilityLossCount} hidden-tab event(s).
+              </p>
+            </div>
+          ) : null}
 
           <div className="flex items-center gap-3 border-l border-border-subtle pl-4">
             <button className="text-on-surface-variant transition hover:text-primary">
@@ -1022,6 +1112,21 @@ export default function StudentLearningPage() {
               {/* Video Viewer */}
               {selectedLesson.type === 'Video' && (
                 <div className="space-y-4">
+                  {learningSecurityNotice || currentLearningAttention ? (
+                    <div className="rounded-[16px] border border-warning/20 bg-warning/5 p-4 text-sm text-on-surface">
+                      <p className="font-semibold text-warning">Learning attention monitoring is active.</p>
+                      {learningSecurityNotice ? (
+                        <p className="mt-1">{learningSecurityNotice}</p>
+                      ) : null}
+                      {currentLearningAttention ? (
+                        <p className="mt-2 text-xs text-on-surface-variant">
+                          {currentLearningAttention.warnings} warning(s), {currentLearningAttention.focusLossCount} focus exits,{' '}
+                          {currentLearningAttention.visibilityLossCount} hidden-tab event(s), {currentLearningAttention.manualPauseCount}{' '}
+                          pause event(s).
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
                   <div className="rounded-[20px] overflow-hidden shadow-lg">
                     <div className="aspect-video bg-black relative">
                       <iframe
@@ -1070,6 +1175,21 @@ export default function StudentLearningPage() {
                 selectedLesson.type === 'Link') && (
                 <div className="rounded-[20px] overflow-hidden border border-border-subtle bg-surface-muted space-y-6">
                   <div className="bg-surface rounded-[20px] p-8 space-y-6">
+                    {learningSecurityNotice || currentLearningAttention ? (
+                      <div className="rounded-[16px] border border-warning/20 bg-warning/5 p-4 text-sm text-on-surface">
+                        <p className="font-semibold text-warning">Learning attention monitoring is active.</p>
+                        {learningSecurityNotice ? (
+                          <p className="mt-1">{learningSecurityNotice}</p>
+                        ) : null}
+                        {currentLearningAttention ? (
+                          <p className="mt-2 text-xs text-on-surface-variant">
+                            {currentLearningAttention.warnings} warning(s), {currentLearningAttention.focusLossCount} focus exits,{' '}
+                            {currentLearningAttention.visibilityLossCount} hidden-tab event(s), {currentLearningAttention.manualPauseCount}{' '}
+                            pause event(s).
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
                     <div className="flex items-start gap-4">
                       <div className="flex h-16 w-16 items-center justify-center rounded-[14px] bg-primary/10 text-primary shrink-0">
                         <IconFile className="size-8" />

@@ -278,6 +278,22 @@ describe('StudentPortalService', () => {
     ).toThrow(BadRequestException);
   });
 
+  it('tracks learning attention events and pauses the lesson session', () => {
+    service.selectModule('student-amara-singh', { moduleId: 'm3' });
+    service.recordLessonSessionStart('student-amara-singh', 'm3-video');
+    service.setLearningSession('student-amara-singh', { active: true });
+
+    const attention = service.reportLearningAttentionEvent('student-amara-singh', {
+      type: 'visibility_hidden',
+      detail: 'lesson-tab-hidden',
+    });
+
+    expect(attention?.lessonId).toBe('m3-video');
+    expect(attention?.warnings).toBe(1);
+    expect(attention?.visibilityLossCount).toBe(1);
+    expect(service.getLearning('student-amara-singh').learningSessionActive).toBe(false);
+  });
+
   it('preserves completed intake state after service restart', () => {
     const submission = intakeSubmissionService.submitIntake('student-amara-singh', {
       entranceExamScore: null,

@@ -166,6 +166,7 @@ export class StudentPortalRepository {
       learningSessionActive: false,
       activeLessonId: undefined,
       lessonElapsedMinutes: {},
+      activeLearningAttention: undefined,
       activeExamSession: undefined,
       textbookIssued: false,
       textbookOpened: false,
@@ -178,6 +179,12 @@ export class StudentPortalRepository {
     this.portalByStudentId.set(localUser.id, personalized);
     this.persistState();
     return this.clone(personalized);
+  }
+
+  findAll(): StudentPortalState[] {
+    return Array.from(this.portalByStudentId.values()).map((portal) =>
+      this.enrichPortalWithConfigs(this.clone(portal)),
+    );
   }
 
   save(portal: StudentPortalState): StudentPortalState {

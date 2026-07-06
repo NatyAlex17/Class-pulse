@@ -16,6 +16,7 @@ import {
   IconSearch,
   IconSettings,
   IconAdjustments,
+  IconShieldExclamation,
   IconUser,
   IconUsersGroup,
   IconX,
@@ -39,6 +40,7 @@ const navItems: AdminNavItem[] = [
   { label: 'Command Center', href: '/admin/operations', icon: IconLayoutDashboard },
   { label: 'Applications', href: '/admin/applications', icon: IconClipboardList },
   { label: 'Review Workspace', href: '/admin/applications/review', icon: IconAppWindow },
+  { label: 'Violations Log', href: '/admin/violations', icon: IconShieldExclamation },
   { label: 'Reports', href: '/admin/reports', icon: IconFileAnalytics },
   {
     label: 'Configurations',
@@ -495,7 +497,7 @@ export function AdminShell({
           navItems[0],
           navItems[1],
           navItems[2],
-          navItems[4],
+          navItems[5],
           { label: 'Settings', href: '/admin/settings', icon: IconSettings },
         ].map((item) => {
           const Icon = item.icon;

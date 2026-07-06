@@ -64,6 +64,27 @@ type ModuleExamResult = {
 
 type ModuleExamOutcome = { ok: true; result: ModuleExamResult } | { ok: false; error: string };
 
+type LearningAttentionEventType = 'visibility_hidden' | 'window_blur' | 'session_paused';
+
+type LearningAttentionEvent = {
+  id: string;
+  type: LearningAttentionEventType;
+  occurredAt: string;
+  detail?: string;
+};
+
+type ActiveLearningAttention = {
+  moduleId: string;
+  lessonId: string;
+  startedAt: string;
+  lastActivityAt: string;
+  focusLossCount: number;
+  visibilityLossCount: number;
+  manualPauseCount: number;
+  warnings: number;
+  recentEvents: LearningAttentionEvent[];
+};
+
 type ExamSecurityEventType =
   | 'visibility_hidden'
   | 'window_blur'
@@ -366,6 +387,7 @@ type StudentDemoState = {
   learningSessionActive: boolean;
   activeLessonId?: string;
   lessonElapsedMinutes: Record<string, number>;
+  activeLearningAttention?: ActiveLearningAttention;
   activeExamSession?: ActiveExamSession;
   attendanceRecords: AttendanceRecord[];
   reflectionResponse: string;
@@ -439,6 +461,10 @@ type StudentDemoContextValue = StudentDemoState & {
   toggleLearningSession: () => void;
   setLearningSession: (active: boolean) => void;
   recordLessonSessionStart: (lessonId: string) => void;
+  reportLearningAttentionEvent: (payload: {
+    type: LearningAttentionEventType;
+    detail?: string;
+  }) => void;
   startModuleExamSession: (moduleId: string, stepId: string) => Promise<ActiveExamSession | null>;
   reportExamSecurityEvent: (
     moduleId: string,
@@ -528,6 +554,7 @@ type StudentPortalApi = {
   learningSessionActive: boolean;
   activeLessonId?: string;
   lessonElapsedMinutes: Record<string, number>;
+  activeLearningAttention?: ActiveLearningAttention;
   activeExamSession?: ActiveExamSession;
   reflectionResponse: string;
   questionOfDayAnswer: string;
@@ -544,6 +571,7 @@ type StudentLearningApi = {
   learningSessionActive: boolean;
   activeLessonId?: string;
   lessonElapsedMinutes: Record<string, number>;
+  activeLearningAttention?: ActiveLearningAttention;
   activeExamSession?: ActiveExamSession;
   examUnlocked: boolean;
   textbookIssued: boolean;
@@ -629,6 +657,7 @@ function createFallbackState(): StudentDemoState {
     learningSessionActive: false,
     activeLessonId: undefined,
     lessonElapsedMinutes: {},
+    activeLearningAttention: undefined,
     activeExamSession: undefined,
     attendanceRecords: [],
     reflectionResponse: '',
@@ -697,6 +726,7 @@ function mapPortalToState(portal: StudentPortalApi): StudentDemoState {
     learningSessionActive: portal.learningSessionActive,
     activeLessonId: portal.activeLessonId,
     lessonElapsedMinutes: portal.lessonElapsedMinutes ?? {},
+    activeLearningAttention: portal.activeLearningAttention,
     activeExamSession: portal.activeExamSession,
     attendanceRecords: portal.attendanceRecords,
     reflectionResponse: portal.reflectionResponse,
@@ -735,6 +765,7 @@ function mergeLearningIntoState(
     learningSessionActive: learning.learningSessionActive,
     activeLessonId: learning.activeLessonId,
     lessonElapsedMinutes: learning.lessonElapsedMinutes ?? {},
+    activeLearningAttention: learning.activeLearningAttention,
     activeExamSession: learning.activeExamSession,
     textbookIssued: learning.textbookIssued,
     textbookOpened: learning.textbookOpened,
@@ -1151,6 +1182,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
   const recordLessonSessionStart = React.useCallback(
     (lessonId: string) => {
       setState((current) => {
+        const now = new Date().toISOString();
         return {
           ...current,
           activeLessonId: lessonId,
@@ -1158,9 +1190,76 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
             ...current.lessonElapsedMinutes,
             [lessonId]: Math.max(0, current.lessonElapsedMinutes[lessonId] ?? 0),
           },
+          activeLearningAttention:
+            current.activeLearningAttention &&
+            current.activeLearningAttention.moduleId === current.activeModuleId &&
+            current.activeLearningAttention.lessonId === lessonId
+              ? current.activeLearningAttention
+              : {
+                  moduleId: current.activeModuleId,
+                  lessonId,
+                  startedAt: now,
+                  lastActivityAt: now,
+                  focusLossCount: 0,
+                  visibilityLossCount: 0,
+                  manualPauseCount: 0,
+                  warnings: 0,
+                  recentEvents: [],
+                },
         };
       });
       mutate(`/learning/lessons/${lessonId}/session-start`, 'PATCH');
+    },
+    [mutate]
+  );
+
+  const reportLearningAttentionEvent = React.useCallback(
+    (payload: { type: LearningAttentionEventType; detail?: string }) => {
+      setState((current) => {
+        const now = new Date().toISOString();
+        const activeLearningAttention =
+          current.activeLearningAttention &&
+          current.activeLessonId &&
+          current.activeLearningAttention.lessonId === current.activeLessonId &&
+          current.activeLearningAttention.moduleId === current.activeModuleId
+            ? { ...current.activeLearningAttention }
+            : current.activeLessonId
+              ? {
+                  moduleId: current.activeModuleId,
+                  lessonId: current.activeLessonId,
+                  startedAt: now,
+                  lastActivityAt: now,
+                  focusLossCount: 0,
+                  visibilityLossCount: 0,
+                  manualPauseCount: 0,
+                  warnings: 0,
+                  recentEvents: [],
+                }
+              : undefined;
+
+        if (!activeLearningAttention) {
+          return current;
+        }
+
+        activeLearningAttention.warnings += 1;
+        activeLearningAttention.lastActivityAt = now;
+
+        if (payload.type === 'visibility_hidden') {
+          activeLearningAttention.visibilityLossCount += 1;
+        } else if (payload.type === 'window_blur') {
+          activeLearningAttention.focusLossCount += 1;
+        } else if (payload.type === 'session_paused') {
+          activeLearningAttention.manualPauseCount += 1;
+        }
+
+        return {
+          ...current,
+          learningSessionActive: false,
+          activeLearningAttention,
+        };
+      });
+
+      mutate('/learning/attention-events', 'POST', payload);
     },
     [mutate]
   );
@@ -1480,6 +1579,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       toggleLearningSession,
       setLearningSession,
       recordLessonSessionStart,
+      reportLearningAttentionEvent,
       startModuleExamSession,
       reportExamSecurityEvent,
       selectModule,
@@ -1524,6 +1624,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       portalHydrated,
       portalUnlocked,
       programCertificateReady,
+      reportLearningAttentionEvent,
       reportExamSecurityEvent,
       refreshLearning,
       readinessCount,

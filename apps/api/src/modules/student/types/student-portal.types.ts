@@ -253,6 +253,27 @@ export interface StudentAuditEvent {
   details?: Record<string, string | number | boolean>;
 }
 
+export type StudentViolationContext = 'secure_exam' | 'learning_session';
+export type StudentViolationTone = 'warning' | 'error' | 'info';
+
+export interface StudentViolationLogEntry {
+  id: string;
+  studentId: string;
+  studentName: string;
+  studentNumber: string;
+  context: StudentViolationContext;
+  contextLabel: string;
+  type: string;
+  label: string;
+  tone: StudentViolationTone;
+  moduleId?: string;
+  moduleTitle?: string;
+  stepId?: string;
+  warningsAtEvent?: number;
+  detail?: string;
+  occurredAt: string;
+}
+
 export interface AttendanceRecord {
   id: string;
   date: string;
@@ -466,6 +487,7 @@ export interface StudentPortalState {
   activeLessonId?: string;
   /** Per-lesson persisted elapsed learning time, in minutes. */
   lessonElapsedMinutes: Record<string, number>;
+  activeLearningAttention?: ActiveLearningAttention;
   activeExamSession?: ActiveExamSession;
   reflectionResponse: string;
   questionOfDayAnswer: string;
@@ -507,6 +529,7 @@ export interface StudentLearningSnapshot {
   learningSessionActive: boolean;
   activeLessonId?: string;
   lessonElapsedMinutes: Record<string, number>;
+  activeLearningAttention?: ActiveLearningAttention;
   activeExamSession?: ActiveExamSession;
   examUnlocked: boolean;
   textbookIssued: boolean;
@@ -639,6 +662,27 @@ export interface AdvanceLearningDto {
   minutes?: number;
 }
 
+export type LearningAttentionEventType = 'visibility_hidden' | 'window_blur' | 'session_paused';
+
+export interface LearningAttentionEvent {
+  id: string;
+  type: LearningAttentionEventType;
+  occurredAt: string;
+  detail?: string;
+}
+
+export interface ActiveLearningAttention {
+  moduleId: string;
+  lessonId: string;
+  startedAt: string;
+  lastActivityAt: string;
+  focusLossCount: number;
+  visibilityLossCount: number;
+  manualPauseCount: number;
+  warnings: number;
+  recentEvents: LearningAttentionEvent[];
+}
+
 export type ExamSecurityEventType =
   | 'visibility_hidden'
   | 'window_blur'
@@ -674,6 +718,11 @@ export interface ActiveExamSession {
 
 export interface SetLearningSessionDto {
   active: boolean;
+}
+
+export interface ReportLearningAttentionEventDto {
+  type: LearningAttentionEventType;
+  detail?: string;
 }
 
 export interface StartModuleExamSessionDto {
