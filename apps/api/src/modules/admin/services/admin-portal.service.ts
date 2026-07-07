@@ -19,6 +19,10 @@ export class AdminPortalService {
     return this.repository.findByAdminId(adminId);
   }
 
+  getProfile(adminId: string) {
+    return this.repository.findByAdminId(adminId).profile;
+  }
+
   getDashboard(adminId: string) {
     return this.repository.findByAdminId(adminId).dashboard;
   }

@@ -24,6 +24,7 @@ import {
   IconX,
   IconChevronDown,
 } from '@tabler/icons-react';
+import { useAuth } from '@/components/auth/auth-provider';
 import { SignOutButton } from '@/components/auth/sign-out-button';
 import { UnreadMessageBanner } from '@/components/chat/unread-message-banner';
 import { useUnreadMessagesCount } from '@/lib/chat/use-unread-count';
@@ -31,6 +32,30 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+
+function getInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean).slice(0, 2);
+
+  if (parts.length === 0) {
+    return 'A';
+  }
+
+  return parts.map((part) => part.charAt(0).toUpperCase()).join('');
+}
+
+function formatRoleLabel(role?: string) {
+  if (!role) {
+    return 'Admin';
+  }
+
+  return role
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
 
 type AdminNavItem = {
   label: string;
@@ -89,13 +114,62 @@ export function AdminShell({
     { label: 'Reports', href: '/admin/reports' },
   ],
   topActions,
-  profileName = 'Charlie Admin',
-  profileRole = 'Operations Lead',
+  profileName,
+  profileRole,
 }: AdminShellProps) {
   const pathname = usePathname();
+  const { user, syncedUser, session } = useAuth();
   const [profileMenuOpen, setProfileMenuOpen] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const { unreadCount, notification, dismissNotification } = useUnreadMessagesCount();
+  const [fetchedProfile, setFetchedProfile] = React.useState<{ fullName: string; title: string; avatarUrl?: string } | null>(null);
+
+  const adminId = syncedUser?.localUserId;
+  const accessToken = session?.access_token;
+
+  React.useEffect(() => {
+    if (!adminId || !accessToken) {
+      setFetchedProfile(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    fetch(`${API_BASE_URL}/admins/${adminId}/profile`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: 'no-store',
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (cancelled || !payload?.data) return;
+        setFetchedProfile({
+          fullName: payload.data.fullName,
+          title: payload.data.title,
+          avatarUrl: payload.data.avatarUrl,
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setFetchedProfile(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, adminId]);
+
+  const resolvedProfileName =
+    profileName ||
+    fetchedProfile?.fullName ||
+    (typeof user?.user_metadata?.full_name === 'string' && user.user_metadata.full_name.trim()) ||
+    (typeof user?.user_metadata?.name === 'string' && user.user_metadata.name.trim()) ||
+    syncedUser?.email ||
+    'Admin';
+  const resolvedProfileRole = profileRole || fetchedProfile?.title || formatRoleLabel(syncedUser?.role);
+  const resolvedProfileImageUrl =
+    fetchedProfile?.avatarUrl ||
+    (typeof user?.user_metadata?.avatar_url === 'string' && user.user_metadata.avatar_url.trim()) ||
+    (typeof user?.user_metadata?.picture === 'string' && user.user_metadata.picture.trim()) ||
+    undefined;
 
   // Auto-expand parent menus if child is active
   const initialExpandedMenus = React.useMemo(() => {
@@ -446,24 +520,40 @@ export function AdminShell({
                 className="flex items-center gap-3 border-l border-border-subtle pl-2 transition hover:opacity-80 sm:pl-4"
               >
                 <div className="hidden text-right sm:block">
-                  <p className="text-sm font-semibold text-on-surface">{profileName}</p>
-                  <p className="text-[12px] text-on-surface-variant">{profileRole}</p>
+                  <p className="text-sm font-semibold text-on-surface">{resolvedProfileName}</p>
+                  <p className="text-[12px] text-on-surface-variant">{resolvedProfileRole}</p>
                 </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary cursor-pointer">
-                  CA
-                </div>
+                {resolvedProfileImageUrl ? (
+                  <img
+                    className="h-10 w-10 rounded-full object-cover cursor-pointer"
+                    src={resolvedProfileImageUrl}
+                    alt={resolvedProfileName}
+                  />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary cursor-pointer">
+                    {getInitials(resolvedProfileName)}
+                  </div>
+                )}
               </button>
 
               {profileMenuOpen && (
                 <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-[16px] border border-border-subtle bg-surface shadow-lg">
                   <div className="border-b border-border-subtle p-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                        CA
-                      </div>
+                      {resolvedProfileImageUrl ? (
+                        <img
+                          className="h-12 w-12 rounded-full object-cover"
+                          src={resolvedProfileImageUrl}
+                          alt={resolvedProfileName}
+                        />
+                      ) : (
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                          {getInitials(resolvedProfileName)}
+                        </div>
+                      )}
                       <div>
-                        <p className="font-semibold text-on-surface">{profileName}</p>
-                        <p className="text-[12px] text-on-surface-variant">{profileRole}</p>
+                        <p className="font-semibold text-on-surface">{resolvedProfileName}</p>
+                        <p className="text-[12px] text-on-surface-variant">{resolvedProfileRole}</p>
                       </div>
                     </div>
                   </div>

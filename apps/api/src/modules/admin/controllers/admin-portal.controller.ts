@@ -66,6 +66,14 @@ export class AdminPortalController {
     );
   }
 
+  @Get('profile')
+  getProfile(@Param('adminId') adminId: string) {
+    return createApiResponse(
+      this.adminPortalService.getProfile(adminId),
+      'Admin profile retrieved successfully.',
+    );
+  }
+
   @Get('dashboard')
   getDashboard(@Param('adminId') adminId: string) {
     return createApiResponse(

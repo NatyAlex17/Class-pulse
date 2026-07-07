@@ -111,16 +111,16 @@ export function StudentShell({
     { label: 'Resources', href: '/student/documents' },
   ],
   topActions,
-  profileName = 'Amara S.',
-  profileMeta = 'Lvl 4 Student',
-  profileImageUrl = 'https://lh3.googleusercontent.com/aida-public/AB6AXuCORLMwhTMJTUK6FODigB1moGImYYGZQHXCXSgJ2KuWB2FlIsc1k9nXp9wA_jUMwgls2xrI8ZxGgGJ84YUd2CVx8vsALJMGelvtEszS1btbtM2nUH_cfS-eMbMz-NJSUOR8z5ji3DOJ_By_LWrgvWUDQEnnA3i3MKAQ8FHsAVoA9lS5N4JG7-FEwGe5_aRHsr-OFI5MadCqWN258EqTHYnUO_Wr-NKrhFeuJLOsNBJtdxbYq7-StZxPlypb48B-UwtjgC1BeTDccqv9',
+  profileName,
+  profileMeta,
+  profileImageUrl,
   sidebarTitle = 'Student Portal',
   sidebarSubtitle = 'Healthcare Education',
   stickyFooter,
   patternedCanvas = false,
 }: StudentShellProps) {
   const pathname = usePathname();
-  const { workflowStage, portalHydrated, portalUnlocked } = useStudentDemo();
+  const { workflowStage, portalHydrated, portalUnlocked, profile } = useStudentDemo();
   const { user, syncedUser } = useAuth();
   const [workflowOpen, setWorkflowOpen] = React.useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = React.useState(false);
@@ -128,22 +128,21 @@ export function StudentShell({
   const { unreadCount, notification, dismissNotification } = useUnreadMessagesCount();
 
   const resolvedProfileName =
-    typeof user?.user_metadata?.full_name === 'string' && user.user_metadata.full_name.trim()
-      ? user.user_metadata.full_name.trim()
-      : typeof user?.user_metadata?.name === 'string' && user.user_metadata.name.trim()
-        ? user.user_metadata.name.trim()
-        : syncedUser?.email
-          ? syncedUser.email
-          : profileName;
-  const resolvedProfileMeta = `${formatRoleLabel(syncedUser?.role)}${
-    syncedUser?.status ? ` · ${syncedUser.status}` : ''
-  }`;
+    profileName ||
+    profile.fullName ||
+    profile.preferredName ||
+    (typeof user?.user_metadata?.full_name === 'string' && user.user_metadata.full_name.trim()) ||
+    (typeof user?.user_metadata?.name === 'string' && user.user_metadata.name.trim()) ||
+    syncedUser?.email ||
+    'Student';
+  const resolvedProfileMeta =
+    profileMeta ||
+    `${formatRoleLabel(syncedUser?.role)}${syncedUser?.status ? ` · ${syncedUser.status}` : ''}`;
   const resolvedProfileImageUrl =
-    typeof user?.user_metadata?.avatar_url === 'string' && user.user_metadata.avatar_url.trim()
-      ? user.user_metadata.avatar_url.trim()
-      : typeof user?.user_metadata?.picture === 'string' && user.user_metadata.picture.trim()
-        ? user.user_metadata.picture.trim()
-        : profileImageUrl;
+    profileImageUrl ||
+    (typeof user?.user_metadata?.avatar_url === 'string' && user.user_metadata.avatar_url.trim()) ||
+    (typeof user?.user_metadata?.picture === 'string' && user.user_metadata.picture.trim()) ||
+    undefined;
 
   React.useEffect(() => {
     if (portalHydrated && !portalUnlocked) {

@@ -15,6 +15,7 @@ export interface AdminProfile {
   fullName: string;
   title: string;
   email: string;
+  avatarUrl?: string;
 }
 
 export interface AdminKpi {

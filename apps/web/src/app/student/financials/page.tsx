@@ -40,6 +40,7 @@ export default function StudentFinancialsPage() {
     financialStatus,
     makePayment,
     lastAction,
+    profile,
   } = useStudentDemo();
   const billingStep = onboardingSteps.find((step) => step.id === 'billing');
 
@@ -59,13 +60,21 @@ export default function StudentFinancialsPage() {
   const [paymentStep, setPaymentStep] = React.useState<'select' | 'form' | 'processing' | 'success'>('select');
   const [selectedAmount, setSelectedAmount] = React.useState(paymentBalance);
   const [cardData, setCardData] = React.useState({
-    name: 'Sarah Jenkins',
-    email: 'sarah.jenkins@example.com',
+    name: profile.fullName,
+    email: profile.email,
     cardNumber: '',
     expiry: '',
     cvc: '',
   });
   const [processingError, setProcessingError] = React.useState('');
+
+  React.useEffect(() => {
+    setCardData((current) => ({
+      ...current,
+      name: current.name || profile.fullName,
+      email: current.email || profile.email,
+    }));
+  }, [profile.fullName, profile.email]);
 
   const [showReceiptModal, setShowReceiptModal] = React.useState(false);
   const [selectedReceipt, setSelectedReceipt] = React.useState<PaymentRecord | null>(null);
@@ -133,8 +142,8 @@ export default function StudentFinancialsPage() {
     setShowPaymentModal(false);
     setPaymentStep('select');
     setCardData({
-      name: 'Sarah Jenkins',
-      email: 'sarah.jenkins@example.com',
+      name: profile.fullName,
+      email: profile.email,
       cardNumber: '',
       expiry: '',
       cvc: '',
@@ -157,9 +166,6 @@ export default function StudentFinancialsPage() {
           </div>
         </div>
       }
-      profileName="Sarah Jenkins"
-      profileMeta="BNS Nursing Student"
-      profileImageUrl="https://lh3.googleusercontent.com/aida-public/AB6AXuDf6HnCMkNHZlbyGnX9vhP7RdDxyWbBaIIvXRMM6AM4S-bbpGQRU46l3YXzTF8-_L7cHkf-nq43C-CgNbOiDLrLSZC6b8YLzSnR5dfcYGlqDMXFe8qHChFUDNXqt3nHhsXnXNGLqgH8cFVDQYPvtdtcyPc5C8tWwClRE8ZjiciWKqDyQulGMA89qV1H3sy3Z3EnN_kK8bB_Ac8zPicp7arwLtTO37sFPfHjLvWSHbSK6IDeIf80QN1EY5raYQeXcSdbN9Pwy3pKsLDn"
     >
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div />
@@ -375,9 +381,9 @@ export default function StudentFinancialsPage() {
               {/* Bill To */}
               <div className="mb-6">
                 <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wide mb-2">Bill To</p>
-                <p className="font-bold text-on-surface text-sm">Sarah Jenkins</p>
-                <p className="text-[11px] text-on-surface-variant">sarah.jenkins@example.com</p>
-                <p className="text-[11px] text-on-surface-variant">BNS Nursing Student</p>
+                <p className="font-bold text-on-surface text-sm">{profile.fullName}</p>
+                <p className="text-[11px] text-on-surface-variant">{profile.email}</p>
+                <p className="text-[11px] text-on-surface-variant">{profile.cohort}</p>
               </div>
 
               {/* Line Items */}
@@ -498,9 +504,9 @@ export default function StudentFinancialsPage() {
 
                           <div class="section">
                             <div class="label">BILL TO</div>
-                            <p style="margin: 5px 0; font-weight: bold;">Sarah Jenkins</p>
-                            <p style="margin: 2px 0; font-size: 12px;">sarah.jenkins@example.com</p>
-                            <p style="margin: 2px 0; font-size: 12px;">BNS Nursing Student</p>
+                            <p style="margin: 5px 0; font-weight: bold;">${profile.fullName}</p>
+                            <p style="margin: 2px 0; font-size: 12px;">${profile.email}</p>
+                            <p style="margin: 2px 0; font-size: 12px;">${profile.cohort}</p>
                           </div>
 
                           <div class="section">
@@ -576,9 +582,9 @@ Receipt No: ${transactionIdFor(selectedReceipt)}
 Date: ${selectedReceipt.date}
 
 BILL TO
-Sarah Jenkins
-sarah.jenkins@example.com
-BNS Nursing Student
+${profile.fullName}
+${profile.email}
+${profile.cohort}
 
 ========================================
 DESCRIPTION                       AMOUNT

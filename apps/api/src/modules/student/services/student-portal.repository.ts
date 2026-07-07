@@ -90,6 +90,9 @@ export class StudentPortalRepository {
         preferredName: firstName,
         email: localUser.email,
         studentNumber: this.buildStudentNumber(localUser.id),
+        cohort: '',
+        cohortId: undefined,
+        levelLabel: 'Prospective Student',
       },
       workflowStage: 'entrance_exam',
       intakeJourney: {

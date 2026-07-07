@@ -389,6 +389,7 @@ type StudentProfileSummary = {
   email: string;
   cohort: string;
   studentNumber: string;
+  location: string;
 };
 
 type StudentDemoState = {
@@ -644,7 +645,7 @@ const StudentDemoContext = React.createContext<StudentDemoContextValue | null>(n
 
 function createFallbackState(): StudentDemoState {
   return {
-    profile: { fullName: '', email: '', cohort: '', studentNumber: '' },
+    profile: { fullName: '', email: '', cohort: '', studentNumber: '', location: '' },
     workflowStage: 'entrance_exam',
     intakeJourney: null,
     entranceExam: {
