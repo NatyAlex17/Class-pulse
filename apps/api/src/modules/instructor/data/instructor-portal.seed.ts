@@ -206,25 +206,7 @@ export const instructorPortalSeed: InstructorPortalState[] = [
         notes: 'Sunrise Care Rotation',
       },
     ],
-    skillsWorkspace: {
-      studentId: 'student-alice-smith',
-      studentName: 'Alice Smith',
-      autosave: true,
-      savedAt: '2026-06-30T14:32:00.000Z',
-      completionPercent: 75,
-      groups: [
-        {
-          id: 'group-1',
-          title: 'Module 4 / Vital Signs',
-          progressPercent: 75,
-          items: [
-            { id: 'skill-1', label: 'Hand hygiene protocol', status: 'Verified' },
-            { id: 'skill-2', label: 'Temperature and pulse sequence', status: 'Verified' },
-            { id: 'skill-3', label: 'Blood pressure measurement', status: 'Needs observation' },
-          ],
-        },
-      ],
-    },
+    skillReviews: {},
     clinicalLogs: [
       {
         id: 'log-1',

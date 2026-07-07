@@ -7,6 +7,7 @@ import type {
   LearningModuleDefinition,
   LearningResourceDefinition,
   LearningSectionDefinition,
+  ModuleSkillDefinition,
 } from '../types/student-portal.types';
 
 export interface LearningResourcesConfig {
@@ -124,6 +125,29 @@ export class LearningResourcesConfigService implements OnModuleInit {
         );
       }
 
+      if (
+        module.minimumClinicalHours !== undefined &&
+        (!Number.isFinite(module.minimumClinicalHours) || module.minimumClinicalHours < 0)
+      ) {
+        throw new BadRequestException(
+          `Module "${module.title}" minimum clinical hours must be a non-negative number.`,
+        );
+      }
+
+      const skillIds = new Set<string>();
+      (module.skills ?? []).forEach((skill, skillIndex) => {
+        if (!skill.id || !skill.name) {
+          throw new BadRequestException(
+            `Skill ${skillIndex + 1} in module "${module.title}" must include an id and name.`,
+          );
+        }
+
+        if (skillIds.has(skill.id)) {
+          throw new BadRequestException(`Skill id "${skill.id}" in module "${module.title}" must be unique.`);
+        }
+        skillIds.add(skill.id);
+      });
+
       const sectionIds = new Set<string>();
       const resourceIds = new Set<string>();
 
@@ -175,7 +199,19 @@ export class LearningResourcesConfigService implements OnModuleInit {
         module.minimumHoursForCertification === undefined || module.minimumHoursForCertification === null
           ? undefined
           : Number(module.minimumHoursForCertification),
+      minimumClinicalHours:
+        module.minimumClinicalHours === undefined || module.minimumClinicalHours === null
+          ? undefined
+          : Number(module.minimumClinicalHours),
+      skills: (module.skills ?? []).map((skill) => this.normalizeSkill(skill)),
       sections: (module.sections ?? []).map((section) => this.normalizeSection(section)),
+    };
+  }
+
+  private normalizeSkill(skill: ModuleSkillDefinition): ModuleSkillDefinition {
+    return {
+      id: (skill.id ?? '').trim(),
+      name: (skill.name ?? '').trim(),
     };
   }
 

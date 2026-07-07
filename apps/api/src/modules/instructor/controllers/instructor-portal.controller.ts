@@ -269,14 +269,15 @@ export class InstructorPortalController {
     );
   }
 
-  @Patch('skills/items/:itemId')
+  @Patch('skills/:studentId/items/:itemId')
   reviewSkillItem(
     @Param('instructorId') instructorId: string,
+    @Param('studentId') studentId: string,
     @Param('itemId') itemId: string,
     @Body() body: ReviewSkillChecklistItemDto,
   ) {
     return createApiResponse(
-      this.instructorPortalService.reviewSkillItem(instructorId, itemId, body),
+      this.instructorPortalService.reviewSkillItem(instructorId, studentId, itemId, body),
       'Instructor skill checklist item reviewed successfully.',
     );
   }

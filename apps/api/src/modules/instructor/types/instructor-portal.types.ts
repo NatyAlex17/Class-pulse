@@ -155,10 +155,15 @@ export interface SkillChecklistGroup {
 export interface InstructorSkillsWorkspace {
   studentId: string;
   studentName: string;
-  autosave: boolean;
   savedAt: string;
   completionPercent: number;
   groups: SkillChecklistGroup[];
+}
+
+export interface InstructorSkillReview {
+  status: SkillItemStatus;
+  feedback?: string;
+  reviewedAt: string;
 }
 
 export interface InstructorClinicalLog {
@@ -338,7 +343,8 @@ export interface InstructorPortalState {
   conversations: InstructorConversation[];
   activeConversationId: string;
   schedule: InstructorScheduleSlot[];
-  skillsWorkspace: InstructorSkillsWorkspace;
+  /** Instructor-authored skill reviews, keyed by student id then skill id. */
+  skillReviews: Record<string, Record<string, InstructorSkillReview>>;
   clinicalLogs: InstructorClinicalLog[];
   availability: InstructorAvailabilityState;
   documents: InstructorDocument[];

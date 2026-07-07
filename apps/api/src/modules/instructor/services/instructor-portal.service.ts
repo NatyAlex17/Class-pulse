@@ -4,6 +4,7 @@ import type { LocalUserRecord } from '../../auth/types/auth-user.types';
 import { DocumentRequirementsConfigService } from '../../student/services/document-requirements-config.service';
 import { LearningResourcesConfigService } from '../../student/services/learning-resources-config.service';
 import { StudentPortalService } from '../../student/services/student-portal.service';
+import type { CurriculumModule, StudentPortalState } from '../../student/types/student-portal.types';
 import type {
   AddInstructorStudentNoteDto,
   AnswerInstructorOnboardingQuestionDto,
@@ -13,9 +14,11 @@ import type {
   InstructorAuditEvent,
   InstructorClinicalLog,
   InstructorDocumentChecklistItem,
+  InstructorIntakeSubmission,
   InstructorOnboardingState,
   InstructorPortalState,
   InstructorScheduleSlot,
+  InstructorSkillsWorkspace,
   InstructorStudentRecord,
   ReviewClinicalLogDto,
   ReviewSkillChecklistItemDto,
@@ -237,50 +240,112 @@ export class InstructorPortalService {
   }
 
   getSkillsWorkspace(instructorId: string) {
-    return this.repository.findByInstructorId(instructorId).skillsWorkspace;
+    const portal = this.repository.findByInstructorId(instructorId);
+    const workspaces = this.buildSkillsWorkspaces(portal);
+    return {
+      activeStudentId: workspaces.some((workspace) => workspace.studentId === portal.activeStudentId)
+        ? portal.activeStudentId
+        : (workspaces[0]?.studentId ?? ''),
+      workspaces,
+    };
   }
 
-  reviewSkillItem(instructorId: string, itemId: string, payload: ReviewSkillChecklistItemDto) {
+  reviewSkillItem(
+    instructorId: string,
+    studentId: string,
+    itemId: string,
+    payload: ReviewSkillChecklistItemDto,
+  ) {
     const portal = this.repository.findByInstructorId(instructorId);
-    let updated = false;
+    const taughtStudent = this.getTaughtStudents(portal).find((entry) => entry.student.profile.id === studentId);
 
-    portal.skillsWorkspace.groups = portal.skillsWorkspace.groups.map((group) => {
-      const nextItems = group.items.map((item) => {
-        if (item.id !== itemId) {
-          return item;
-        }
+    if (!taughtStudent) {
+      throw new BadRequestException(`Student "${studentId}" was not found among your assigned students.`);
+    }
 
-        updated = true;
-        return {
-          ...item,
-          status: payload.status,
-          feedback: payload.feedback?.trim(),
-        };
-      });
+    const skillExists = taughtStudent.matchingModules
+      .filter((module) => module.status === 'Complete')
+      .some((module) => (module.skills ?? []).some((skill) => skill.id === itemId));
 
-      const verifiedCount = nextItems.filter((item) => item.status === 'Verified').length;
-      const progressPercent = Math.round((verifiedCount / nextItems.length) * 100);
-
-      return {
-        ...group,
-        items: nextItems,
-        progressPercent,
-      };
-    });
-
-    if (!updated) {
+    if (!skillExists) {
       throw new BadRequestException(`Skill checklist item "${itemId}" was not found.`);
     }
 
-    const totalItems = portal.skillsWorkspace.groups.flatMap((group) => group.items).length;
-    const verifiedTotal = portal.skillsWorkspace.groups
-      .flatMap((group) => group.items)
-      .filter((item) => item.status === 'Verified').length;
-    portal.skillsWorkspace.completionPercent = Math.round((verifiedTotal / totalItems) * 100);
-    portal.skillsWorkspace.savedAt = new Date().toISOString();
+    const studentReviews = portal.skillReviews?.[studentId] ?? {};
+    portal.skillReviews = {
+      ...(portal.skillReviews ?? {}),
+      [studentId]: {
+        ...studentReviews,
+        [itemId]: {
+          status: payload.status,
+          feedback: payload.feedback?.trim(),
+          reviewedAt: new Date().toISOString(),
+        },
+      },
+    };
 
-    this.recordAudit(portal, 'instructor.skills.item.reviewed', itemId, { status: payload.status });
-    return this.repository.save(portal).skillsWorkspace;
+    this.recordAudit(portal, 'instructor.skills.item.reviewed', itemId, { studentId, status: payload.status });
+    const saved = this.repository.save(portal);
+    return this.buildSkillsWorkspaces(saved).find((workspace) => workspace.studentId === studentId);
+  }
+
+  /**
+   * A skill only appears on a student's checklist once they've finished the module
+   * it belongs to; review status/feedback persist in the instructor's skillReviews map.
+   */
+  private buildSkillsWorkspaces(portal: InstructorPortalState): InstructorSkillsWorkspace[] {
+    const reviewsByStudentId = portal.skillReviews ?? {};
+
+    return this.getTaughtStudents(portal)
+      .map(({ student, matchingModules }) => {
+        const studentReviews = reviewsByStudentId[student.profile.id] ?? {};
+        const completedModules = matchingModules.filter((module) => module.status === 'Complete');
+
+        const groups = completedModules
+          .filter((module) => (module.skills ?? []).length > 0)
+          .map((module) => {
+            const items = (module.skills ?? []).map((skill) => {
+              const review = studentReviews[skill.id];
+              return {
+                id: skill.id,
+                label: skill.name,
+                status: review?.status ?? 'Needs observation',
+                feedback: review?.feedback,
+              };
+            });
+
+            const verifiedCount = items.filter((item) => item.status === 'Verified').length;
+
+            return {
+              id: module.id,
+              title: module.title,
+              progressPercent: items.length > 0 ? Math.round((verifiedCount / items.length) * 100) : 0,
+              items,
+            };
+          });
+
+        if (groups.length === 0) {
+          return null;
+        }
+
+        const allItems = groups.flatMap((group) => group.items);
+        const verifiedTotal = allItems.filter((item) => item.status === 'Verified').length;
+        const savedAt = Object.values(studentReviews).reduce<string>(
+          (latest, review) => (review.reviewedAt > latest ? review.reviewedAt : latest),
+          '',
+        );
+
+        const workspace: InstructorSkillsWorkspace = {
+          studentId: student.profile.id,
+          studentName: student.profile.fullName,
+          savedAt,
+          completionPercent: allItems.length > 0 ? Math.round((verifiedTotal / allItems.length) * 100) : 0,
+          groups,
+        };
+
+        return workspace;
+      })
+      .filter((workspace): workspace is InstructorSkillsWorkspace => workspace !== null);
   }
 
   getClinicalLogs(instructorId: string) {
@@ -381,9 +446,13 @@ export class InstructorPortalService {
   /**
    * A student is "assigned" to this instructor when they're enrolled in a curriculum
    * module the instructor is approved to teach (their onboarding selectedModuleIds,
-   * once workflowStage is 'active'). There is no separate assignment table.
+   * once workflowStage is 'active'). There is no separate assignment table. Shared by
+   * every instructor feature that scopes real students to "who I teach" (My Students,
+   * Skills Checklists, etc).
    */
-  private buildInstructorStudentRecords(portal: InstructorPortalState): InstructorStudentRecord[] {
+  private getTaughtStudents(
+    portal: InstructorPortalState,
+  ): Array<{ student: StudentPortalState; matchingModules: CurriculumModule[] }> {
     if (portal.workflowStage !== 'active') {
       return [];
     }
@@ -393,16 +462,19 @@ export class InstructorPortalService {
       return [];
     }
 
-    const notesByStudentId = portal.studentNotes ?? {};
-
     return this.studentPortalService
       .findAllStudentPortals()
-      .map((student) => {
-        const matchingModules = student.modules.filter((module) => moduleIds.has(module.id));
-        if (matchingModules.length === 0) {
-          return null;
-        }
+      .map((student) => ({
+        student,
+        matchingModules: student.modules.filter((module) => moduleIds.has(module.id)),
+      }))
+      .filter((entry) => entry.matchingModules.length > 0);
+  }
 
+  private buildInstructorStudentRecords(portal: InstructorPortalState): InstructorStudentRecord[] {
+    const notesByStudentId = portal.studentNotes ?? {};
+
+    return this.getTaughtStudents(portal).map(({ student, matchingModules }) => {
         const checklistTotal = matchingModules.reduce((sum, module) => sum + module.steps.length, 0);
         const checklistCompleted = matchingModules.reduce(
           (sum, module) => sum + module.steps.filter((step) => step.complete).length,
@@ -468,8 +540,7 @@ export class InstructorPortalService {
         };
 
         return record;
-      })
-      .filter((record): record is InstructorStudentRecord => record !== null);
+      });
   }
 
   private getSlotOrThrow(portal: InstructorPortalState, slotId: string) {
@@ -625,24 +696,67 @@ export class InstructorPortalService {
       .modules.map((module) => ({ id: module.id, title: module.title, summary: module.summary }));
   }
 
+  /**
+   * The submitted intake record (questions/documents/approval) is the durable source
+   * of truth. If the lighter-weight portal record is ever missing or reset (e.g. a
+   * cleared/corrupted cache file), this reconciles it against that intake record
+   * instead of silently re-showing onboarding for an already-approved instructor.
+   */
   private syncWorkflowState(portal: InstructorPortalState) {
-    if (portal.workflowStage !== 'admin_review') {
+    if (portal.workflowStage !== 'admin_review' && portal.workflowStage !== 'onboarding') {
       return portal;
     }
 
-    const status = this.instructorIntakeSubmissionService.getInstructorApprovalStatus(portal.profile.id);
+    const submission = this.instructorIntakeSubmissionService.getInstructorSubmission(portal.profile.id);
+    if (!submission) {
+      return portal;
+    }
 
-    if (status === 'approved') {
+    if (portal.workflowStage === 'onboarding' && submission.status === 'pending') {
+      // A submission exists but the portal was reset to a blank onboarding state.
+      this.restoreOnboardingFromSubmission(portal, submission);
+      portal.workflowStage = 'admin_review';
+      return this.repository.save(portal);
+    }
+
+    if (submission.status === 'approved') {
+      this.restoreOnboardingFromSubmission(portal, submission);
       portal.workflowStage = 'active';
       return this.repository.save(portal);
     }
 
-    if (status === 'rejected') {
+    if (submission.status === 'rejected') {
+      this.restoreOnboardingFromSubmission(portal, submission);
       portal.workflowStage = 'rejected';
       return this.repository.save(portal);
     }
 
     return portal;
+  }
+
+  private restoreOnboardingFromSubmission(portal: InstructorPortalState, submission: InstructorIntakeSubmission) {
+    const answersByQuestionId = new Map(submission.questions.map((question) => [question.questionId, question.answer]));
+    portal.onboarding.questions = portal.onboarding.questions.map((question) => ({
+      ...question,
+      answer: answersByQuestionId.get(question.id) ?? question.answer,
+    }));
+
+    portal.onboarding.readinessUploads = {};
+    portal.onboarding.readinessDocumentFiles = {};
+    submission.documents.forEach((document) => {
+      if (document.fileUrl) {
+        portal.onboarding.readinessUploads[document.documentId] = true;
+        portal.onboarding.readinessDocumentFiles[document.documentId] = {
+          fileName: document.fileName ?? document.name,
+          url: document.fileUrl,
+          uploadedAt: submission.submittedAt,
+        };
+      }
+    });
+
+    portal.onboarding.agreedToTerms = submission.agreedToTerms;
+    portal.onboarding.selectedModuleIds = submission.selectedModuleIds;
+    portal.onboarding.submitted = true;
   }
 
   private assertOnboardingEditable(instructorId: string): InstructorPortalState {

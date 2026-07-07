@@ -62,6 +62,7 @@ export class InstructorPortalRepository {
         submitted: false,
       },
       studentNotes: {},
+      skillReviews: {},
       activeStudentId: '',
       conversations: [],
       activeConversationId: '',

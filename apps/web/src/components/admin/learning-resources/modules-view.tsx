@@ -11,6 +11,7 @@ import {
   IconHierarchy3,
   IconPlus,
   IconTrash,
+  IconX,
 } from '@tabler/icons-react';
 
 import { AdminShell } from '@/components/admin/admin-shell';
@@ -21,7 +22,7 @@ import { Modal } from '@/components/ui/modal';
 import { Textarea } from '@/components/ui/textarea';
 
 import { ConfigBanner, DeleteConfirmModal, PageToolbar, RowIconButton, type DeleteConfirmState } from './shared';
-import { formatMoney, getItemCount, getModuleHref, slugify, type ModuleRow } from './types';
+import { formatMoney, getItemCount, getModuleHref, slugify, type ModuleRow, type ModuleSkill } from './types';
 import type { LearningResourcesStore } from './use-learning-resources-config';
 
 const emptyModuleDraft = {
@@ -30,6 +31,8 @@ const emptyModuleDraft = {
   requiredHours: '10',
   moduleFee: '0',
   minimumHoursForCertification: '',
+  minimumClinicalHours: '',
+  skills: [] as ModuleSkill[],
 };
 
 export function ModulesView({ store }: { store: LearningResourcesStore }) {
@@ -63,17 +66,25 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
     id: module.id,
     title: module.title,
     requiredHours: module.requiredHours,
+    minimumClinicalHours: module.minimumClinicalHours,
     moduleFee: module.moduleFee,
     sections: module.sections.length,
     items: getItemCount(module),
+    skillCount: module.skills?.length ?? 0,
   }));
 
   const columns: DataTableColumn<ModuleRow>[] = [
     { id: 'title', header: 'Module', accessorKey: 'title' },
     { id: 'requiredHours', header: 'Hours', accessorKey: 'requiredHours' },
+    {
+      id: 'minimumClinicalHours',
+      header: 'Min. Clinical Hours',
+      cell: (row) => (row.minimumClinicalHours ? row.minimumClinicalHours : '—'),
+    },
     { id: 'moduleFee', header: 'Fee', cell: (row) => <span className="font-medium">{formatMoney(row.moduleFee)}</span> },
     { id: 'sections', header: 'Lessons', accessorKey: 'sections' },
     { id: 'items', header: 'Learning Activities', accessorKey: 'items' },
+    { id: 'skillCount', header: 'Skills', accessorKey: 'skillCount' },
   ];
 
   return (
@@ -211,6 +222,83 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
           </div>
 
           <div className="mt-4">
+            <label className="mb-2 block text-sm font-semibold text-on-surface">
+              Minimum Clinical Hours
+            </label>
+            <Input
+              type="number"
+              min={0}
+              value={moduleDraft.minimumClinicalHours}
+              onChange={(event) =>
+                setModuleDraft((current) => ({
+                  ...current,
+                  minimumClinicalHours: event.target.value,
+                }))
+              }
+              placeholder="Leave blank if no requirement"
+            />
+            <p className="mt-1 text-xs text-on-surface-variant">
+              Minimum clinical/placement hours a student must log for this module.
+            </p>
+          </div>
+
+          <div className="mt-4">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-semibold text-on-surface">Skills</label>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() =>
+                  setModuleDraft((current) => ({
+                    ...current,
+                    skills: [...current.skills, { id: `skill-${Date.now()}`, name: '' }],
+                  }))
+                }
+              >
+                <IconPlus className="size-4" />
+                Add Skill
+              </Button>
+            </div>
+            <p className="mt-1 text-xs text-on-surface-variant">
+              Skills instructors will assess students on for this module.
+            </p>
+            {moduleDraft.skills.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {moduleDraft.skills.map((skill, index) => (
+                  <div key={skill.id} className="flex items-center gap-2">
+                    <Input
+                      value={skill.name}
+                      onChange={(event) =>
+                        setModuleDraft((current) => ({
+                          ...current,
+                          skills: current.skills.map((item, itemIndex) =>
+                            itemIndex === index ? { ...item, name: event.target.value } : item,
+                          ),
+                        }))
+                      }
+                      placeholder="e.g., Vital Signs Assessment"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setModuleDraft((current) => ({
+                          ...current,
+                          skills: current.skills.filter((_, itemIndex) => itemIndex !== index),
+                        }))
+                      }
+                      className="shrink-0 rounded-lg p-2 text-error transition hover:bg-error/10"
+                      title="Remove skill"
+                    >
+                      <IconX className="size-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4">
             <label className="mb-2 block text-sm font-semibold text-on-surface">Summary *</label>
             <Textarea
               className="min-h-24"
@@ -232,6 +320,12 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
                 const minimumHours = moduleDraft.minimumHoursForCertification
                   ? Number(moduleDraft.minimumHoursForCertification)
                   : undefined;
+                const minimumClinicalHours = moduleDraft.minimumClinicalHours
+                  ? Number(moduleDraft.minimumClinicalHours)
+                  : undefined;
+                const skills = moduleDraft.skills
+                  .map((skill) => ({ ...skill, name: skill.name.trim() }))
+                  .filter((skill) => skill.name);
 
                 if (!title || !summary || requiredHours <= 0 || !Number.isFinite(moduleFee) || moduleFee < 0) {
                   setError('Module title, summary, required hours, and a valid module fee are required.');
@@ -250,6 +344,8 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
                             requiredHours,
                             moduleFee,
                             minimumHoursForCertification: minimumHours,
+                            minimumClinicalHours,
+                            skills,
                           }
                         : m,
                     ),
@@ -280,6 +376,8 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
                         moduleFee,
                         order: nextOrder,
                         minimumHoursForCertification: minimumHours,
+                        minimumClinicalHours,
+                        skills,
                         sections: [],
                       },
                     ],
@@ -346,6 +444,8 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
                           minimumHoursForCertification: String(
                             module.minimumHoursForCertification ?? '',
                           ),
+                          minimumClinicalHours: String(module.minimumClinicalHours ?? ''),
+                          skills: module.skills ?? [],
                         });
                         setEditingModuleId(module.id);
                         setShowModuleForm(true);

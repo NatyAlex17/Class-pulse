@@ -138,6 +138,8 @@ export interface CurriculumModule {
   sessionMinutes?: number;
   examScore?: string;
   certificateUnlocked: boolean;
+  /** Skills a student is assessed on for this module, once completed. */
+  skills?: ModuleSkillDefinition[];
   steps: LearningStep[];
 }
 
@@ -174,6 +176,11 @@ export interface LearningSectionDefinition {
   resources: LearningResourceDefinition[];
 }
 
+export interface ModuleSkillDefinition {
+  id: string;
+  name: string;
+}
+
 export interface LearningModuleDefinition {
   id: string;
   title: string;
@@ -182,6 +189,10 @@ export interface LearningModuleDefinition {
   moduleFee: number;
   order: number;
   minimumHoursForCertification?: number;
+  /** Minimum clinical/placement hours a student must log against this module. */
+  minimumClinicalHours?: number;
+  /** Skills a student is assessed on for this module (e.g. instructor skill checklists). */
+  skills?: ModuleSkillDefinition[];
   sections: LearningSectionDefinition[];
 }
 

@@ -29,14 +29,15 @@ const fakeStudentPortal = {
       id: 'm1',
       title: 'Foundation of Patient Care',
       summary: '',
-      status: 'In Progress',
-      progressPercent: 80,
+      status: 'Complete',
+      progressPercent: 100,
       requiredHours: 40,
-      completedHours: 32,
-      certificateUnlocked: false,
+      completedHours: 40,
+      certificateUnlocked: true,
+      skills: [{ id: 'skill-3', name: 'Blood pressure measurement' }],
       steps: [
         { id: 'step-1', title: 'Step 1', type: 'Video', duration: '10 min', note: '', complete: true },
-        { id: 'step-2', title: 'Step 2', type: 'Video', duration: '10 min', note: '', complete: false },
+        { id: 'step-2', title: 'Step 2', type: 'Video', duration: '10 min', note: '', complete: true },
       ],
     },
   ],
@@ -94,12 +95,12 @@ describe('InstructorPortalService', () => {
   });
 
   it('reviews a skill checklist item and updates workspace progress', () => {
-    const workspace = service.reviewSkillItem('instructor-sarah-chen', 'skill-3', {
+    const workspace = service.reviewSkillItem('instructor-sarah-chen', 'student-alice-smith', 'skill-3', {
       status: 'Verified',
       feedback: 'Observed and approved during supervised practice.',
     });
 
-    expect(workspace.groups[0]?.items.find((item) => item.id === 'skill-3')?.status).toBe('Verified');
+    expect(workspace?.groups[0]?.items.find((item) => item.id === 'skill-3')?.status).toBe('Verified');
   });
 
   it('flags a clinical log with reviewer notes', () => {
