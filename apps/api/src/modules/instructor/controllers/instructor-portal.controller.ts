@@ -1,15 +1,24 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Patch, Post, Req, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Request } from 'express';
+import * as fs from 'fs';
+import { diskStorage } from 'multer';
+import * as path from 'path';
 
 import { createApiResponse } from '../../../common/utils/create-api-response';
+import { INSTRUCTOR_READINESS_DOCUMENTS_UPLOADS_DIR, UPLOADS_URL_PREFIX } from '../../../common/utils/upload-paths';
 import type {
   AddInstructorStudentNoteDto,
+  AnswerInstructorOnboardingQuestionDto,
   AssignStudentToSlotDto,
   CreateScheduleSlotDto,
   GenerateInstructorReportDto,
   ReviewClinicalLogDto,
   ReviewSkillChecklistItemDto,
+  SelectInstructorModulesDto,
   SendInstructorMessageDto,
   UpdateInstructorAvailabilityDto,
+  UpdateInstructorOnboardingAgreementDto,
   UpdateInstructorProfileDto,
   UploadInstructorDocumentDto,
 } from '../types/instructor-portal.types';
@@ -48,6 +57,104 @@ export class InstructorPortalController {
     return createApiResponse(
       this.instructorPortalService.updateProfile(instructorId, body),
       'Instructor profile updated successfully.',
+    );
+  }
+
+  @Get('onboarding')
+  getOnboarding(@Param('instructorId') instructorId: string) {
+    return createApiResponse(
+      this.instructorPortalService.getOnboarding(instructorId),
+      'Instructor onboarding state retrieved successfully.',
+    );
+  }
+
+  @Patch('onboarding/questions/:questionId')
+  answerOnboardingQuestion(
+    @Param('instructorId') instructorId: string,
+    @Param('questionId') questionId: string,
+    @Body() body: AnswerInstructorOnboardingQuestionDto,
+  ) {
+    return createApiResponse(
+      this.instructorPortalService.answerOnboardingQuestion(instructorId, questionId, body),
+      'Onboarding question updated successfully.',
+    );
+  }
+
+  @Patch('onboarding/agreement')
+  updateOnboardingAgreement(
+    @Param('instructorId') instructorId: string,
+    @Body() body: UpdateInstructorOnboardingAgreementDto,
+  ) {
+    return createApiResponse(
+      this.instructorPortalService.updateOnboardingAgreement(instructorId, body),
+      'Onboarding agreement updated successfully.',
+    );
+  }
+
+  @Patch('onboarding/modules')
+  selectOnboardingModules(@Param('instructorId') instructorId: string, @Body() body: SelectInstructorModulesDto) {
+    return createApiResponse(
+      this.instructorPortalService.selectOnboardingModules(instructorId, body),
+      'Onboarding module selection updated successfully.',
+    );
+  }
+
+  @Post('onboarding/documents/:documentId/upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: (_req, _file, callback) => {
+          fs.mkdirSync(INSTRUCTOR_READINESS_DOCUMENTS_UPLOADS_DIR, { recursive: true });
+          callback(null, INSTRUCTOR_READINESS_DOCUMENTS_UPLOADS_DIR);
+        },
+        filename: (_req, file, callback) => {
+          const extension = path.extname(file.originalname).toLowerCase();
+          const baseName =
+            path
+              .basename(file.originalname, extension)
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/(^-|-$)/g, '') || 'file';
+          callback(null, `${Date.now()}-${baseName}${extension}`);
+        },
+      }),
+      limits: { fileSize: 15 * 1024 * 1024 },
+      fileFilter: (_req, file, callback) => {
+        if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
+          callback(null, true);
+        } else {
+          callback(new BadRequestException('Only image or PDF files can be uploaded.'), false);
+        }
+      },
+    }),
+  )
+  uploadOnboardingDocument(
+    @Param('instructorId') instructorId: string,
+    @Param('documentId') documentId: string,
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Req() request: Request,
+  ) {
+    if (!file) {
+      throw new BadRequestException('No file received. Attach a file under the "file" field.');
+    }
+
+    const baseUrl = `${request.protocol}://${request.get('host')}`;
+    const url = `${baseUrl}${UPLOADS_URL_PREFIX}/instructor-readiness-documents/${file.filename}`;
+
+    return createApiResponse(
+      this.instructorPortalService.uploadOnboardingDocument(instructorId, documentId, {
+        fileName: file.originalname,
+        url,
+      }),
+      'Document uploaded successfully.',
+    );
+  }
+
+  @Post('onboarding/submit')
+  submitOnboarding(@Param('instructorId') instructorId: string) {
+    return createApiResponse(
+      this.instructorPortalService.submitOnboarding(instructorId),
+      'Onboarding submitted successfully.',
     );
   }
 

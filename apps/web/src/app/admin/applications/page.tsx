@@ -252,6 +252,11 @@ export default function AdminApplicationsPage() {
               Intake Submissions
             </button>
           </Link>
+          <Link href="/admin/applications/instructor-intake-submissions">
+            <button className="px-4 py-3 font-semibold text-sm border-b-2 border-transparent text-on-surface-variant hover:text-on-surface">
+              Instructor Onboarding
+            </button>
+          </Link>
         </div>
         <DataTable
           columns={columns}

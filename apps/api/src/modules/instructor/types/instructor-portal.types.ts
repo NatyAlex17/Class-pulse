@@ -223,9 +223,116 @@ export interface InstructorAuditEvent {
   details?: Record<string, string | number | boolean>;
 }
 
+export type InstructorWorkflowStage = 'onboarding' | 'admin_review' | 'active' | 'rejected';
+
+export interface InstructorOnboardingQuestionOption {
+  label: string;
+  value: string;
+}
+
+export interface InstructorOnboardingQuestion {
+  id: string;
+  prompt: string;
+  type: 'choice' | 'text';
+  placeholder?: string;
+  options: InstructorOnboardingQuestionOption[];
+  answer: string;
+}
+
+export interface InstructorOnboardingDocumentFile {
+  fileName: string;
+  url: string;
+  uploadedAt: string;
+}
+
+export interface InstructorDocumentChecklistItem {
+  id: string;
+  name: string;
+  description: string;
+  required: boolean;
+  uploaded: boolean;
+  fileName?: string;
+  fileUrl?: string;
+}
+
+export interface InstructorOnboardingState {
+  questions: InstructorOnboardingQuestion[];
+  readinessUploads: Record<string, boolean>;
+  readinessDocumentFiles: Record<string, InstructorOnboardingDocumentFile>;
+  agreedToTerms: boolean;
+  selectedModuleIds: string[];
+  submitted: boolean;
+}
+
+export interface InstructorOnboardingSnapshot extends InstructorOnboardingState {
+  documentChecklist: InstructorDocumentChecklistItem[];
+  availableModules: Array<{ id: string; title: string; summary: string }>;
+}
+
+export type InstructorIntakeApprovalStatus = 'pending' | 'approved' | 'rejected';
+export type InstructorIntakeDocumentReviewStatus = 'pending' | 'approved' | 'rejected';
+
+export interface SubmittedInstructorOnboardingQuestion {
+  questionId: string;
+  prompt: string;
+  answer: string;
+}
+
+export interface SubmittedInstructorIntakeDocument {
+  documentId: string;
+  name: string;
+  description: string;
+  required: boolean;
+  fileName?: string;
+  fileUrl?: string;
+  reviewStatus: InstructorIntakeDocumentReviewStatus;
+}
+
+export interface InstructorIntakeSubmission {
+  id: string;
+  instructorId: string;
+  status: InstructorIntakeApprovalStatus;
+  questions: SubmittedInstructorOnboardingQuestion[];
+  documents: SubmittedInstructorIntakeDocument[];
+  agreedToTerms: boolean;
+  selectedModuleIds: string[];
+  submittedAt: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+  reviewedBy?: string;
+}
+
+export interface SubmitInstructorIntakeDto {
+  questions: SubmittedInstructorOnboardingQuestion[];
+  documents: SubmittedInstructorIntakeDocument[];
+  agreedToTerms: boolean;
+  selectedModuleIds: string[];
+}
+
+export interface ApproveInstructorIntakeDto {
+  approved: boolean;
+  rejectionReason?: string;
+  documentReviews?: Record<string, InstructorIntakeDocumentReviewStatus>;
+}
+
+export interface AnswerInstructorOnboardingQuestionDto {
+  answer: string;
+}
+
+export interface UpdateInstructorOnboardingAgreementDto {
+  agreedToTerms: boolean;
+}
+
+export interface SelectInstructorModulesDto {
+  moduleIds: string[];
+}
+
 export interface InstructorPortalState {
   profile: InstructorProfile;
-  students: InstructorStudentRecord[];
+  workflowStage: InstructorWorkflowStage;
+  onboarding: InstructorOnboardingState;
+  /** Notes an instructor has written about a real student, keyed by student id. */
+  studentNotes: Record<string, InstructorStudentNote[]>;
   activeStudentId: string;
   dashboard: InstructorDashboardSnapshot;
   conversations: InstructorConversation[];

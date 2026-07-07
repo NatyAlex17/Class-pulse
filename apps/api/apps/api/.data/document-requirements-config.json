@@ -20,6 +20,13 @@
       "description": "Recent physical exam and TB clearance test results.",
       "appliesTo": "student",
       "required": true
+    },
+    {
+      "id": "certificate",
+      "name": "certificate",
+      "description": "certificate",
+      "appliesTo": "instructor",
+      "required": true
     }
   ]
 }

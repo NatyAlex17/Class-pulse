@@ -25,6 +25,7 @@ import {
 import { useAuth } from '@/components/auth/auth-provider';
 import { SignOutButton } from '@/components/auth/sign-out-button';
 import { UnreadMessageBanner } from '@/components/chat/unread-message-banner';
+import { InstructorIntakeModal } from '@/components/instructor/instructor-intake-modal';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useUnreadMessagesCount } from '@/lib/chat/use-unread-count';
@@ -122,9 +123,43 @@ export function InstructorShell({
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const { unreadCount, notification, dismissNotification } = useUnreadMessagesCount();
   const [fetchedProfile, setFetchedProfile] = React.useState<{ fullName: string; title: string; avatarUrl?: string } | null>(null);
+  const [workflowStage, setWorkflowStage] = React.useState<'onboarding' | 'admin_review' | 'active' | 'rejected' | null>(null);
+  const [workflowOpen, setWorkflowOpen] = React.useState(false);
 
   const instructorId = syncedUser?.localUserId;
   const accessToken = session?.access_token;
+
+  React.useEffect(() => {
+    if (!instructorId || !accessToken) {
+      setWorkflowStage(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    fetch(`${API_BASE_URL}/instructors/${instructorId}/onboarding`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: 'no-store',
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (cancelled || !payload?.data) return;
+        setWorkflowStage(payload.data.workflowStage);
+      })
+      .catch(() => {
+        if (!cancelled) setWorkflowStage(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, instructorId, pathname]);
+
+  React.useEffect(() => {
+    if (workflowStage && workflowStage !== 'active') {
+      setWorkflowOpen(true);
+    }
+  }, [workflowStage]);
 
   React.useEffect(() => {
     if (!instructorId || !accessToken) {
@@ -500,6 +535,8 @@ export function InstructorShell({
           );
         })}
       </nav>
+
+      <InstructorIntakeModal open={workflowOpen} onClose={() => setWorkflowOpen(false)} />
     </div>
   );
 }

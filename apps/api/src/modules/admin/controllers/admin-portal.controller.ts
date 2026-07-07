@@ -36,6 +36,13 @@ import {
 import { IntakeSubmissionService } from '../../student/services/intake-submission.service';
 import { StudentPortalService } from '../../student/services/student-portal.service';
 import type { ApproveIntakeDto, ReplySupportTicketDto } from '../../student/types/student-portal.types';
+import { InstructorIntakeSubmissionService } from '../../instructor/services/instructor-intake-submission.service';
+import {
+  InstructorOnboardingQuestionsConfigService,
+  type InstructorOnboardingQuestionsConfig,
+} from '../../instructor/services/instructor-onboarding-questions-config.service';
+import { InstructorPortalService } from '../../instructor/services/instructor-portal.service';
+import type { ApproveInstructorIntakeDto } from '../../instructor/types/instructor-portal.types';
 import type {
   AddAdminApplicationNoteDto,
   GenerateAdminReportExportDto,
@@ -56,6 +63,9 @@ export class AdminPortalController {
     private readonly documentRequirementsConfigService: DocumentRequirementsConfigService,
     private readonly intakeSubmissionService: IntakeSubmissionService,
     private readonly studentPortalService: StudentPortalService,
+    private readonly instructorPortalService: InstructorPortalService,
+    private readonly instructorIntakeSubmissionService: InstructorIntakeSubmissionService,
+    private readonly instructorOnboardingQuestionsConfigService: InstructorOnboardingQuestionsConfigService,
   ) {}
 
   @Get('portal')
@@ -242,6 +252,33 @@ export class AdminPortalController {
     return createApiResponse(
       this.examConfigService.resetToDefault(),
       'Entrance exam configuration reset to default successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('instructor-onboarding-questions-config')
+  getInstructorOnboardingQuestionsConfig() {
+    return createApiResponse(
+      this.instructorOnboardingQuestionsConfigService.getConfig(),
+      'Instructor onboarding questions configuration retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Patch('instructor-onboarding-questions-config')
+  updateInstructorOnboardingQuestionsConfig(@Body() config: InstructorOnboardingQuestionsConfig) {
+    return createApiResponse(
+      this.instructorOnboardingQuestionsConfigService.updateConfig(config),
+      'Instructor onboarding questions configuration updated successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Post('instructor-onboarding-questions-config/reset')
+  resetInstructorOnboardingQuestionsConfig() {
+    return createApiResponse(
+      this.instructorOnboardingQuestionsConfigService.resetToDefault(),
+      'Instructor onboarding questions configuration reset to default successfully.',
     );
   }
 
@@ -469,6 +506,17 @@ export class AdminPortalController {
     }
   }
 
+  private withInstructorName<T extends { instructorId: string }>(
+    submission: T,
+  ): T & { instructorName: string; instructorEmail?: string } {
+    try {
+      const profile = this.instructorPortalService.getProfile(submission.instructorId);
+      return { ...submission, instructorName: profile.fullName, instructorEmail: profile.email };
+    } catch {
+      return { ...submission, instructorName: submission.instructorId };
+    }
+  }
+
   @UseGuards(SupabaseAuthGuard)
   @Patch('intake/submissions/:submissionId/approve')
   approveIntakeSubmission(
@@ -551,5 +599,70 @@ export class AdminPortalController {
       this.withStudentName({ ...ticket, studentId }),
       'Support ticket reply sent successfully.',
     );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('instructor-intake/pending-submissions')
+  getPendingInstructorSubmissions() {
+    return createApiResponse(
+      this.instructorIntakeSubmissionService.getPendingSubmissions().map((submission) => this.withInstructorName(submission)),
+      'Pending instructor onboarding submissions retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('instructor-intake/submissions')
+  getAllInstructorSubmissions() {
+    return createApiResponse(
+      this.instructorIntakeSubmissionService.getAllSubmissions().map((submission) => this.withInstructorName(submission)),
+      'Instructor onboarding submissions retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('instructor-intake/submissions/:submissionId')
+  getInstructorSubmissionById(@Param('submissionId') submissionId: string) {
+    const submission = this.instructorIntakeSubmissionService.getSubmission(submissionId);
+
+    if (!submission) {
+      throw new NotFoundException('Instructor onboarding submission not found.');
+    }
+
+    return createApiResponse(
+      this.withInstructorName(submission),
+      'Instructor onboarding submission retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Patch('instructor-intake/submissions/:submissionId/approve')
+  approveInstructorSubmission(
+    @Param('adminId') adminId: string,
+    @Param('submissionId') submissionId: string,
+    @Body() body: ApproveInstructorIntakeDto,
+  ) {
+    if (body.approved) {
+      const submission = this.instructorIntakeSubmissionService.approveIntake(
+        submissionId,
+        adminId,
+        body.documentReviews,
+      );
+      this.instructorPortalService.markOnboardingApproved(submission.instructorId);
+
+      return createApiResponse(submission, 'Instructor onboarding approved successfully.');
+    } else {
+      const submission = this.instructorIntakeSubmissionService.rejectIntake(
+        submissionId,
+        adminId,
+        body.rejectionReason || 'Rejected',
+        body.documentReviews,
+      );
+      this.instructorPortalService.markOnboardingRejected(
+        submission.instructorId,
+        submission.rejectionReason || 'Rejected',
+      );
+
+      return createApiResponse(submission, 'Instructor onboarding rejected successfully.');
+    }
   }
 }

@@ -1773,6 +1773,10 @@ export class StudentPortalService {
     return this.repository.save(portal).workflowStage;
   }
 
+  findAllStudentPortals(): StudentPortalState[] {
+    return this.repository.findAll();
+  }
+
   getSecurityViolationsLog(): StudentViolationLogEntry[] {
     const entries: StudentViolationLogEntry[] = [];
 

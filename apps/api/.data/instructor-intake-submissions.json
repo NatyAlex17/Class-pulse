@@ -1,0 +1,50 @@
+{
+  "submissions": [
+    {
+      "id": "instructor-submission-1783439911933",
+      "instructorId": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+      "status": "approved",
+      "questions": [
+        {
+          "questionId": "q1",
+          "prompt": "Describe your clinical teaching experience and the settings you have worked in.",
+          "answer": "sup man"
+        },
+        {
+          "questionId": "q2",
+          "prompt": "What is your approach to mentoring students who are struggling with a clinical skill?",
+          "answer": "sup man"
+        },
+        {
+          "questionId": "q3",
+          "prompt": "Do you have any scheduling constraints or availability limitations we should know about?",
+          "answer": "sds"
+        }
+      ],
+      "documents": [
+        {
+          "documentId": "certificate",
+          "name": "certificate",
+          "description": "certificate",
+          "required": true,
+          "fileName": "APPEN - MASTER SERVICES AGREEMENT.pdf",
+          "fileUrl": "http://localhost:4000/uploads/instructor-readiness-documents/1783439894513-appen-master-services-agreement.pdf",
+          "reviewStatus": "approved"
+        }
+      ],
+      "agreedToTerms": true,
+      "selectedModuleIds": [
+        "intro-care"
+      ],
+      "submittedAt": "2026-07-07T15:58:31.933Z",
+      "approvedAt": "2026-07-07T16:03:11.927Z",
+      "reviewedBy": "cf1754f4-4bae-4963-aab4-e77236d6aefb"
+    }
+  ],
+  "approvalStatuses": [
+    [
+      "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+      "approved"
+    ]
+  ]
+}

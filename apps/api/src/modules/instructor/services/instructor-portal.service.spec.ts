@@ -1,13 +1,64 @@
 import { BadRequestException } from '@nestjs/common';
 
+import { DocumentRequirementsConfigService } from '../../student/services/document-requirements-config.service';
+import { LearningResourcesConfigService } from '../../student/services/learning-resources-config.service';
+import type { StudentPortalService } from '../../student/services/student-portal.service';
+import type { StudentPortalState } from '../../student/types/student-portal.types';
+import { InstructorIntakeSubmissionService } from './instructor-intake-submission.service';
+import { InstructorOnboardingQuestionsConfigService } from './instructor-onboarding-questions-config.service';
 import { InstructorPortalRepository } from './instructor-portal.repository';
 import { InstructorPortalService } from './instructor-portal.service';
+
+// Minimal stand-in for a real student enrolled in the same module ('m1') that the
+// seeded instructor (Dr. Sarah Chen) is approved to teach, so student-lookup methods
+// (addStudentNote, assignStudentToSlot) resolve without wiring up the full student module.
+const fakeStudentPortal = {
+  profile: {
+    id: 'student-alice-smith',
+    fullName: 'Alice Smith',
+    email: 'alice.smith@example.com',
+    phone: '(555) 123-4567',
+    location: 'Portland, OR',
+    cohort: 'CNA Cohort 12',
+    cohortId: 'cohort-1',
+    levelLabel: 'Level 1',
+    studentNumber: 'STU-001',
+  },
+  modules: [
+    {
+      id: 'm1',
+      title: 'Foundation of Patient Care',
+      summary: '',
+      status: 'In Progress',
+      progressPercent: 80,
+      requiredHours: 40,
+      completedHours: 32,
+      certificateUnlocked: false,
+      steps: [
+        { id: 'step-1', title: 'Step 1', type: 'Video', duration: '10 min', note: '', complete: true },
+        { id: 'step-2', title: 'Step 2', type: 'Video', duration: '10 min', note: '', complete: false },
+      ],
+    },
+  ],
+  clinicalSessions: [],
+  attendanceRecords: [],
+} as unknown as StudentPortalState;
+
+const studentPortalServiceStub = {
+  findAllStudentPortals: () => [fakeStudentPortal],
+} as unknown as StudentPortalService;
 
 describe('InstructorPortalService', () => {
   let service: InstructorPortalService;
 
   beforeEach(() => {
-    service = new InstructorPortalService(new InstructorPortalRepository());
+    service = new InstructorPortalService(
+      new InstructorPortalRepository(new InstructorOnboardingQuestionsConfigService()),
+      new DocumentRequirementsConfigService(),
+      new LearningResourcesConfigService(),
+      new InstructorIntakeSubmissionService(),
+      studentPortalServiceStub,
+    );
   });
 
   it('returns the instructor dashboard snapshot', () => {
