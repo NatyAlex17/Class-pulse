@@ -8,6 +8,7 @@ import type {
   AnswerOnboardingQuestionDto,
   AskAiTutorDto,
   AttendanceCheckInDto,
+  CreateEnrollmentPaymentIntentDto,
   LogClinicalHoursDto,
   ReportLearningAttentionEventDto,
   ReportExamSecurityEventDto,
@@ -77,10 +78,21 @@ export class StudentPortalController {
     );
   }
 
-  @Post('cohorts/register')
-  registerCohort(@Param('studentId') studentId: string, @Body() body: RegisterCohortDto) {
+  @Post('cohorts/payment-intent')
+  async createEnrollmentPaymentIntent(
+    @Param('studentId') studentId: string,
+    @Body() body: CreateEnrollmentPaymentIntentDto,
+  ) {
     return createApiResponse(
-      this.studentPortalService.registerCohort(studentId, body),
+      await this.studentPortalService.createEnrollmentPaymentIntent(studentId, body),
+      'Enrollment payment intent created successfully.',
+    );
+  }
+
+  @Post('cohorts/register')
+  async registerCohort(@Param('studentId') studentId: string, @Body() body: RegisterCohortDto) {
+    return createApiResponse(
+      await this.studentPortalService.registerCohort(studentId, body),
       'Cohort registration completed successfully.',
     );
   }

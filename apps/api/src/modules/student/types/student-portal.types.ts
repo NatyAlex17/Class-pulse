@@ -160,6 +160,7 @@ export interface LearningModuleDefinition {
   title: string;
   summary: string;
   requiredHours: number;
+  moduleFee: number;
   order: number;
   minimumHoursForCertification?: number;
   sections: LearningSectionDefinition[];
@@ -230,6 +231,7 @@ export interface PaymentRecord {
   amount: number;
   status: PaymentStatus;
   method: string;
+  stripePaymentIntentId?: string;
 }
 
 export interface FinancialSummary {
@@ -626,6 +628,7 @@ export interface RecordPaymentDto {
   amount: number;
   method: string;
   date?: string;
+  stripePaymentIntentId?: string;
 }
 
 export interface UploadStudentDocumentDto {
@@ -759,6 +762,20 @@ export interface SelectModuleDto {
 
 export interface RegisterCohortDto {
   cohortId: string;
+  paymentIntentId?: string;
+}
+
+export interface CreateEnrollmentPaymentIntentDto {
+  cohortId: string;
+}
+
+export interface EnrollmentPaymentIntentSnapshot {
+  cohortId: string;
+  cohortName: string;
+  amount: number;
+  currency: string;
+  clientSecret: string;
+  publishableKey: string;
 }
 
 export interface AvailableCohort {

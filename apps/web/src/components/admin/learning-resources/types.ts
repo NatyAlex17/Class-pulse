@@ -37,6 +37,7 @@ export type LearningModule = {
   title: string;
   summary: string;
   requiredHours: number;
+  moduleFee: number;
   order: number;
   minimumHoursForCertification?: number;
   sections: LearningSection[];
@@ -55,6 +56,7 @@ export type ModuleRow = {
   id: string;
   title: string;
   requiredHours: number;
+  moduleFee: number;
   sections: number;
   items: number;
 };
@@ -149,4 +151,8 @@ export function getSectionHref(moduleId: string, sectionId: string) {
 
 export function getItemCount(module: LearningModule) {
   return module.sections.reduce((sum, section) => sum + section.resources.length, 0);
+}
+
+export function formatMoney(amount: number) {
+  return `$${amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }

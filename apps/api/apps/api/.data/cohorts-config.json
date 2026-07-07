@@ -1,14 +1,13 @@
 {
   "cohorts": [
     {
-      "id": "cna-cohort-1",
-      "name": "CNA Cohort 1",
-      "description": "this can be taken by registered Students",
+      "id": "cna-paid",
+      "name": "CNA Paid",
+      "description": "Paid cohort",
       "moduleIds": [
-        "introduction",
-        "foundation-of-patients"
+        "intro-care"
       ],
-      "feeAmount": 500,
+      "feeAmount": 0,
       "isOpen": true
     }
   ]

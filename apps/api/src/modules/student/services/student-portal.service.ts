@@ -13,6 +13,7 @@ import type {
   AttendanceRecord,
   CdphForm,
   ClinicalLogEntry,
+  CreateEnrollmentPaymentIntentDto,
   CurriculumModule,
   LogClinicalHoursDto,
   RecordPaymentDto,
@@ -55,6 +56,7 @@ import { ExamConfigService } from './exam-config.service';
 import { GeminiService } from './gemini.service';
 import { IntakeSubmissionService } from './intake-submission.service';
 import { LearningResourcesConfigService } from './learning-resources-config.service';
+import { StripePaymentsService } from './stripe-payments.service';
 import { StudentPortalRepository } from './student-portal.repository';
 
 const CLINICAL_HOURS_REQUIRED = 40;
@@ -107,6 +109,7 @@ export class StudentPortalService {
     private readonly learningResourcesConfigService: LearningResourcesConfigService,
     private readonly cohortsConfigService: CohortsConfigService,
     private readonly geminiService: GeminiService,
+    private readonly stripePaymentsService: StripePaymentsService,
   ) {}
 
   ensurePortalForLocalUser(localUser: LocalUserRecord) {
@@ -122,7 +125,7 @@ export class StudentPortalService {
   }
 
   updateProfile(studentId: string, payload: UpdateStudentProfileDto) {
-    const portal = this.repository.findByStudentId(studentId);
+    let portal = this.repository.findByStudentId(studentId);
 
     if (payload.email && !payload.email.includes('@')) {
       throw new BadRequestException('A valid email address is required.');
@@ -156,7 +159,7 @@ export class StudentPortalService {
           id: cohort.id,
           name: cohort.name,
           description: cohort.description,
-          feeAmount: cohort.feeAmount,
+          feeAmount: this.stripePaymentsService.getEnrollmentPricing(cohort.id).amount,
           moduleCount: cohort.moduleIds.length,
           moduleTitles: cohort.moduleIds
             .map((moduleId) => moduleTitleById.get(moduleId))
@@ -165,7 +168,17 @@ export class StudentPortalService {
     };
   }
 
-  registerCohort(studentId: string, payload: RegisterCohortDto): StudentCohortsSnapshot {
+  createEnrollmentPaymentIntent(studentId: string, payload: CreateEnrollmentPaymentIntentDto) {
+    const cohortId = payload.cohortId?.trim();
+
+    if (!cohortId) {
+      throw new BadRequestException('A cohortId is required to start enrollment payment.');
+    }
+
+    return this.stripePaymentsService.createEnrollmentPaymentIntent(studentId, cohortId);
+  }
+
+  async registerCohort(studentId: string, payload: RegisterCohortDto): Promise<StudentCohortsSnapshot> {
     const cohortId = payload.cohortId?.trim();
 
     if (!cohortId) {
@@ -182,24 +195,58 @@ export class StudentPortalService {
       throw new BadRequestException(`Cohort "${cohort.name}" is not open for registration.`);
     }
 
-    const portal = this.repository.findByStudentId(studentId);
+    const pricing = this.stripePaymentsService.getEnrollmentPricing(cohort.id);
+    let portal = this.repository.findByStudentId(studentId);
+
+    if (portal.profile.cohortId === cohort.id) {
+      return this.getCohorts(studentId);
+    }
+
+    let paymentVerified: {
+      amount: number;
+      paymentIntentId: string;
+      methodLabel: string;
+    } | null = null;
+
+    if (pricing.amount > 0) {
+      paymentVerified = await this.stripePaymentsService.verifyEnrollmentPayment(
+        studentId,
+        cohort.id,
+        payload.paymentIntentId ?? '',
+      );
+
+      const alreadyRecorded = portal.financials.paymentPlan.some(
+        (payment) => payment.stripePaymentIntentId === paymentVerified?.paymentIntentId,
+      );
+
+      if (!alreadyRecorded) {
+        this.recordPayment(studentId, {
+          amount: paymentVerified.amount,
+          method: paymentVerified.methodLabel,
+          stripePaymentIntentId: paymentVerified.paymentIntentId,
+        });
+        portal = this.repository.findByStudentId(studentId);
+      }
+    }
+
     portal.profile = {
       ...portal.profile,
       cohortId: cohort.id,
       cohort: cohort.name,
     };
 
-    if (cohort.feeAmount > 0) {
+    if (pricing.amount > 0) {
       portal.financials = {
         ...portal.financials,
-        totalTuition: cohort.feeAmount,
-        balance: Math.max(0, cohort.feeAmount - portal.financials.amountPaid),
+        totalTuition: pricing.amount,
+        balance: Math.max(0, pricing.amount - portal.financials.amountPaid),
       };
     }
 
     this.recordAudit(portal, 'student.cohort.registered', cohort.id, {
       cohortName: cohort.name,
-      feeAmount: cohort.feeAmount,
+      feeAmount: pricing.amount,
+      paymentIntentId: paymentVerified?.paymentIntentId,
     });
     this.repository.save(portal);
     return this.getCohorts(studentId);
@@ -1419,6 +1466,7 @@ export class StudentPortalService {
         amount: payload.amount,
         status: 'Completed',
         method: payload.method.trim(),
+        stripePaymentIntentId: payload.stripePaymentIntentId?.trim() || undefined,
       },
       ...portal.financials.paymentPlan,
     ];
@@ -1429,6 +1477,7 @@ export class StudentPortalService {
     this.recordAudit(portal, 'student.payment.recorded', 'financials', {
       amount: payload.amount,
       method: payload.method.trim(),
+      stripePaymentIntentId: payload.stripePaymentIntentId,
     });
     return this.repository.save(portal).financials;
   }

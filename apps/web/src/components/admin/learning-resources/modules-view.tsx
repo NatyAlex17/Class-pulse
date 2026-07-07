@@ -21,10 +21,16 @@ import { Modal } from '@/components/ui/modal';
 import { Textarea } from '@/components/ui/textarea';
 
 import { ConfigBanner, DeleteConfirmModal, PageToolbar, RowIconButton, type DeleteConfirmState } from './shared';
-import { getItemCount, getModuleHref, slugify, type ModuleRow } from './types';
+import { formatMoney, getItemCount, getModuleHref, slugify, type ModuleRow } from './types';
 import type { LearningResourcesStore } from './use-learning-resources-config';
 
-const emptyModuleDraft = { title: '', summary: '', requiredHours: '10', minimumHoursForCertification: '' };
+const emptyModuleDraft = {
+  title: '',
+  summary: '',
+  requiredHours: '10',
+  moduleFee: '0',
+  minimumHoursForCertification: '',
+};
 
 export function ModulesView({ store }: { store: LearningResourcesStore }) {
   const router = useRouter();
@@ -57,6 +63,7 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
     id: module.id,
     title: module.title,
     requiredHours: module.requiredHours,
+    moduleFee: module.moduleFee,
     sections: module.sections.length,
     items: getItemCount(module),
   }));
@@ -64,6 +71,7 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
   const columns: DataTableColumn<ModuleRow>[] = [
     { id: 'title', header: 'Module', accessorKey: 'title' },
     { id: 'requiredHours', header: 'Hours', accessorKey: 'requiredHours' },
+    { id: 'moduleFee', header: 'Fee', cell: (row) => <span className="font-medium">{formatMoney(row.moduleFee)}</span> },
     { id: 'sections', header: 'Lessons', accessorKey: 'sections' },
     { id: 'items', header: 'Learning Activities', accessorKey: 'items' },
   ];
@@ -153,6 +161,20 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
             </div>
           </div>
 
+          <div className="mt-4">
+            <label className="mb-2 block text-sm font-semibold text-on-surface">Module Fee (USD) *</label>
+            <Input
+              type="number"
+              min={0}
+              value={moduleDraft.moduleFee}
+              onChange={(event) =>
+                setModuleDraft((current) => ({ ...current, moduleFee: event.target.value }))
+              }
+              placeholder="e.g., 750"
+            />
+            <p className="mt-1 text-xs text-on-surface-variant">Set the price charged for this module.</p>
+          </div>
+
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-semibold text-on-surface">Module Order</label>
@@ -206,12 +228,13 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
                 const title = moduleDraft.title.trim();
                 const summary = moduleDraft.summary.trim();
                 const requiredHours = Number(moduleDraft.requiredHours);
+                const moduleFee = Number(moduleDraft.moduleFee);
                 const minimumHours = moduleDraft.minimumHoursForCertification
                   ? Number(moduleDraft.minimumHoursForCertification)
                   : undefined;
 
-                if (!title || !summary || requiredHours <= 0) {
-                  setError('Module title, summary, and required hours are required.');
+                if (!title || !summary || requiredHours <= 0 || !Number.isFinite(moduleFee) || moduleFee < 0) {
+                  setError('Module title, summary, required hours, and a valid module fee are required.');
                   return;
                 }
 
@@ -225,6 +248,7 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
                             title,
                             summary,
                             requiredHours,
+                            moduleFee,
                             minimumHoursForCertification: minimumHours,
                           }
                         : m,
@@ -253,6 +277,7 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
                         title,
                         summary,
                         requiredHours,
+                        moduleFee,
                         order: nextOrder,
                         minimumHoursForCertification: minimumHours,
                         sections: [],
@@ -301,7 +326,9 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
             getRowId={(row) => row.id}
             onRowClick={(row) => router.push(getModuleHref(row.id))}
             mobileCardTitle={(row) => row.title}
-            mobileCardSubtitle={(row) => `${row.sections} lessons • ${row.items} learning activities`}
+            mobileCardSubtitle={(row) =>
+              `${row.sections} lessons • ${row.items} learning activities • ${formatMoney(row.moduleFee)}`
+            }
             rowActions={(row) => {
               const module = config.modules.find((m) => m.id === row.id);
               return (
@@ -315,6 +342,7 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
                           title: module.title,
                           summary: module.summary,
                           requiredHours: String(module.requiredHours),
+                          moduleFee: String(module.moduleFee),
                           minimumHoursForCertification: String(
                             module.minimumHoursForCertification ?? '',
                           ),

@@ -13,11 +13,12 @@ import { IntakeSubmissionService } from './services/intake-submission.service';
 import { LearningResourcesConfigService } from './services/learning-resources-config.service';
 import { CohortsConfigService } from './services/cohorts-config.service';
 import { GeminiService } from './services/gemini.service';
+import { StripePaymentsService } from './services/stripe-payments.service';
 
 @Module({
   imports: [forwardRef(() => AuthModule)],
   controllers: [StudentPortalController],
-  providers: [Reflector, SupabaseAuthGuard, ExamConfigService, EnrollmentWizardConfigService, OrientationSurveyConfigService, LearningResourcesConfigService, CohortsConfigService, IntakeSubmissionService, StudentPortalRepository, StudentPortalService, GeminiService],
-  exports: [StudentPortalService, ExamConfigService, EnrollmentWizardConfigService, OrientationSurveyConfigService, LearningResourcesConfigService, CohortsConfigService, IntakeSubmissionService],
+  providers: [Reflector, SupabaseAuthGuard, ExamConfigService, EnrollmentWizardConfigService, OrientationSurveyConfigService, LearningResourcesConfigService, CohortsConfigService, IntakeSubmissionService, StudentPortalRepository, StudentPortalService, GeminiService, StripePaymentsService],
+  exports: [StudentPortalService, ExamConfigService, EnrollmentWizardConfigService, OrientationSurveyConfigService, LearningResourcesConfigService, CohortsConfigService, IntakeSubmissionService, StripePaymentsService],
 })
 export class StudentModule {}

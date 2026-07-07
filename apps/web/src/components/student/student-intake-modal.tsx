@@ -14,6 +14,7 @@ import {
   IconClockPause,
 } from '@tabler/icons-react';
 import { useAuth } from '@/components/auth/auth-provider';
+import { EnrollmentPaymentSection } from '@/components/student/enrollment-payment-section';
 import { useStudentDemo } from '@/components/student/student-portal-store';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,32 @@ type AvailableCohort = {
   moduleTitles: string[];
 };
 
+type EnrollmentPaymentIntentSnapshot = {
+  cohortId: string;
+  cohortName: string;
+  amount: number;
+  currency: string;
+  clientSecret: string;
+  publishableKey: string;
+};
+
+function isEnrollmentPaymentIntentSnapshot(value: unknown): value is EnrollmentPaymentIntentSnapshot {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate.cohortId === 'string' &&
+    typeof candidate.cohortName === 'string' &&
+    typeof candidate.amount === 'number' &&
+    Number.isFinite(candidate.amount) &&
+    typeof candidate.currency === 'string' &&
+    typeof candidate.clientSecret === 'string' &&
+    typeof candidate.publishableKey === 'string'
+  );
+}
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 function formatCohortFee(amount: number) {
@@ -54,6 +81,10 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
   const [cohortsLoaded, setCohortsLoaded] = React.useState(false);
   const [selectedCohortId, setSelectedCohortId] = React.useState<string | null>(null);
   const [isRegisteringCohort, setIsRegisteringCohort] = React.useState(false);
+  const [isCreatingPaymentIntent, setIsCreatingPaymentIntent] = React.useState(false);
+  const [paymentIntent, setPaymentIntent] = React.useState<EnrollmentPaymentIntentSnapshot | null>(null);
+  const [paymentSuccessMessage, setPaymentSuccessMessage] = React.useState<string | null>(null);
+  const paymentSectionRef = React.useRef<HTMLDivElement | null>(null);
 
   const {
     workflowStage,
@@ -139,7 +170,23 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
     void loadCohorts();
   }, [loadCohorts, open]);
 
-  const handleRegisterCohort = async () => {
+  React.useEffect(() => {
+    setPaymentIntent((current) => (current && current.cohortId !== selectedCohortId ? null : current));
+  }, [selectedCohortId]);
+
+  React.useEffect(() => {
+    if (paymentIntent) {
+      paymentSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [paymentIntent]);
+
+  React.useEffect(() => {
+    if (!paymentSuccessMessage) return;
+    const timeout = setTimeout(() => setPaymentSuccessMessage(null), 6000);
+    return () => clearTimeout(timeout);
+  }, [paymentSuccessMessage]);
+
+  const handleRegisterCohort = async (paymentIntentId?: string) => {
     if (!selectedCohortId || !session?.access_token) return;
 
     try {
@@ -151,7 +198,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ cohortId: selectedCohortId }),
+        body: JSON.stringify({ cohortId: selectedCohortId, paymentIntentId }),
       });
 
       if (!response.ok) {
@@ -161,10 +208,55 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
 
       const payload = await response.json();
       setRegisteredCohortId(payload.data?.registeredCohortId ?? selectedCohortId);
+
+      if (paymentIntentId) {
+        const cohortName = paymentIntent?.cohortName ?? selectedCohort?.name ?? 'your cohort';
+        const amount = paymentIntent?.amount;
+        setPaymentSuccessMessage(
+          Number.isFinite(amount)
+            ? `Payment of $${(amount as number).toLocaleString()} confirmed — you're enrolled in ${cohortName}.`
+            : `Payment confirmed — you're enrolled in ${cohortName}.`,
+        );
+      }
+
+      setPaymentIntent(null);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Failed to register for the cohort.');
     } finally {
       setIsRegisteringCohort(false);
+    }
+  };
+
+  const handleCreatePaymentIntent = async () => {
+    if (!selectedCohortId || !session?.access_token) return;
+
+    try {
+      setIsCreatingPaymentIntent(true);
+      setSubmitError(null);
+      const response = await fetch(`${API_BASE_URL}/students/${studentId}/cohorts/payment-intent`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cohortId: selectedCohortId }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error?.message ?? 'Failed to start secure payment.');
+      }
+
+      const payload = await response.json();
+      if (!isEnrollmentPaymentIntentSnapshot(payload.data)) {
+        throw new Error('Payment setup returned an invalid response. Please try again.');
+      }
+
+      setPaymentIntent(payload.data);
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Failed to start secure payment.');
+    } finally {
+      setIsCreatingPaymentIntent(false);
     }
   };
 
@@ -224,6 +316,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
     workflowStage === 'entrance_exam' &&
     !entranceExam.taken;
   const selectedCohort = cohorts.find((cohort) => cohort.id === selectedCohortId) ?? null;
+  const selectedCohortRequiresPayment = (selectedCohort?.feeAmount ?? 0) > 0;
 
   const examComplete = examQuestions.every((question) =>
     (entranceExam.answers[question.id] ?? '').trim(),
@@ -370,6 +463,24 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
           </div>
         ) : null}
 
+        {paymentSuccessMessage ? (
+          <div className="shrink-0 border-b border-success/20 bg-success/5 px-6 py-4 sm:px-8">
+            <div className="flex items-start gap-3">
+              <IconCheck className="size-5 text-success mt-0.5 shrink-0" />
+              <div className="flex-1">
+                <p className="font-semibold text-on-surface text-sm">Payment Successful</p>
+                <p className="text-xs text-on-surface-variant mt-1">{paymentSuccessMessage}</p>
+              </div>
+              <button
+                onClick={() => setPaymentSuccessMessage(null)}
+                className="text-on-surface-variant transition hover:text-on-surface"
+              >
+                <IconX className="size-4" />
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         {approvalStatus === null && workflowStage === 'entrance_exam' && !entranceExam.taken && hasStudentAccess && (
           <div className="shrink-0 border-b border-info/20 bg-info/5 px-6 py-4 sm:px-8">
             <div className="flex items-start gap-3">
@@ -452,6 +563,21 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                     );
                   })}
                 </div>
+
+                {paymentIntent && Number.isFinite(paymentIntent.amount) ? (
+                  <div ref={paymentSectionRef} className="scroll-mt-6">
+                    <EnrollmentPaymentSection
+                      amount={paymentIntent.amount}
+                      clientSecret={paymentIntent.clientSecret}
+                      cohortName={paymentIntent.cohortName}
+                      publishableKey={paymentIntent.publishableKey}
+                      onError={(message) => setSubmitError(message || null)}
+                      onSuccess={async (paymentIntentId) => {
+                        await handleRegisterCohort(paymentIntentId);
+                      }}
+                    />
+                  </div>
+                ) : null}
               </section>
             ) : null}
 
@@ -979,17 +1105,40 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
 
           {needsCohortSelection && (
             <div className="shrink-0 border-t border-border-subtle bg-surface px-6 py-4 sm:px-8">
-              <Button
-                disabled={!selectedCohortId || isRegisteringCohort}
-                onClick={handleRegisterCohort}
-                className="w-full"
-              >
-                {isRegisteringCohort
-                  ? 'Registering...'
-                  : selectedCohort
-                    ? `Register for ${selectedCohort.name} — ${formatCohortFee(selectedCohort.feeAmount)}`
-                    : 'Select a cohort to continue'}
-              </Button>
+              {paymentIntent ? (
+                <p className="text-center text-sm font-semibold text-on-surface-variant">
+                  {isRegisteringCohort
+                    ? 'Completing enrollment...'
+                    : 'Enter your card details above to finish enrollment.'}
+                </p>
+              ) : (
+                <Button
+                  disabled={!selectedCohortId || isRegisteringCohort || isCreatingPaymentIntent}
+                  onClick={() => {
+                    if (!selectedCohort) {
+                      return;
+                    }
+
+                    if (selectedCohortRequiresPayment) {
+                      void handleCreatePaymentIntent();
+                      return;
+                    }
+
+                    void handleRegisterCohort();
+                  }}
+                  className="w-full"
+                >
+                  {isRegisteringCohort
+                    ? 'Completing enrollment...'
+                    : isCreatingPaymentIntent
+                      ? 'Preparing secure payment...'
+                    : selectedCohort
+                      ? selectedCohortRequiresPayment
+                        ? `Continue to payment for ${selectedCohort.name} — ${formatCohortFee(selectedCohort.feeAmount)}`
+                        : `Register for ${selectedCohort.name}`
+                      : 'Select a cohort to continue'}
+                </Button>
+              )}
             </div>
           )}
 
