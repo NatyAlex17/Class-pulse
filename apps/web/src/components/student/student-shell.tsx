@@ -18,7 +18,6 @@ import {
   IconPlayerPlayFilled,
   IconSettings,
   IconStethoscope,
-  IconUserCheck,
   IconUser,
   IconX,
 } from '@tabler/icons-react';
@@ -57,7 +56,6 @@ const navItems: StudentNavItem[] = [
     icon: IconFileDescription,
     mobileLabel: 'Docs',
   },
-  { label: 'Onboarding', href: '/student/onboarding', icon: IconUserCheck, mobileLabel: 'Start' },
   { label: 'Forms', href: '/student/forms', icon: IconFileText, mobileLabel: 'Forms' },
 ];
 

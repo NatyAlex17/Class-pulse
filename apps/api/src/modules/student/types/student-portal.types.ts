@@ -337,6 +337,9 @@ export interface SupportTicket {
   message: string;
   status: 'Open' | 'In Review' | 'Resolved';
   createdAt: string;
+  adminReply?: string;
+  respondedAt?: string;
+  respondedBy?: string;
 }
 
 export interface StudentSettings {
@@ -855,6 +858,11 @@ export interface SubmitSupportTicketDto {
   subject: string;
   category: string;
   message: string;
+}
+
+export interface ReplySupportTicketDto {
+  reply: string;
+  status?: 'In Review' | 'Resolved';
 }
 
 export interface UpdateCdphFormDto {

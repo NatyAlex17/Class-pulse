@@ -35,7 +35,7 @@ import {
 } from '../../student/services/document-requirements-config.service';
 import { IntakeSubmissionService } from '../../student/services/intake-submission.service';
 import { StudentPortalService } from '../../student/services/student-portal.service';
-import type { ApproveIntakeDto } from '../../student/types/student-portal.types';
+import type { ApproveIntakeDto, ReplySupportTicketDto } from '../../student/types/student-portal.types';
 import type {
   AddAdminApplicationNoteDto,
   GenerateAdminReportExportDto,
@@ -508,6 +508,40 @@ export class AdminPortalController {
     return createApiResponse(
       this.studentPortalService.getSecurityViolationsLog(),
       'Student security violation log retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('support-tickets')
+  getAllSupportTickets() {
+    return createApiResponse(
+      this.studentPortalService.getAllSupportTickets().map((ticket) => this.withStudentName(ticket)),
+      'Student support tickets retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('support-tickets/:studentId/:ticketId')
+  getSupportTicketById(@Param('studentId') studentId: string, @Param('ticketId') ticketId: string) {
+    const ticket = this.studentPortalService.getSupportTicket(studentId, ticketId);
+    return createApiResponse(
+      this.withStudentName({ ...ticket, studentId }),
+      'Support ticket retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Patch('support-tickets/:studentId/:ticketId/reply')
+  replySupportTicket(
+    @Param('adminId') adminId: string,
+    @Param('studentId') studentId: string,
+    @Param('ticketId') ticketId: string,
+    @Body() body: ReplySupportTicketDto,
+  ) {
+    const ticket = this.studentPortalService.replyToSupportTicket(studentId, ticketId, adminId, body);
+    return createApiResponse(
+      this.withStudentName({ ...ticket, studentId }),
+      'Support ticket reply sent successfully.',
     );
   }
 }

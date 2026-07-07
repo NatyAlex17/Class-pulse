@@ -189,6 +189,8 @@ type SupportTicket = {
   message: string;
   status: 'Open' | 'In Review' | 'Resolved';
   createdAt: string;
+  adminReply?: string;
+  respondedAt?: string;
 };
 
 type StudentSettings = {
@@ -467,6 +469,7 @@ type StudentDemoContextValue = StudentDemoState & {
   todayTheoryCheckedIn: boolean;
   todayClinicalCheckedIn: boolean;
   refreshLearning: () => Promise<void>;
+  refreshPortal: () => Promise<void>;
   setWorkflowStage: (stage: StudentWorkflowStage) => void;
   answerEntranceExamQuestion: (questionId: string, answer: string) => void;
   submitEntranceExam: () => void;
@@ -1672,6 +1675,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       todayTheoryCheckedIn,
       todayClinicalCheckedIn,
       refreshLearning,
+      refreshPortal,
       setWorkflowStage,
       answerEntranceExamQuestion,
       submitEntranceExam,
@@ -1750,6 +1754,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       reportLearningAttentionEvent,
       reportExamSecurityEvent,
       refreshLearning,
+      refreshPortal,
       readinessCount,
       recordLessonSessionStart,
       replaceDocument,

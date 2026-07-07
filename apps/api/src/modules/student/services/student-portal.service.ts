@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
 import type { LocalUserRecord } from '../../auth/types/auth-user.types';
 import type {
@@ -23,6 +23,7 @@ import type {
   ReportLearningAttentionEventDto,
   ReportExamSecurityEventDto,
   ReplaceStudentDocumentDto,
+  ReplySupportTicketDto,
   ReportAbsenceDto,
   SelectModuleDto,
   SetLearningSessionDto,
@@ -38,6 +39,7 @@ import type {
   StudentLearningSnapshot,
   StudentPortalState,
   StudentThread,
+  SupportTicket,
   StudentViolationLogEntry,
   SubmitModuleExamDto,
   SubmitModuleExamResponse,
@@ -1853,6 +1855,64 @@ export class StudentPortalService {
       category: ticket.category,
     });
     return this.repository.save(portal).supportTickets[0];
+  }
+
+  getAllSupportTickets(): Array<SupportTicket & { studentId: string; studentNumber: string }> {
+    const entries: Array<SupportTicket & { studentId: string; studentNumber: string }> = [];
+
+    for (const portal of this.repository.findAll()) {
+      for (const ticket of portal.supportTickets) {
+        entries.push({
+          ...ticket,
+          studentId: portal.profile.id,
+          studentNumber: portal.profile.studentNumber,
+        });
+      }
+    }
+
+    return entries.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  }
+
+  getSupportTicket(studentId: string, ticketId: string): SupportTicket {
+    const ticket = this.repository
+      .findByStudentId(studentId)
+      .supportTickets.find((item) => item.id === ticketId);
+
+    if (!ticket) {
+      throw new NotFoundException(`Support ticket "${ticketId}" was not found.`);
+    }
+
+    return ticket;
+  }
+
+  replyToSupportTicket(
+    studentId: string,
+    ticketId: string,
+    adminId: string,
+    payload: ReplySupportTicketDto,
+  ): SupportTicket {
+    if (!payload.reply.trim()) {
+      throw new BadRequestException('Reply message is required.');
+    }
+
+    const portal = this.repository.findByStudentId(studentId);
+    const ticket = portal.supportTickets.find((item) => item.id === ticketId);
+
+    if (!ticket) {
+      throw new NotFoundException(`Support ticket "${ticketId}" was not found.`);
+    }
+
+    ticket.adminReply = payload.reply.trim();
+    ticket.respondedAt = new Date().toISOString();
+    ticket.respondedBy = adminId;
+    ticket.status = payload.status ?? 'Resolved';
+    portal.lastAction = 'Support request received a reply from the admin team.';
+    this.recordAudit(portal, 'student.support-ticket.replied', ticket.id, {
+      status: ticket.status,
+      respondedBy: adminId,
+    });
+    this.repository.save(portal);
+    return ticket;
   }
 
   getCertificates(studentId: string): StudentCertificatesSummary {
