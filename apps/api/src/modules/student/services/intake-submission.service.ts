@@ -3,6 +3,7 @@ import { join } from 'path';
 
 import { BadRequestException, Injectable } from '@nestjs/common';
 import type {
+  IntakeDocumentReviewStatus,
   IntakeQuestionReviewStatus,
   StudentIntakeSubmission,
   SubmitStudentIntakeDto,
@@ -28,6 +29,7 @@ export class IntakeSubmissionService {
       entranceExamPassed: data.entranceExamPassed,
       passingScore: data.passingScore,
       questions: data.questions,
+      documents: data.documents,
       enrollmentData: data.enrollmentData,
       submittedAt: new Date().toISOString(),
       approvedAt: undefined,
@@ -75,10 +77,17 @@ export class IntakeSubmissionService {
     return Array.from(this.submissions.values()).filter((s) => s.status === 'pending');
   }
 
+  getAllSubmissions(): StudentIntakeSubmission[] {
+    return Array.from(this.submissions.values()).sort(
+      (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime(),
+    );
+  }
+
   approveIntake(
     submissionId: string,
     adminId: string,
     questionReviews?: Record<string, 'correct' | 'wrong'>,
+    documentReviews?: Record<string, 'approved' | 'rejected'>,
   ): StudentIntakeSubmission {
     const submission = this.submissions.get(submissionId);
 
@@ -87,6 +96,7 @@ export class IntakeSubmissionService {
     }
 
     this.applyQuestionReview(submission, questionReviews, true);
+    this.applyDocumentReview(submission, documentReviews, true);
     submission.status = 'approved';
     submission.approvedAt = new Date().toISOString();
     submission.reviewedBy = adminId;
@@ -104,6 +114,7 @@ export class IntakeSubmissionService {
     adminId: string,
     reason: string,
     questionReviews?: Record<string, 'correct' | 'wrong'>,
+    documentReviews?: Record<string, 'approved' | 'rejected'>,
   ): StudentIntakeSubmission {
     const submission = this.submissions.get(submissionId);
 
@@ -112,6 +123,7 @@ export class IntakeSubmissionService {
     }
 
     this.applyQuestionReview(submission, questionReviews, false);
+    this.applyDocumentReview(submission, documentReviews, false);
     submission.status = 'rejected';
     submission.rejectionReason = reason;
     submission.reviewedBy = adminId;
@@ -149,6 +161,30 @@ export class IntakeSubmissionService {
     submission.entranceExamPassed = hasPendingReview ? null : score >= submission.passingScore;
   }
 
+  private applyDocumentReview(
+    submission: StudentIntakeSubmission,
+    documentReviews: Record<string, 'approved' | 'rejected'> | undefined,
+    requireCompleteReview: boolean,
+  ) {
+    const normalizedDocuments = submission.documents.map((document) => {
+      const reviewStatus: IntakeDocumentReviewStatus =
+        documentReviews?.[document.documentId] ?? document.reviewStatus;
+      return {
+        ...document,
+        reviewStatus,
+      };
+    });
+
+    const hasPendingRequiredReview = normalizedDocuments.some(
+      (document) => document.required && document.reviewStatus === 'pending',
+    );
+    if (requireCompleteReview && hasPendingRequiredReview) {
+      throw new BadRequestException('Each required document must be approved or rejected before approval.');
+    }
+
+    submission.documents = normalizedDocuments;
+  }
+
   private loadState() {
     if (!existsSync(this.storagePath)) {
       return;
@@ -169,6 +205,12 @@ export class IntakeSubmissionService {
               reviewStatus: question.reviewStatus ?? ('pending' as IntakeQuestionReviewStatus),
             })) ?? [];
 
+          const normalizedDocuments =
+            submission.documents?.map((document) => ({
+              ...document,
+              reviewStatus: document.reviewStatus ?? ('pending' as IntakeDocumentReviewStatus),
+            })) ?? [];
+
           return [
             submission.id,
             {
@@ -176,6 +218,7 @@ export class IntakeSubmissionService {
               entranceExamPassed: submission.entranceExamPassed ?? null,
               passingScore: submission.passingScore ?? normalizedQuestions.length,
               questions: normalizedQuestions,
+              documents: normalizedDocuments,
             },
           ];
         }),

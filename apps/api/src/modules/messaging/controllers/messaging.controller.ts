@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 
 import { SupabaseAuthGuard } from '../../../common/auth/supabase-auth.guard';
 import type { AuthenticatedUserContext } from '../../../common/auth/authenticated-request.interface';
@@ -19,6 +19,18 @@ export class MessagingController {
     return createApiResponse(
       await this.messagingService.listThreadsForUser(currentUser),
       'Messaging threads retrieved successfully.',
+    );
+  }
+
+  @Get('contacts')
+  @Roles('student', 'instructor', 'admin', 'auditor')
+  async getContacts(
+    @CurrentUser() currentUser: AuthenticatedUserContext,
+    @Query('search') search?: string,
+  ) {
+    return createApiResponse(
+      await this.messagingService.listContacts(currentUser, search),
+      'Messaging contacts retrieved successfully.',
     );
   }
 

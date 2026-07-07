@@ -2,12 +2,14 @@
 
 import Link from 'next/link';
 import * as React from 'react';
-import { IconArrowRight, IconMessageCircle, IconSchool, IconSend2 } from '@tabler/icons-react';
+import { IconArrowRight, IconMessageCircle, IconPlus, IconSchool, IconSend2 } from '@tabler/icons-react';
+import { useAuth } from '@/components/auth/auth-provider';
+import { NewConversationModal } from '@/components/chat/new-conversation-modal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { StudentShell } from '@/components/student/student-shell';
-import { studentDemoThreads, studentDemoUser } from '@/lib/chat/mock-data';
+import { studentDemoUser } from '@/lib/chat/mock-data';
 import { useRealtimeInbox } from '@/lib/chat/use-realtime-inbox';
 
 function formatThreadTime(value: string) {
@@ -20,20 +22,30 @@ function formatThreadTime(value: string) {
 }
 
 export default function StudentInboxPage() {
+  const { session } = useAuth();
   const inbox = useRealtimeInbox({
     fallbackCurrentUser: studentDemoUser,
-    fallbackThreads: studentDemoThreads,
+    fallbackThreads: [],
   });
-  const unreadCount = inbox.threads.reduce((total, thread) => total + thread.unreadCount, 0);
+  const [newConversationOpen, setNewConversationOpen] = React.useState(false);
+  const savedMessagesThreadId =
+    inbox.threads.find((thread) => thread.participants.length === 1 && thread.participants[0]?.isCurrentUser)
+      ?.id ?? null;
 
   return (
     <StudentShell
       title="Inbox"
       subtitle="Student-to-instructor communication, updates, and operational notices."
       topActions={
-        <Badge variant={inbox.setupState.mode === 'supabase' ? 'success' : 'warning'}>
-          {inbox.setupState.mode === 'supabase' ? 'Live chat connected' : `${unreadCount} demo unread`}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant={inbox.setupState.mode === 'supabase' ? 'success' : 'warning'}>
+            {inbox.setupState.mode === 'supabase' ? 'Live chat connected' : 'Chat offline'}
+          </Badge>
+          <Button size="sm" className="gap-1.5" onClick={() => setNewConversationOpen(true)}>
+            <IconPlus className="size-4" />
+            New message
+          </Button>
+        </div>
       }
     >
       <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
@@ -116,12 +128,6 @@ export default function StudentInboxPage() {
                     </div>
                   ),
                 )}
-                <div className="rounded-[18px] border border-border-subtle bg-surface-muted p-4">
-                  <p className="text-sm text-on-surface-variant">
-                    Run the SQL in `docs/database/supabase-chat-schema.sql`, then sign in with Supabase
-                    Auth to move this inbox from demo mode to realtime mode.
-                  </p>
-                </div>
                 <div className="flex gap-3 pt-4">
                   <Input
                     value={inbox.composerValue}
@@ -155,6 +161,15 @@ export default function StudentInboxPage() {
           )}
         </section>
       </div>
+
+      <NewConversationModal
+        open={newConversationOpen}
+        onClose={() => setNewConversationOpen(false)}
+        accessToken={session?.access_token}
+        currentUserId={inbox.currentUser.id}
+        savedMessagesThreadId={savedMessagesThreadId}
+        onCreated={(threadId) => void inbox.refresh(threadId)}
+      />
     </StudentShell>
   );
 }

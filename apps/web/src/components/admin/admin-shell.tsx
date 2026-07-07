@@ -10,8 +10,10 @@ import {
   IconClipboardList,
   IconDashboard,
   IconFileAnalytics,
+  IconHeadset,
   IconHelpCircle,
   IconLayoutDashboard,
+  IconMail,
   IconMenu2,
   IconSearch,
   IconSettings,
@@ -22,11 +24,38 @@ import {
   IconX,
   IconChevronDown,
 } from '@tabler/icons-react';
+import { useAuth } from '@/components/auth/auth-provider';
 import { SignOutButton } from '@/components/auth/sign-out-button';
+import { UnreadMessageBanner } from '@/components/chat/unread-message-banner';
+import { useUnreadMessagesCount } from '@/lib/chat/use-unread-count';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+
+function getInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean).slice(0, 2);
+
+  if (parts.length === 0) {
+    return 'A';
+  }
+
+  return parts.map((part) => part.charAt(0).toUpperCase()).join('');
+}
+
+function formatRoleLabel(role?: string) {
+  if (!role) {
+    return 'Admin';
+  }
+
+  return role
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
 
 type AdminNavItem = {
   label: string;
@@ -41,6 +70,7 @@ const navItems: AdminNavItem[] = [
   { label: 'Applications', href: '/admin/applications', icon: IconClipboardList },
   { label: 'Review Workspace', href: '/admin/applications/review', icon: IconAppWindow },
   { label: 'Violations Log', href: '/admin/violations', icon: IconShieldExclamation },
+  { label: 'Support Requests', href: '/admin/support', icon: IconHeadset },
   { label: 'Reports', href: '/admin/reports', icon: IconFileAnalytics },
   {
     label: 'Configurations',
@@ -51,6 +81,7 @@ const navItems: AdminNavItem[] = [
       { label: 'Cohorts', href: '/admin/configurations/cohorts', icon: IconUsersGroup },
     ],
   },
+  { label: 'Inbox', href: '/admin/inbox', icon: IconMail },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -83,12 +114,62 @@ export function AdminShell({
     { label: 'Reports', href: '/admin/reports' },
   ],
   topActions,
-  profileName = 'Charlie Admin',
-  profileRole = 'Operations Lead',
+  profileName,
+  profileRole,
 }: AdminShellProps) {
   const pathname = usePathname();
+  const { user, syncedUser, session } = useAuth();
   const [profileMenuOpen, setProfileMenuOpen] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const { unreadCount, notification, dismissNotification } = useUnreadMessagesCount();
+  const [fetchedProfile, setFetchedProfile] = React.useState<{ fullName: string; title: string; avatarUrl?: string } | null>(null);
+
+  const adminId = syncedUser?.localUserId;
+  const accessToken = session?.access_token;
+
+  React.useEffect(() => {
+    if (!adminId || !accessToken) {
+      setFetchedProfile(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    fetch(`${API_BASE_URL}/admins/${adminId}/profile`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: 'no-store',
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (cancelled || !payload?.data) return;
+        setFetchedProfile({
+          fullName: payload.data.fullName,
+          title: payload.data.title,
+          avatarUrl: payload.data.avatarUrl,
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setFetchedProfile(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, adminId]);
+
+  const resolvedProfileName =
+    profileName ||
+    fetchedProfile?.fullName ||
+    (typeof user?.user_metadata?.full_name === 'string' && user.user_metadata.full_name.trim()) ||
+    (typeof user?.user_metadata?.name === 'string' && user.user_metadata.name.trim()) ||
+    syncedUser?.email ||
+    'Admin';
+  const resolvedProfileRole = profileRole || fetchedProfile?.title || formatRoleLabel(syncedUser?.role);
+  const resolvedProfileImageUrl =
+    fetchedProfile?.avatarUrl ||
+    (typeof user?.user_metadata?.avatar_url === 'string' && user.user_metadata.avatar_url.trim()) ||
+    (typeof user?.user_metadata?.picture === 'string' && user.user_metadata.picture.trim()) ||
+    undefined;
 
   // Auto-expand parent menus if child is active
   const initialExpandedMenus = React.useMemo(() => {
@@ -141,6 +222,11 @@ export function AdminShell({
 
   return (
     <div className="min-h-screen bg-background text-on-surface">
+      <UnreadMessageBanner
+        notification={notification}
+        inboxHref="/admin/inbox"
+        onDismiss={dismissNotification}
+      />
       <aside className="fixed left-0 top-0 z-50 hidden h-full w-[240px] flex-col border-r border-border-subtle bg-surface-low px-4 py-6 lg:flex">
         <div className="mb-10 px-2">
           <h1 className="font-display text-[30px] font-bold tracking-[-0.02em] text-primary">
@@ -216,6 +302,7 @@ export function AdminShell({
             }
 
             const active = isActive(pathname, item.href || '');
+            const isInbox = item.href === '/admin/inbox';
             return (
               <Link
                 key={`${item.label}-${item.href ?? 'item'}`}
@@ -228,7 +315,12 @@ export function AdminShell({
                 )}
               >
                 <Icon className="size-5" />
-                <span>{item.label}</span>
+                <span className="flex-1">{item.label}</span>
+                {isInbox && unreadCount > 0 ? (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-error px-1.5 text-[11px] font-bold text-white">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                ) : null}
               </Link>
             );
           })}
@@ -340,6 +432,7 @@ export function AdminShell({
                 }
 
                 const active = isActive(pathname, item.href || '');
+                const isInbox = item.href === '/admin/inbox';
                 return (
                   <Link
                     key={`${item.label}-${item.href ?? 'item'}`}
@@ -353,7 +446,12 @@ export function AdminShell({
                     )}
                   >
                     <Icon className="size-5" />
-                    <span>{item.label}</span>
+                    <span className="flex-1">{item.label}</span>
+                    {isInbox && unreadCount > 0 ? (
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-error px-1.5 text-[11px] font-bold text-white">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    ) : null}
                   </Link>
                 );
               })}
@@ -422,24 +520,40 @@ export function AdminShell({
                 className="flex items-center gap-3 border-l border-border-subtle pl-2 transition hover:opacity-80 sm:pl-4"
               >
                 <div className="hidden text-right sm:block">
-                  <p className="text-sm font-semibold text-on-surface">{profileName}</p>
-                  <p className="text-[12px] text-on-surface-variant">{profileRole}</p>
+                  <p className="text-sm font-semibold text-on-surface">{resolvedProfileName}</p>
+                  <p className="text-[12px] text-on-surface-variant">{resolvedProfileRole}</p>
                 </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary cursor-pointer">
-                  CA
-                </div>
+                {resolvedProfileImageUrl ? (
+                  <img
+                    className="h-10 w-10 rounded-full object-cover cursor-pointer"
+                    src={resolvedProfileImageUrl}
+                    alt={resolvedProfileName}
+                  />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary cursor-pointer">
+                    {getInitials(resolvedProfileName)}
+                  </div>
+                )}
               </button>
 
               {profileMenuOpen && (
                 <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-[16px] border border-border-subtle bg-surface shadow-lg">
                   <div className="border-b border-border-subtle p-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                        CA
-                      </div>
+                      {resolvedProfileImageUrl ? (
+                        <img
+                          className="h-12 w-12 rounded-full object-cover"
+                          src={resolvedProfileImageUrl}
+                          alt={resolvedProfileName}
+                        />
+                      ) : (
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                          {getInitials(resolvedProfileName)}
+                        </div>
+                      )}
                       <div>
-                        <p className="font-semibold text-on-surface">{profileName}</p>
-                        <p className="text-[12px] text-on-surface-variant">{profileRole}</p>
+                        <p className="font-semibold text-on-surface">{resolvedProfileName}</p>
+                        <p className="text-[12px] text-on-surface-variant">{resolvedProfileRole}</p>
                       </div>
                     </div>
                   </div>
@@ -497,7 +611,7 @@ export function AdminShell({
           navItems[0],
           navItems[1],
           navItems[2],
-          navItems[5],
+          navItems[6],
           { label: 'Settings', href: '/admin/settings', icon: IconSettings },
         ].map((item) => {
           const Icon = item.icon;

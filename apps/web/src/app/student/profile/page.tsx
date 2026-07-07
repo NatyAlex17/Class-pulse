@@ -9,7 +9,6 @@ import {
   IconHistory,
   IconLocation,
   IconMessageCircle,
-  IconNotes,
   IconShieldCheck,
 } from '@tabler/icons-react';
 import { useStudentDemo } from '@/components/student/student-portal-store';
@@ -22,6 +21,7 @@ const tabItems = ['Overview', 'Onboarding', 'Documents', 'Financials', 'Messages
 export default function StudentProfilePage() {
   const [activeTab, setActiveTab] = React.useState('Overview');
   const {
+    profile,
     onboardingSteps,
     uploads,
     threads,
@@ -35,6 +35,14 @@ export default function StudentProfilePage() {
     completeOnboardingStep,
   } = useStudentDemo();
 
+  const initials = profile.fullName
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('') || 'S';
+
   return (
     <StudentShell
       title="My Record Center"
@@ -45,28 +53,30 @@ export default function StudentProfilePage() {
         <div className="mb-8 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex items-center gap-6">
             <div className="relative">
-              <img
-                className="h-24 w-24 rounded-2xl border-2 border-white object-cover shadow-lg"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAz7JfU1KwFuLnEo8rQ_OlNzVaVcld2yA02c4Da13Ox4UAwu56s1osUgtjz1Y56-m11p1DznONZ1RAyfZJdh-C9f0lq4DOiyA5Qe4w5q91jFqfkZJuI0uitWYhT9eRfh3eeQTzq2Hy0WElbEZyqq81mC1fU0frtNVYrnM75KU5p1a06rF4MT3MyBm9SHcYkdS6VHHd1k1tx41rqfgubFYY9o28azQagLqDaNF8MmpG0gK31ArOddoB3NQamX3IwPsf6A-wc9eNK9IxO"
-                alt="Amara Singh"
-              />
+              <div className="flex h-24 w-24 items-center justify-center rounded-2xl border-2 border-white bg-primary/10 text-2xl font-bold text-primary shadow-lg">
+                {initials}
+              </div>
               <span className="absolute -bottom-2 -right-2 rounded-lg border-2 border-white bg-success px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
                 ACTIVE
               </span>
             </div>
             <div>
               <h1 className="font-display text-[30px] font-bold tracking-[-0.02em] text-on-surface">
-                Amara Singh
+                {profile.fullName}
               </h1>
               <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-on-surface-variant">
-                <span className="font-semibold text-primary">Student ID: #9928-11</span>
+                <span className="font-semibold text-primary">Student ID: {profile.studentNumber}</span>
                 <span>|</span>
-                <span>Bachelor of Science in Nursing (BSN)</span>
-                <span>|</span>
-                <span className="flex items-center gap-1">
-                  <IconLocation className="size-4" />
-                  San Francisco Campus
-                </span>
+                <span>{profile.cohort}</span>
+                {profile.location ? (
+                  <>
+                    <span>|</span>
+                    <span className="flex items-center gap-1">
+                      <IconLocation className="size-4" />
+                      {profile.location}
+                    </span>
+                  </>
+                ) : null}
               </div>
               <div className="mt-4 flex flex-wrap gap-3">
                 <Button variant="secondary" className="rounded-[12px] bg-surface-highest text-xs">
@@ -215,35 +225,9 @@ export default function StudentProfilePage() {
                 <IconHistory className="size-5 text-primary" />
               </div>
               <div className="space-y-4 p-5">
-                {[
-                  ['Orientation checklist updated', 'SYSTEM / 09:41 AM'],
-                  ['Document review refreshed', 'OPS / 08:30 AM'],
-                  ['Clinical hour summary recalculated', 'SYSTEM / 07:55 AM'],
-                ].map((item) => (
-                  <div key={item[0]} className="rounded-[14px] border border-border-subtle bg-surface-muted p-4">
-                    <p className="text-sm font-semibold text-on-surface">{item[0]}</p>
-                    <p className="mt-1 font-mono text-[10px] text-on-surface-variant">{item[1]}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-surface">
-              <div className="flex items-center justify-between border-b border-border-subtle bg-surface-container p-4">
-                <h3 className="text-sm font-bold">Advising Notes</h3>
-                <IconNotes className="size-5 text-primary" />
-              </div>
-              <div className="space-y-5 p-5">
-                <div>
-                  <p className="font-mono text-[10px] text-on-surface-variant">DR. SARAH MILLER / 2 DAYS AGO</p>
-                  <p className="mt-2 text-sm leading-relaxed text-on-surface">
-                    Amara is progressing well through clinical documentation and is ready for the
-                    next simulation lab once orientation is fully acknowledged.
-                  </p>
-                </div>
-                <div>
-                  <p className="font-mono text-[10px] text-on-surface-variant">LATEST SYSTEM NOTE</p>
-                  <p className="mt-2 text-sm leading-relaxed text-on-surface">{lastAction}</p>
+                <div className="rounded-[14px] border border-border-subtle bg-surface-muted p-4">
+                  <p className="text-sm font-semibold text-on-surface">{lastAction}</p>
+                  <p className="mt-1 font-mono text-[10px] text-on-surface-variant">LATEST SYSTEM NOTE</p>
                 </div>
               </div>
             </div>

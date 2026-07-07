@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -28,9 +29,13 @@ import {
 } from '../../student/services/learning-resources-config.service';
 import { OrientationSurveyConfigService, type OrientationSurveyConfig } from '../../student/services/orientation-survey-config.service';
 import { CohortsConfigService, type CohortsConfig } from '../../student/services/cohorts-config.service';
+import {
+  DocumentRequirementsConfigService,
+  type DocumentRequirementsConfig,
+} from '../../student/services/document-requirements-config.service';
 import { IntakeSubmissionService } from '../../student/services/intake-submission.service';
 import { StudentPortalService } from '../../student/services/student-portal.service';
-import type { ApproveIntakeDto } from '../../student/types/student-portal.types';
+import type { ApproveIntakeDto, ReplySupportTicketDto } from '../../student/types/student-portal.types';
 import type {
   AddAdminApplicationNoteDto,
   GenerateAdminReportExportDto,
@@ -48,6 +53,7 @@ export class AdminPortalController {
     private readonly learningResourcesConfigService: LearningResourcesConfigService,
     private readonly orientationSurveyConfigService: OrientationSurveyConfigService,
     private readonly cohortsConfigService: CohortsConfigService,
+    private readonly documentRequirementsConfigService: DocumentRequirementsConfigService,
     private readonly intakeSubmissionService: IntakeSubmissionService,
     private readonly studentPortalService: StudentPortalService,
   ) {}
@@ -57,6 +63,14 @@ export class AdminPortalController {
     return createApiResponse(
       this.adminPortalService.getPortal(adminId),
       'Admin portal state retrieved successfully.',
+    );
+  }
+
+  @Get('profile')
+  getProfile(@Param('adminId') adminId: string) {
+    return createApiResponse(
+      this.adminPortalService.getProfile(adminId),
+      'Admin profile retrieved successfully.',
     );
   }
 
@@ -286,6 +300,33 @@ export class AdminPortalController {
   }
 
   @UseGuards(SupabaseAuthGuard)
+  @Get('document-requirements-config')
+  getDocumentRequirementsConfig() {
+    return createApiResponse(
+      this.documentRequirementsConfigService.getConfig(),
+      'Document requirements configuration retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Patch('document-requirements-config')
+  updateDocumentRequirementsConfig(@Body() config: DocumentRequirementsConfig) {
+    return createApiResponse(
+      this.documentRequirementsConfigService.updateConfig(config),
+      'Document requirements configuration updated successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Post('document-requirements-config/reset')
+  resetDocumentRequirementsConfig() {
+    return createApiResponse(
+      this.documentRequirementsConfigService.resetToDefault(),
+      'Document requirements configuration reset to default successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
   @Get('learning-resources-config')
   getLearningResourcesConfig() {
     return createApiResponse(
@@ -391,9 +432,41 @@ export class AdminPortalController {
   @Get('intake/pending-submissions')
   getPendingSubmissions() {
     return createApiResponse(
-      this.intakeSubmissionService.getPendingSubmissions(),
+      this.intakeSubmissionService.getPendingSubmissions().map((submission) => this.withStudentName(submission)),
       'Pending student intake submissions retrieved successfully.',
     );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('intake/submissions')
+  getAllIntakeSubmissions() {
+    return createApiResponse(
+      this.intakeSubmissionService.getAllSubmissions().map((submission) => this.withStudentName(submission)),
+      'Student intake submissions retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('intake/submissions/:submissionId')
+  getIntakeSubmissionById(@Param('submissionId') submissionId: string) {
+    const submission = this.intakeSubmissionService.getSubmission(submissionId);
+
+    if (!submission) {
+      throw new NotFoundException('Intake submission not found.');
+    }
+
+    return createApiResponse(this.withStudentName(submission), 'Student intake submission retrieved successfully.');
+  }
+
+  private withStudentName<T extends { studentId: string }>(
+    submission: T,
+  ): T & { studentName: string; studentEmail?: string } {
+    try {
+      const profile = this.studentPortalService.getProfile(submission.studentId);
+      return { ...submission, studentName: profile.fullName, studentEmail: profile.email };
+    } catch {
+      return { ...submission, studentName: submission.studentId };
+    }
   }
 
   @UseGuards(SupabaseAuthGuard)
@@ -404,7 +477,12 @@ export class AdminPortalController {
     @Body() body: ApproveIntakeDto,
   ) {
     if (body.approved) {
-      const submission = this.intakeSubmissionService.approveIntake(submissionId, adminId, body.questionReviews);
+      const submission = this.intakeSubmissionService.approveIntake(
+        submissionId,
+        adminId,
+        body.questionReviews,
+        body.documentReviews,
+      );
       this.studentPortalService.markIntakeApproved(submission.studentId, {
         score: submission.entranceExamScore,
         passed: submission.entranceExamPassed,
@@ -421,6 +499,7 @@ export class AdminPortalController {
         adminId,
         body.rejectionReason || 'Rejected',
         body.questionReviews,
+        body.documentReviews,
       );
       this.studentPortalService.markIntakeRejected(submission.studentId, submission.rejectionReason || 'Rejected');
 
@@ -437,6 +516,40 @@ export class AdminPortalController {
     return createApiResponse(
       this.studentPortalService.getSecurityViolationsLog(),
       'Student security violation log retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('support-tickets')
+  getAllSupportTickets() {
+    return createApiResponse(
+      this.studentPortalService.getAllSupportTickets().map((ticket) => this.withStudentName(ticket)),
+      'Student support tickets retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('support-tickets/:studentId/:ticketId')
+  getSupportTicketById(@Param('studentId') studentId: string, @Param('ticketId') ticketId: string) {
+    const ticket = this.studentPortalService.getSupportTicket(studentId, ticketId);
+    return createApiResponse(
+      this.withStudentName({ ...ticket, studentId }),
+      'Support ticket retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Patch('support-tickets/:studentId/:ticketId/reply')
+  replySupportTicket(
+    @Param('adminId') adminId: string,
+    @Param('studentId') studentId: string,
+    @Param('ticketId') ticketId: string,
+    @Body() body: ReplySupportTicketDto,
+  ) {
+    const ticket = this.studentPortalService.replyToSupportTicket(studentId, ticketId, adminId, body);
+    return createApiResponse(
+      this.withStudentName({ ...ticket, studentId }),
+      'Support ticket reply sent successfully.',
     );
   }
 }

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
 import type { LocalUserRecord } from '../../auth/types/auth-user.types';
 import type {
@@ -13,13 +13,17 @@ import type {
   AttendanceRecord,
   CdphForm,
   ClinicalLogEntry,
+  CreateEnrollmentPaymentIntentDto,
   CurriculumModule,
+  DocumentChecklistItem,
   LogClinicalHoursDto,
+  OnboardingState,
   RecordPaymentDto,
   RegisterCohortDto,
   ReportLearningAttentionEventDto,
   ReportExamSecurityEventDto,
   ReplaceStudentDocumentDto,
+  ReplySupportTicketDto,
   ReportAbsenceDto,
   SelectModuleDto,
   SetLearningSessionDto,
@@ -35,6 +39,7 @@ import type {
   StudentLearningSnapshot,
   StudentPortalState,
   StudentThread,
+  SupportTicket,
   StudentViolationLogEntry,
   SubmitModuleExamDto,
   SubmitModuleExamResponse,
@@ -51,10 +56,12 @@ import type {
   UploadStudentDocumentDto,
 } from '../types/student-portal.types';
 import { CohortsConfigService } from './cohorts-config.service';
+import { DocumentRequirementsConfigService } from './document-requirements-config.service';
 import { ExamConfigService } from './exam-config.service';
 import { GeminiService } from './gemini.service';
 import { IntakeSubmissionService } from './intake-submission.service';
 import { LearningResourcesConfigService } from './learning-resources-config.service';
+import { StripePaymentsService } from './stripe-payments.service';
 import { StudentPortalRepository } from './student-portal.repository';
 
 const CLINICAL_HOURS_REQUIRED = 40;
@@ -106,15 +113,24 @@ export class StudentPortalService {
     private readonly intakeSubmissionService: IntakeSubmissionService,
     private readonly learningResourcesConfigService: LearningResourcesConfigService,
     private readonly cohortsConfigService: CohortsConfigService,
+    private readonly documentRequirementsConfigService: DocumentRequirementsConfigService,
     private readonly geminiService: GeminiService,
+    private readonly stripePaymentsService: StripePaymentsService,
   ) {}
 
   ensurePortalForLocalUser(localUser: LocalUserRecord) {
     return this.repository.ensureForLocalUser(localUser);
   }
 
-  getPortal(studentId: string): StudentPortalState {
-    return this.syncWorkflowState(this.repository.findByStudentId(studentId));
+  getPortal(studentId: string) {
+    const portal = this.syncWorkflowState(this.repository.findByStudentId(studentId));
+    return {
+      ...portal,
+      onboarding: {
+        ...portal.onboarding,
+        documentChecklist: this.buildDocumentChecklist(portal.onboarding),
+      },
+    };
   }
 
   getProfile(studentId: string) {
@@ -122,7 +138,7 @@ export class StudentPortalService {
   }
 
   updateProfile(studentId: string, payload: UpdateStudentProfileDto) {
-    const portal = this.repository.findByStudentId(studentId);
+    let portal = this.repository.findByStudentId(studentId);
 
     if (payload.email && !payload.email.includes('@')) {
       throw new BadRequestException('A valid email address is required.');
@@ -134,6 +150,13 @@ export class StudentPortalService {
     };
     this.recordAudit(portal, 'student.profile.updated', portal.profile.id, { ...payload });
     return this.repository.save(portal).profile;
+  }
+
+  getEnrollmentFeeSummary(): { amount: number; moduleCount: number } {
+    const modules = this.learningResourcesConfigService.getConfig().modules;
+    const amount = modules.reduce((sum, module) => sum + Math.max(0, module.moduleFee ?? 0), 0);
+
+    return { amount, moduleCount: modules.length };
   }
 
   getCohorts(studentId: string): StudentCohortsSnapshot {
@@ -156,7 +179,7 @@ export class StudentPortalService {
           id: cohort.id,
           name: cohort.name,
           description: cohort.description,
-          feeAmount: cohort.feeAmount,
+          feeAmount: this.stripePaymentsService.getEnrollmentPricing(cohort.id).amount,
           moduleCount: cohort.moduleIds.length,
           moduleTitles: cohort.moduleIds
             .map((moduleId) => moduleTitleById.get(moduleId))
@@ -165,7 +188,19 @@ export class StudentPortalService {
     };
   }
 
-  registerCohort(studentId: string, payload: RegisterCohortDto): StudentCohortsSnapshot {
+  createEnrollmentPaymentIntent(studentId: string, payload: CreateEnrollmentPaymentIntentDto) {
+    this.assertStudentApproved(studentId);
+    const cohortId = payload.cohortId?.trim();
+
+    if (!cohortId) {
+      throw new BadRequestException('A cohortId is required to start enrollment payment.');
+    }
+
+    return this.stripePaymentsService.createEnrollmentPaymentIntent(studentId, cohortId);
+  }
+
+  async registerCohort(studentId: string, payload: RegisterCohortDto): Promise<StudentCohortsSnapshot> {
+    this.assertStudentApproved(studentId);
     const cohortId = payload.cohortId?.trim();
 
     if (!cohortId) {
@@ -182,24 +217,58 @@ export class StudentPortalService {
       throw new BadRequestException(`Cohort "${cohort.name}" is not open for registration.`);
     }
 
-    const portal = this.repository.findByStudentId(studentId);
+    const pricing = this.stripePaymentsService.getEnrollmentPricing(cohort.id);
+    let portal = this.repository.findByStudentId(studentId);
+
+    if (portal.profile.cohortId === cohort.id) {
+      return this.getCohorts(studentId);
+    }
+
+    let paymentVerified: {
+      amount: number;
+      paymentIntentId: string;
+      methodLabel: string;
+    } | null = null;
+
+    if (pricing.amount > 0) {
+      paymentVerified = await this.stripePaymentsService.verifyEnrollmentPayment(
+        studentId,
+        cohort.id,
+        payload.paymentIntentId ?? '',
+      );
+
+      const alreadyRecorded = portal.financials.paymentPlan.some(
+        (payment) => payment.stripePaymentIntentId === paymentVerified?.paymentIntentId,
+      );
+
+      if (!alreadyRecorded) {
+        this.recordPayment(studentId, {
+          amount: paymentVerified.amount,
+          method: paymentVerified.methodLabel,
+          stripePaymentIntentId: paymentVerified.paymentIntentId,
+        });
+        portal = this.repository.findByStudentId(studentId);
+      }
+    }
+
     portal.profile = {
       ...portal.profile,
       cohortId: cohort.id,
       cohort: cohort.name,
     };
 
-    if (cohort.feeAmount > 0) {
+    if (pricing.amount > 0) {
       portal.financials = {
         ...portal.financials,
-        totalTuition: cohort.feeAmount,
-        balance: Math.max(0, cohort.feeAmount - portal.financials.amountPaid),
+        totalTuition: pricing.amount,
+        balance: Math.max(0, pricing.amount - portal.financials.amountPaid),
       };
     }
 
     this.recordAudit(portal, 'student.cohort.registered', cohort.id, {
       cohortName: cohort.name,
-      feeAmount: cohort.feeAmount,
+      feeAmount: pricing.amount,
+      paymentIntentId: paymentVerified?.paymentIntentId,
     });
     this.repository.save(portal);
     return this.getCohorts(studentId);
@@ -311,6 +380,14 @@ export class StudentPortalService {
       throw new BadRequestException(`Question "${unansweredQuestion.prompt}" must be answered before submission.`);
     }
 
+    const missingDocument = this.documentRequirementsConfigService
+      .getDocumentsFor('student')
+      .find((document) => document.required && !portal.onboarding.readinessUploads[document.id]);
+
+    if (missingDocument) {
+      throw new BadRequestException(`Document "${missingDocument.name}" must be uploaded before submission.`);
+    }
+
     const submittedAt = new Date().toISOString();
 
     portal.entranceExam = {
@@ -339,6 +416,18 @@ export class StudentPortalService {
         studentAnswer: portal.entranceExam.answers[question.id]?.trim() ?? '',
         reviewStatus: 'pending',
       })),
+      documents: this.documentRequirementsConfigService.getDocumentsFor('student').map((document) => {
+        const file = portal.onboarding.readinessDocumentFiles[document.id];
+        return {
+          documentId: document.id,
+          name: document.name,
+          description: document.description,
+          required: document.required,
+          fileName: file?.fileName,
+          fileUrl: file?.url,
+          reviewStatus: 'pending',
+        };
+      }),
       enrollmentData: portal.enrollmentWizard,
     });
 
@@ -463,7 +552,69 @@ export class StudentPortalService {
   }
 
   getOnboarding(studentId: string) {
-    return this.repository.findByStudentId(studentId).onboarding;
+    const portal = this.repository.findByStudentId(studentId);
+    return {
+      ...portal.onboarding,
+      documentChecklist: this.buildDocumentChecklist(portal.onboarding),
+    };
+  }
+
+  uploadReadinessDocument(
+    studentId: string,
+    documentId: string,
+    file: { fileName: string; url: string },
+  ) {
+    this.assertEntranceExamEditable(studentId);
+
+    const document = this.documentRequirementsConfigService.getDocumentsFor('student').find(
+      (item) => item.id === documentId,
+    );
+
+    if (!document) {
+      throw new BadRequestException(`Document "${documentId}" was not found.`);
+    }
+
+    const portal = this.repository.findByStudentId(studentId);
+    portal.onboarding.readinessUploads = {
+      ...portal.onboarding.readinessUploads,
+      [documentId]: true,
+    };
+    portal.onboarding.readinessDocumentFiles = {
+      ...portal.onboarding.readinessDocumentFiles,
+      [documentId]: {
+        fileName: file.fileName,
+        url: file.url,
+        uploadedAt: new Date().toISOString(),
+      },
+    };
+    portal.lastAction = `Uploaded "${document.name}" for admissions review.`;
+    this.recordAudit(portal, 'student.onboarding.document.uploaded', documentId, {
+      documentId,
+      fileName: file.fileName,
+    });
+
+    const saved = this.repository.save(portal);
+    return {
+      ...saved.onboarding,
+      documentChecklist: this.buildDocumentChecklist(saved.onboarding),
+    };
+  }
+
+  private buildDocumentChecklist(
+    onboarding: Pick<OnboardingState, 'readinessUploads' | 'readinessDocumentFiles'>,
+  ): DocumentChecklistItem[] {
+    return this.documentRequirementsConfigService.getDocumentsFor('student').map((document) => {
+      const file = onboarding.readinessDocumentFiles[document.id];
+      return {
+        id: document.id,
+        name: document.name,
+        description: document.description,
+        required: document.required,
+        uploaded: Boolean(onboarding.readinessUploads[document.id]),
+        fileName: file?.fileName,
+        fileUrl: file?.url,
+      };
+    });
   }
 
   toggleTask(studentId: string, taskId: string) {
@@ -541,7 +692,12 @@ export class StudentPortalService {
     const portal = this.repository.findByStudentId(studentId);
     const allQuestionsAnswered = portal.onboarding.questions.every((question) => question.answer.trim().length > 0);
     const acknowledgementsComplete = Object.values(portal.onboarding.acknowledgements).every(Boolean);
-    const readinessComplete = Object.values(portal.onboarding.readinessUploads).every(Boolean);
+    const requiredDocuments = this.documentRequirementsConfigService
+      .getDocumentsFor('student')
+      .filter((document) => document.required);
+    const readinessComplete = requiredDocuments.every(
+      (document) => portal.onboarding.readinessUploads[document.id] === true,
+    );
 
     if (!allQuestionsAnswered || !acknowledgementsComplete || !readinessComplete) {
       throw new BadRequestException(
@@ -1419,6 +1575,7 @@ export class StudentPortalService {
         amount: payload.amount,
         status: 'Completed',
         method: payload.method.trim(),
+        stripePaymentIntentId: payload.stripePaymentIntentId?.trim() || undefined,
       },
       ...portal.financials.paymentPlan,
     ];
@@ -1429,6 +1586,7 @@ export class StudentPortalService {
     this.recordAudit(portal, 'student.payment.recorded', 'financials', {
       amount: payload.amount,
       method: payload.method.trim(),
+      stripePaymentIntentId: payload.stripePaymentIntentId,
     });
     return this.repository.save(portal).financials;
   }
@@ -1697,6 +1855,64 @@ export class StudentPortalService {
       category: ticket.category,
     });
     return this.repository.save(portal).supportTickets[0];
+  }
+
+  getAllSupportTickets(): Array<SupportTicket & { studentId: string; studentNumber: string }> {
+    const entries: Array<SupportTicket & { studentId: string; studentNumber: string }> = [];
+
+    for (const portal of this.repository.findAll()) {
+      for (const ticket of portal.supportTickets) {
+        entries.push({
+          ...ticket,
+          studentId: portal.profile.id,
+          studentNumber: portal.profile.studentNumber,
+        });
+      }
+    }
+
+    return entries.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  }
+
+  getSupportTicket(studentId: string, ticketId: string): SupportTicket {
+    const ticket = this.repository
+      .findByStudentId(studentId)
+      .supportTickets.find((item) => item.id === ticketId);
+
+    if (!ticket) {
+      throw new NotFoundException(`Support ticket "${ticketId}" was not found.`);
+    }
+
+    return ticket;
+  }
+
+  replyToSupportTicket(
+    studentId: string,
+    ticketId: string,
+    adminId: string,
+    payload: ReplySupportTicketDto,
+  ): SupportTicket {
+    if (!payload.reply.trim()) {
+      throw new BadRequestException('Reply message is required.');
+    }
+
+    const portal = this.repository.findByStudentId(studentId);
+    const ticket = portal.supportTickets.find((item) => item.id === ticketId);
+
+    if (!ticket) {
+      throw new NotFoundException(`Support ticket "${ticketId}" was not found.`);
+    }
+
+    ticket.adminReply = payload.reply.trim();
+    ticket.respondedAt = new Date().toISOString();
+    ticket.respondedBy = adminId;
+    ticket.status = payload.status ?? 'Resolved';
+    portal.lastAction = 'Support request received a reply from the admin team.';
+    this.recordAudit(portal, 'student.support-ticket.replied', ticket.id, {
+      status: ticket.status,
+      respondedBy: adminId,
+    });
+    this.repository.save(portal);
+    return ticket;
   }
 
   getCertificates(studentId: string): StudentCertificatesSummary {

@@ -1,11 +1,17 @@
-import { randomUUID } from 'crypto';
-
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 
 import { AuthenticatedUserContext } from '../../../common/auth/authenticated-request.interface';
 import { AuditLogService } from '../../../common/services/audit-log.service';
+import { LocalUsersService } from '../../auth/services/local-users.service';
 import { SupabaseService } from '../../auth/services/supabase.service';
-import { CreateThreadDto, MarkThreadReadDto, MessagingThreadResponse, SendMessageDto } from '../types/messaging.types';
+import { canRolesMessage, getAllowedCounterpartRoles } from '../messaging-permissions';
+import {
+  CreateThreadDto,
+  MarkThreadReadDto,
+  MessagingContact,
+  MessagingThreadResponse,
+  SendMessageDto,
+} from '../types/messaging.types';
 
 interface SupabaseThreadRow {
   id: string;
@@ -37,6 +43,7 @@ export class MessagingService {
   constructor(
     private readonly supabaseService: SupabaseService,
     private readonly auditLogService: AuditLogService,
+    private readonly localUsersService: LocalUsersService,
   ) {}
 
   async listThreadsForUser(currentUser: AuthenticatedUserContext): Promise<MessagingThreadResponse[]> {
@@ -105,16 +112,55 @@ export class MessagingService {
     });
   }
 
+  async listContacts(currentUser: AuthenticatedUserContext, search?: string): Promise<MessagingContact[]> {
+    const allowedRoles = getAllowedCounterpartRoles(currentUser.localUser.role);
+    const contacts = await this.localUsersService.listByRoles(allowedRoles, {
+      excludeSupabaseUserId: currentUser.authUser.id,
+      search,
+    });
+
+    return contacts.map((contact) => ({
+      supabaseUserId: contact.supabaseUserId,
+      email: contact.email,
+      role: contact.role,
+    }));
+  }
+
   async createThread(currentUser: AuthenticatedUserContext, body: CreateThreadDto) {
     if (!Array.isArray(body.participantSupabaseUserIds) || body.participantSupabaseUserIds.length === 0) {
       throw new BadRequestException('participantSupabaseUserIds must include at least one participant.');
     }
 
-    const participantIds = [...new Set([currentUser.authUser.id, ...body.participantSupabaseUserIds])];
+    const counterpartIds = [...new Set(body.participantSupabaseUserIds)].filter(
+      (id) => id !== currentUser.authUser.id,
+    );
+    // No other participants means the student/instructor/admin/auditor is starting a
+    // "Saved Messages" style note-to-self thread, which skips counterpart role checks.
+    const isSelfNote = counterpartIds.length === 0;
+
+    const counterparts = await Promise.all(
+      counterpartIds.map(async (supabaseUserId) => {
+        const localUser = await this.localUsersService.findBySupabaseUserId(supabaseUserId);
+
+        if (!localUser) {
+          throw new NotFoundException(`Participant "${supabaseUserId}" was not found.`);
+        }
+
+        if (!canRolesMessage(currentUser.localUser.role, localUser.role)) {
+          throw new ForbiddenException(
+            `A ${currentUser.localUser.role} cannot start a conversation with a ${localUser.role}.`,
+          );
+        }
+
+        return { supabaseUserId, localUser };
+      }),
+    );
+
+    const participantIds = [currentUser.authUser.id, ...counterpartIds];
     const threadInsert = await this.supabaseService.adminClient
       .from('chat_threads')
       .insert({
-        subject: body.subject?.trim() || null,
+        subject: body.subject?.trim() || (isSelfNote ? 'Saved Messages' : null),
         context_type: body.contextType ?? 'general',
         context_id: body.contextId?.trim() || null,
         created_by_user_id: currentUser.authUser.id,
@@ -129,13 +175,27 @@ export class MessagingService {
     const participantInsert = await this.supabaseService.adminClient
       .from('chat_thread_participants')
       .insert(
-        participantIds.map((participantId) => ({
-          thread_id: threadInsert.data.id,
-          user_id: participantId,
-          participant_role: participantId === currentUser.authUser.id ? currentUser.localUser.role : 'student',
-          display_name: participantId === currentUser.authUser.id ? currentUser.localUser.email : null,
-          last_read_at: participantId === currentUser.authUser.id ? new Date().toISOString() : null,
-        })),
+        participantIds.map((participantId) => {
+          if (participantId === currentUser.authUser.id) {
+            return {
+              thread_id: threadInsert.data.id,
+              user_id: participantId,
+              participant_role: currentUser.localUser.role,
+              display_name: currentUser.localUser.email,
+              last_read_at: new Date().toISOString(),
+            };
+          }
+
+          const counterpart = counterparts.find((item) => item.supabaseUserId === participantId);
+
+          return {
+            thread_id: threadInsert.data.id,
+            user_id: participantId,
+            participant_role: counterpart?.localUser.role ?? 'student',
+            display_name: counterpart?.localUser.email ?? null,
+            last_read_at: null,
+          };
+        }),
       );
 
     if (participantInsert.error) {

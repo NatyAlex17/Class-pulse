@@ -1,0 +1,25 @@
+{
+  "documents": [
+    {
+      "id": "photoId",
+      "name": "Photo ID",
+      "description": "A valid government-issued photo ID.",
+      "appliesTo": "student",
+      "required": true
+    },
+    {
+      "id": "diploma",
+      "name": "High School Diploma / Transcript",
+      "description": "Proof of high school completion or equivalent.",
+      "appliesTo": "student",
+      "required": true
+    },
+    {
+      "id": "tbTest",
+      "name": "Physical + TB Clearance",
+      "description": "Recent physical exam and TB clearance test results.",
+      "appliesTo": "student",
+      "required": true
+    }
+  ]
+}

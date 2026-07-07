@@ -14,7 +14,7 @@ import { Modal } from '@/components/ui/modal';
 import { Textarea } from '@/components/ui/textarea';
 
 import { ConfigBanner, DeleteConfirmModal, PageToolbar, RowIconButton, type DeleteConfirmState } from './shared';
-import { getSectionHref, slugify, type SectionRow } from './types';
+import { formatMoney, getSectionHref, slugify, type SectionRow } from './types';
 import type { LearningResourcesStore } from './use-learning-resources-config';
 
 const emptySectionDraft = { title: '', description: '' };
@@ -132,6 +132,24 @@ export function ModuleDetailView({
                 }
               />
             </div>
+          </div>
+
+          <div className="mt-4">
+            <label className="mb-2 block text-sm font-semibold text-on-surface">Module Fee (USD)</label>
+            <Input
+              type="number"
+              min={0}
+              value={selectedModule.moduleFee}
+              onChange={(event) =>
+                updateModule(selectedModule.id, (module) => ({
+                  ...module,
+                  moduleFee: Math.max(0, Number(event.target.value || 0)),
+                }))
+              }
+            />
+            <p className="mt-1 text-xs text-on-surface-variant">
+              Current module fee: {formatMoney(selectedModule.moduleFee)}
+            </p>
           </div>
 
           <div className="mt-4 grid gap-4 md:grid-cols-2">

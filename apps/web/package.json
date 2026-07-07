@@ -10,6 +10,8 @@
   },
   "type": "module",
   "dependencies": {
+    "@stripe/react-stripe-js": "^3.9.1",
+    "@stripe/stripe-js": "^3.5.0",
     "@supabase/supabase-js": "^2.110.0",
     "@tabler/icons-react": "^3.44.0",
     "class-variance-authority": "^0.7.1",

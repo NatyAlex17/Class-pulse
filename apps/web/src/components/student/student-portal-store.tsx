@@ -18,6 +18,16 @@ type OnboardingQuestion = {
   answer: string;
 };
 
+type DocumentChecklistItem = {
+  id: string;
+  name: string;
+  description: string;
+  required: boolean;
+  uploaded: boolean;
+  fileName?: string;
+  fileUrl?: string;
+};
+
 type TaskItem = {
   id: string;
   title: string;
@@ -179,6 +189,8 @@ type SupportTicket = {
   message: string;
   status: 'Open' | 'In Review' | 'Resolved';
   createdAt: string;
+  adminReply?: string;
+  respondedAt?: string;
 };
 
 type StudentSettings = {
@@ -213,12 +225,13 @@ type SessionItem = {
   type: 'Clinical' | 'Theory';
 };
 
-type PaymentRecord = {
+export type PaymentRecord = {
   id: string;
   date: string;
   amount: number;
   status: 'Completed' | 'Upcoming';
   method: string;
+  stripePaymentIntentId?: string;
 };
 
 type ClinicalLog = {
@@ -370,7 +383,17 @@ type StudentIntakeJourney = {
   };
 };
 
+type StudentProfileSummary = {
+  fullName: string;
+  preferredName?: string;
+  email: string;
+  cohort: string;
+  studentNumber: string;
+  location: string;
+};
+
 type StudentDemoState = {
+  profile: StudentProfileSummary;
   workflowStage: StudentWorkflowStage;
   intakeJourney: StudentIntakeJourney | null;
   entranceExam: EntranceExamState;
@@ -383,11 +406,8 @@ type StudentDemoState = {
     attendance: boolean;
     technology: boolean;
   };
-  readinessUploads: {
-    photoId: boolean;
-    diploma: boolean;
-    tbTest: boolean;
-  };
+  readinessUploads: Record<string, boolean>;
+  documentChecklist: DocumentChecklistItem[];
   onboardingSubmitted: boolean;
   tasks: TaskItem[];
   modules: ModuleItem[];
@@ -410,6 +430,10 @@ type StudentDemoState = {
   assignments: AssignmentItem[];
   upcomingSessions: SessionItem[];
   paymentHistory: PaymentRecord[];
+  totalTuition: number;
+  depositRequired: number;
+  depositPaid: boolean;
+  financialStatus: 'Current' | 'Payment Due' | 'Past Due';
   clinicalLogs: ClinicalLog[];
   textbookIssued: boolean;
   textbookOpened: boolean;
@@ -442,9 +466,11 @@ type StudentDemoContextValue = StudentDemoState & {
   moduleCertificatesReady: number;
   programCertificateReady: boolean;
   paymentBalance: number;
+  amountPaid: number;
   todayTheoryCheckedIn: boolean;
   todayClinicalCheckedIn: boolean;
   refreshLearning: () => Promise<void>;
+  refreshPortal: () => Promise<void>;
   setWorkflowStage: (stage: StudentWorkflowStage) => void;
   answerEntranceExamQuestion: (questionId: string, answer: string) => void;
   submitEntranceExam: () => void;
@@ -462,7 +488,7 @@ type StudentDemoContextValue = StudentDemoState & {
   completeOnboardingStep: (stepId: string) => void;
   answerOnboardingQuestion: (questionId: string, answer: string) => void;
   toggleAcknowledgement: (key: keyof StudentDemoState['acknowledgements']) => void;
-  toggleReadinessUpload: (key: keyof StudentDemoState['readinessUploads']) => void;
+  uploadReadinessDocument: (documentId: string, file: File) => Promise<void>;
   submitOnboardingPackage: () => void;
   selectThread: (threadId: string) => void;
   sendMessage: (threadId: string, text: string) => void;
@@ -510,6 +536,7 @@ type StudentDemoContextValue = StudentDemoState & {
 };
 
 type StudentPortalApi = {
+  profile: StudentProfileSummary;
   workflowStage: StudentWorkflowStage;
   intakeJourney: StudentIntakeJourney;
   tasks: TaskItem[];
@@ -519,6 +546,7 @@ type StudentPortalApi = {
     questions: OnboardingQuestion[];
     acknowledgements: StudentDemoState['acknowledgements'];
     readinessUploads: StudentDemoState['readinessUploads'];
+    documentChecklist: DocumentChecklistItem[];
     submitted: boolean;
   };
   modules: ModuleItem[];
@@ -544,6 +572,12 @@ type StudentPortalApi = {
     status: 'Verified' | 'Pending';
   }>;
   financials: {
+    totalTuition: number;
+    amountPaid: number;
+    balance: number;
+    depositRequired: number;
+    depositPaid: boolean;
+    status: 'Current' | 'Payment Due' | 'Past Due';
     paymentPlan: PaymentRecord[];
   };
   documents: Array<{
@@ -611,6 +645,7 @@ const StudentDemoContext = React.createContext<StudentDemoContextValue | null>(n
 
 function createFallbackState(): StudentDemoState {
   return {
+    profile: { fullName: '', email: '', cohort: '', studentNumber: '', location: '' },
     workflowStage: 'entrance_exam',
     intakeJourney: null,
     entranceExam: {
@@ -636,7 +671,8 @@ function createFallbackState(): StudentDemoState {
     onboardingSteps: [],
     onboardingQuestions: [],
     acknowledgements: { schedule: false, attendance: false, technology: false },
-    readinessUploads: { photoId: false, diploma: false, tbTest: false },
+    readinessUploads: {},
+    documentChecklist: [],
     onboardingSubmitted: false,
     tasks: [],
     modules: [
@@ -683,6 +719,10 @@ function createFallbackState(): StudentDemoState {
     assignments: [],
     upcomingSessions: [],
     paymentHistory: [],
+    totalTuition: TOTAL_TUITION,
+    depositRequired: 0,
+    depositPaid: false,
+    financialStatus: 'Current',
     clinicalLogs: [],
     textbookIssued: false,
     textbookOpened: false,
@@ -707,6 +747,7 @@ function createFallbackState(): StudentDemoState {
 
 function mapPortalToState(portal: StudentPortalApi): StudentDemoState {
   return {
+    profile: portal.profile,
     workflowStage: portal.workflowStage,
     intakeJourney: portal.intakeJourney,
     entranceExam: portal.entranceExam,
@@ -716,6 +757,7 @@ function mapPortalToState(portal: StudentPortalApi): StudentDemoState {
     onboardingQuestions: portal.onboarding.questions,
     acknowledgements: portal.onboarding.acknowledgements,
     readinessUploads: portal.onboarding.readinessUploads,
+    documentChecklist: portal.onboarding.documentChecklist ?? [],
     onboardingSubmitted: portal.onboarding.submitted,
     tasks: portal.tasks,
     modules: portal.modules,
@@ -753,6 +795,10 @@ function mapPortalToState(portal: StudentPortalApi): StudentDemoState {
     assignments: portal.assignments,
     upcomingSessions: portal.clinicalSessions,
     paymentHistory: portal.financials.paymentPlan,
+    totalTuition: portal.financials.totalTuition,
+    depositRequired: portal.financials.depositRequired,
+    depositPaid: portal.financials.depositPaid,
+    financialStatus: portal.financials.status,
     clinicalLogs: portal.clinicalLogs.map((log) => ({
       id: log.id,
       date: log.date,
@@ -1092,19 +1138,32 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
     [mutate, state.acknowledgements]
   );
 
-  const toggleReadinessUpload = React.useCallback(
-    (key: keyof StudentDemoState['readinessUploads']) => {
-      const value = !state.readinessUploads[key];
-      setState((current) => ({
-        ...current,
-        readinessUploads: {
-          ...current.readinessUploads,
-          [key]: value,
-        },
-      }));
-      mutate('/onboarding/uploads', 'PATCH', { [key]: value });
+  const uploadReadinessDocument = React.useCallback(
+    async (documentId: string, file: File) => {
+      if (!studentId || !accessToken || !isStudentUser) {
+        throw new Error('Student portal is not authenticated.');
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(
+        `${API_BASE_URL}/students/${studentId}/onboarding/documents/${documentId}/upload`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error?.message ?? 'Failed to upload document.');
+      }
+
+      await refreshPortal();
     },
-    [mutate, state.readinessUploads]
+    [accessToken, isStudentUser, refreshPortal, studentId]
   );
 
   const submitOnboardingPackage = React.useCallback(() => {
@@ -1577,7 +1636,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
   const paymentCompleted = state.paymentHistory
     .filter((payment) => payment.status === 'Completed')
     .reduce((total, payment) => total + payment.amount, 0);
-  const paymentBalance = Math.max(TOTAL_TUITION - paymentCompleted, 0);
+  const paymentBalance = Math.max(state.totalTuition - paymentCompleted, 0);
   const programCertificateReady =
     state.modules.every((module) => module.status === 'Complete') &&
     paymentBalance === 0 &&
@@ -1613,9 +1672,11 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       moduleCertificatesReady,
       programCertificateReady,
       paymentBalance,
+      amountPaid: paymentCompleted,
       todayTheoryCheckedIn,
       todayClinicalCheckedIn,
       refreshLearning,
+      refreshPortal,
       setWorkflowStage,
       answerEntranceExamQuestion,
       submitEntranceExam,
@@ -1630,7 +1691,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       completeOnboardingStep,
       answerOnboardingQuestion,
       toggleAcknowledgement,
-      toggleReadinessUpload,
+      uploadReadinessDocument,
       submitOnboardingPackage,
       selectThread,
       sendMessage,
@@ -1687,12 +1748,14 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       onboardingProgressPercent,
       overallProgressPercent,
       paymentBalance,
+      paymentCompleted,
       portalHydrated,
       portalUnlocked,
       programCertificateReady,
       reportLearningAttentionEvent,
       reportExamSecurityEvent,
       refreshLearning,
+      refreshPortal,
       readinessCount,
       recordLessonSessionStart,
       replaceDocument,
@@ -1724,7 +1787,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       toggleAcknowledgement,
       toggleEnrollmentAgreement,
       toggleLearningSession,
-      toggleReadinessUpload,
+      uploadReadinessDocument,
       toggleTask,
       toggleLiveScanUpload,
       unreadCount,

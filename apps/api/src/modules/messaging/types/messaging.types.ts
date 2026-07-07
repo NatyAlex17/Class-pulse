@@ -13,6 +13,12 @@ export interface MarkThreadReadDto {
   readAt?: string;
 }
 
+export interface MessagingContact {
+  supabaseUserId: string;
+  email: string;
+  role: string;
+}
+
 export interface MessagingThreadResponse {
   id: string;
   subject: string;

@@ -492,6 +492,7 @@ export const studentPortalSeed: StudentPortalState[] = [
         diploma: true,
         tbTest: false,
       },
+      readinessDocumentFiles: {},
       submitted: false,
     },
     modules: [

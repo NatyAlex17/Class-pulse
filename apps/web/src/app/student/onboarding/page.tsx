@@ -1,11 +1,13 @@
 'use client';
 
+import * as React from 'react';
 import {
   IconCircleCheckFilled,
   IconClipboardCheck,
   IconFileUpload,
   IconShieldCheck,
 } from '@tabler/icons-react';
+import { DocumentPreviewModal } from '@/components/ui/document-preview-modal';
 import { useStudentDemo } from '@/components/student/student-portal-store';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,17 +24,58 @@ export default function StudentOnboardingPage() {
     portalUnlocked,
     acknowledgements,
     readinessUploads,
+    documentChecklist,
     answerOnboardingQuestion,
     toggleAcknowledgement,
-    toggleReadinessUpload,
+    uploadReadinessDocument,
     submitOnboardingPackage,
   } = useStudentDemo();
 
+  const [uploadingDocumentId, setUploadingDocumentId] = React.useState<string | null>(null);
+  const [uploadErrors, setUploadErrors] = React.useState<Record<string, string>>({});
+  const readinessFileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const pendingUploadDocumentIdRef = React.useRef<string | null>(null);
+  const [previewDocument, setPreviewDocument] = React.useState<{ title: string; fileUrl: string } | null>(null);
+
+  const handleRequestDocumentUpload = (documentId: string) => {
+    pendingUploadDocumentIdRef.current = documentId;
+    readinessFileInputRef.current?.click();
+  };
+
+  const handleDocumentFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    const documentId = pendingUploadDocumentIdRef.current;
+    event.target.value = '';
+    if (!file || !documentId) return;
+
+    setUploadErrors((current) => {
+      const next = { ...current };
+      delete next[documentId];
+      return next;
+    });
+    setUploadingDocumentId(documentId);
+    try {
+      await uploadReadinessDocument(documentId, file);
+    } catch (err) {
+      setUploadErrors((current) => ({
+        ...current,
+        [documentId]: err instanceof Error ? err.message : 'Failed to upload document.',
+      }));
+    } finally {
+      setUploadingDocumentId(null);
+    }
+  };
+
+  const requiredDocuments = documentChecklist.filter((document) => document.required);
   const allQuestionsAnswered = onboardingQuestions.every((question) => question.answer.trim());
   const allChecksComplete =
     Object.values(acknowledgements).every(Boolean) &&
-    Object.values(readinessUploads).every(Boolean);
+    requiredDocuments.every((document) => readinessUploads[document.id]);
   const readyToSubmit = allQuestionsAnswered && allChecksComplete;
+  const readinessChecksTotal = Object.keys(acknowledgements).length + documentChecklist.length;
+  const readinessChecksComplete =
+    Object.values(acknowledgements).filter(Boolean).length +
+    documentChecklist.filter((document) => readinessUploads[document.id]).length;
 
   return (
     <StudentShell
@@ -104,32 +147,69 @@ export default function StudentOnboardingPage() {
           <div className="rounded-[18px] border border-border-subtle bg-surface p-6">
             <div className="mb-4 flex items-center gap-2">
               <IconFileUpload className="size-5 text-primary" />
-              <h3 className="font-display text-[18px] font-semibold text-on-surface">Demo Upload Checkpoints</h3>
+              <h3 className="font-display text-[18px] font-semibold text-on-surface">Upload Checkpoints</h3>
             </div>
-            <div className="space-y-3">
-              {[
-                ['photoId', 'Photo ID'],
-                ['diploma', 'High School Diploma / Transcript'],
-                ['tbTest', 'Physical + TB Clearance'],
-              ].map(([key, label]) => {
-                const complete = readinessUploads[key as keyof typeof readinessUploads];
-                return (
-                  <div key={key} className="flex items-center justify-between rounded-[16px] border border-border-subtle bg-surface-muted p-4">
-                    <div>
-                      <p className="text-sm font-semibold text-on-surface">{label}</p>
-                      <p className="text-[12px] text-on-surface-variant">Static upload that still changes record state</p>
-                    </div>
-                    <Button
-                      variant={complete ? 'secondary' : 'default'}
-                      className="rounded-[12px]"
-                      onClick={() => toggleReadinessUpload(key as keyof typeof readinessUploads)}
+            {documentChecklist.length === 0 ? (
+              <p className="text-sm text-on-surface-variant">No documents are configured for onboarding yet.</p>
+            ) : (
+              <div className="space-y-3">
+                <input
+                  ref={readinessFileInputRef}
+                  type="file"
+                  accept="image/*,application/pdf"
+                  className="hidden"
+                  onChange={handleDocumentFileSelected}
+                />
+                {documentChecklist.map((document) => {
+                  const complete = Boolean(readinessUploads[document.id]);
+                  const isUploading = uploadingDocumentId === document.id;
+                  const uploadError = uploadErrors[document.id];
+                  return (
+                    <div
+                      key={document.id}
+                      className="flex items-center justify-between gap-3 rounded-[16px] border border-border-subtle bg-surface-muted p-4"
                     >
-                      {complete ? 'Uploaded' : 'Upload'}
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-on-surface">{document.name}</p>
+                          <Badge variant={document.required ? 'warning' : 'neutral'}>
+                            {document.required ? 'Required' : 'Optional'}
+                          </Badge>
+                        </div>
+                        <p className="text-[12px] text-on-surface-variant">{document.description}</p>
+                        {uploadError ? (
+                          <p className="mt-1 text-[12px] text-error">{uploadError}</p>
+                        ) : null}
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        {complete && document.fileUrl ? (
+                          <Button
+                            variant="secondary"
+                            className="rounded-[12px]"
+                            onClick={() =>
+                              setPreviewDocument({
+                                title: document.fileName ?? document.name,
+                                fileUrl: document.fileUrl as string,
+                              })
+                            }
+                          >
+                            View
+                          </Button>
+                        ) : null}
+                        <Button
+                          variant={complete ? 'secondary' : 'default'}
+                          className="rounded-[12px]"
+                          disabled={isUploading}
+                          onClick={() => handleRequestDocumentUpload(document.id)}
+                        >
+                          {isUploading ? 'Uploading...' : complete ? 'Replace' : 'Upload'}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
 
@@ -182,7 +262,7 @@ export default function StudentOnboardingPage() {
               <div className="rounded-[16px] bg-surface p-4">
                 <p className="font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant">Readiness checks</p>
                 <p className="mt-2 font-mono text-[28px] font-semibold text-primary">
-                  {Object.values(acknowledgements).filter(Boolean).length + Object.values(readinessUploads).filter(Boolean).length}/6
+                  {readinessChecksComplete}/{readinessChecksTotal}
                 </p>
               </div>
             </div>
@@ -201,6 +281,13 @@ export default function StudentOnboardingPage() {
           </div>
         </section>
       </div>
+      {previewDocument ? (
+        <DocumentPreviewModal
+          title={previewDocument.title}
+          fileUrl={previewDocument.fileUrl}
+          onClose={() => setPreviewDocument(null)}
+        />
+      ) : null}
     </StudentShell>
   );
 }

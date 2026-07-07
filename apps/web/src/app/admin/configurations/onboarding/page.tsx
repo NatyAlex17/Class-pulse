@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AdminShell } from '@/components/admin/admin-shell';
+import { DocumentRequirementsContent } from '@/components/admin/documents/document-requirements-content';
 import { EntranceExamConfigContent } from '@/components/admin/onboarding/entrance-exam-content';
 import { EnrollmentWizardConfigContent } from '@/components/admin/onboarding/enrollment-wizard-content';
 import { OrientationSurveyConfigContent } from '@/components/admin/onboarding/orientation-survey-content';
@@ -13,6 +14,7 @@ const tabs = [
   { id: 'entrance-exam', label: 'Entrance Exam' },
   { id: 'enrollment-wizard', label: 'Enrollment Wizard' },
   { id: 'orientation-survey', label: 'Orientation Survey' },
+  { id: 'documents', label: 'Document Requirements' },
 ];
 
 function OnboardingConfigsContent() {
@@ -59,6 +61,8 @@ function OnboardingConfigsContent() {
           {activeTab === 'enrollment-wizard' && <EnrollmentWizardConfigContent />}
 
           {activeTab === 'orientation-survey' && <OrientationSurveyConfigContent />}
+
+          {activeTab === 'documents' && <DocumentRequirementsContent />}
         </div>
       </div>
     </AdminShell>

@@ -5,16 +5,21 @@ import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { CohortsConfigService } from './cohorts-config.service';
+import { DocumentRequirementsConfigService } from './document-requirements-config.service';
 import { ExamConfigService } from './exam-config.service';
 import { GeminiService } from './gemini.service';
 import { IntakeSubmissionService } from './intake-submission.service';
 import { LearningResourcesConfigService } from './learning-resources-config.service';
+import { StripePaymentsService } from './stripe-payments.service';
 import { StudentPortalRepository } from './student-portal.repository';
 import { StudentPortalService } from './student-portal.service';
 
 describe('StudentPortalService', () => {
   let service: StudentPortalService;
   let intakeSubmissionService: IntakeSubmissionService;
+  let cohortsConfigService: CohortsConfigService;
+  let learningResourcesConfigService: LearningResourcesConfigService;
+  let stripePaymentsService: StripePaymentsService;
 
   const prepareModuleThreeForSecureExam = () => {
     service.selectModule('student-amara-singh', { moduleId: 'm3' });
@@ -38,8 +43,16 @@ describe('StudentPortalService', () => {
     }
 
     const examConfigService = new ExamConfigService();
-    const learningResourcesConfigService = new LearningResourcesConfigService();
-    const cohortsConfigService = new CohortsConfigService();
+    learningResourcesConfigService = new LearningResourcesConfigService();
+    cohortsConfigService = new CohortsConfigService();
+    stripePaymentsService = new StripePaymentsService(
+      new ConfigService({
+        STRIPE_SECRET_KEY: 'sk_test_placeholder',
+        STRIPE_PUBLISHABLE_KEY: 'pk_test_placeholder',
+      }),
+      cohortsConfigService,
+      learningResourcesConfigService,
+    );
     intakeSubmissionService = new IntakeSubmissionService();
     service = new StudentPortalService(
       new StudentPortalRepository(examConfigService, learningResourcesConfigService, cohortsConfigService),
@@ -47,7 +60,9 @@ describe('StudentPortalService', () => {
       intakeSubmissionService,
       learningResourcesConfigService,
       cohortsConfigService,
+      new DocumentRequirementsConfigService(),
       new GeminiService(new ConfigService()),
+      stripePaymentsService,
     );
   });
 
@@ -83,6 +98,95 @@ describe('StudentPortalService', () => {
     ).toThrow(BadRequestException);
   });
 
+  it('requires a successful Stripe payment before registering a paid cohort', async () => {
+    learningResourcesConfigService.updateConfig({
+      modules: [
+        {
+          id: 'intro-care',
+          title: 'Intro Care',
+          summary: 'Basics',
+          requiredHours: 10,
+          moduleFee: 750,
+          order: 0,
+          sections: [],
+        },
+      ],
+    });
+    cohortsConfigService.updateConfig({
+      cohorts: [
+        {
+          id: 'cna-paid',
+          name: 'CNA Paid',
+          description: 'Paid cohort',
+          moduleIds: ['intro-care'],
+          feeAmount: 0,
+          isOpen: true,
+        },
+      ],
+    });
+
+    await expect(
+      service.registerCohort('student-amara-singh', {
+        cohortId: 'cna-paid',
+      }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('records Stripe-backed payment and cohort registration after verification', async () => {
+    learningResourcesConfigService.updateConfig({
+      modules: [
+        {
+          id: 'intro-care',
+          title: 'Intro Care',
+          summary: 'Basics',
+          requiredHours: 10,
+          moduleFee: 750,
+          order: 0,
+          sections: [],
+        },
+      ],
+    });
+    cohortsConfigService.updateConfig({
+      cohorts: [
+        {
+          id: 'cna-paid',
+          name: 'CNA Paid',
+          description: 'Paid cohort',
+          moduleIds: ['intro-care'],
+          feeAmount: 0,
+          isOpen: true,
+        },
+      ],
+    });
+    jest.spyOn(stripePaymentsService, 'verifyEnrollmentPayment').mockResolvedValue({
+      cohortId: 'cna-paid',
+      cohortName: 'CNA Paid',
+      amount: 750,
+      paymentIntentId: 'pi_test_123',
+      methodLabel: 'Stripe card (TEST12)',
+    });
+
+    const submission = intakeSubmissionService.submitIntake('student-amara-singh', {
+      entranceExamScore: null,
+      entranceExamPassed: null,
+      passingScore: 1,
+      questions: [],
+      documents: [],
+      enrollmentData: {} as never,
+    });
+    intakeSubmissionService.approveIntake(submission.id, 'admin-test');
+
+    const cohorts = await service.registerCohort('student-amara-singh', {
+      cohortId: 'cna-paid',
+      paymentIntentId: 'pi_test_123',
+    });
+    const financials = service.getFinancials('student-amara-singh');
+
+    expect(cohorts.registeredCohortId).toBe('cna-paid');
+    expect(financials.amountPaid).toBeGreaterThan(1750);
+    expect(financials.paymentPlan[0]?.stripePaymentIntentId).toBe('pi_test_123');
+  });
+
   it('adds a clinical log entry with pending review status', () => {
     const logEntry = service.logClinicalHours('student-amara-singh', {
       date: '2026-06-30',
@@ -106,6 +210,7 @@ describe('StudentPortalService', () => {
     service.answerEntranceExamQuestion('student-amara-singh', 'q6', {
       answer: 'Following instructions is crucial in healthcare to ensure patient safety and quality care.',
     });
+    service.updateReadinessUploads('student-amara-singh', { photoId: true, diploma: true, tbTest: true });
 
     const exam = service.submitEntranceExam('student-amara-singh');
     const intake = service.getIntake('student-amara-singh');
@@ -142,6 +247,7 @@ describe('StudentPortalService', () => {
           reviewStatus: 'pending',
         },
       ],
+      documents: [],
       enrollmentData: service.getIntake('student-amara-singh').enrollmentWizard,
     });
     const approvedSubmission = intakeSubmissionService.approveIntake(submission.id, 'admin-001', { q1: 'correct' });
@@ -174,6 +280,7 @@ describe('StudentPortalService', () => {
           reviewStatus: 'pending',
         },
       ],
+      documents: [],
       enrollmentData: service.getIntake('student-amara-singh').enrollmentWizard,
     });
 
@@ -219,6 +326,7 @@ describe('StudentPortalService', () => {
           reviewStatus: 'pending',
         },
       ],
+      documents: [],
       enrollmentData: service.getIntake('student-amara-singh').enrollmentWizard,
     });
 
@@ -313,6 +421,7 @@ describe('StudentPortalService', () => {
           reviewStatus: 'pending',
         },
       ],
+      documents: [],
       enrollmentData: service.getIntake('student-amara-singh').enrollmentWizard,
     });
 
@@ -356,7 +465,16 @@ describe('StudentPortalService', () => {
       reloadedIntakeSubmissionService,
       reloadedLearningResourcesConfigService,
       reloadedCohortsConfigService,
+      new DocumentRequirementsConfigService(),
       new GeminiService(new ConfigService()),
+      new StripePaymentsService(
+        new ConfigService({
+          STRIPE_SECRET_KEY: 'sk_test_placeholder',
+          STRIPE_PUBLISHABLE_KEY: 'pk_test_placeholder',
+        }),
+        reloadedCohortsConfigService,
+        reloadedLearningResourcesConfigService,
+      ),
     );
     const reloadedPortal = reloadedService.getPortal('student-amara-singh');
 
@@ -380,6 +498,7 @@ describe('StudentPortalService', () => {
           reviewStatus: 'pending',
         },
       ],
+      documents: [],
       enrollmentData: service.getIntake('student-amara-singh').enrollmentWizard,
     });
 

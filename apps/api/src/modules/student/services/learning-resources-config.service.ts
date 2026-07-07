@@ -107,6 +107,10 @@ export class LearningResourcesConfigService implements OnModuleInit {
         throw new BadRequestException(`Module "${module.title}" must include required hours greater than zero.`);
       }
 
+      if (!Number.isFinite(module.moduleFee) || module.moduleFee < 0) {
+        throw new BadRequestException(`Module "${module.title}" must include a module fee of zero or more.`);
+      }
+
       if (!Number.isFinite(module.order)) {
         throw new BadRequestException(`Module "${module.title}" must include an order number.`);
       }
@@ -165,6 +169,7 @@ export class LearningResourcesConfigService implements OnModuleInit {
       title: (module.title ?? '').trim(),
       summary: (module.summary ?? '').trim(),
       requiredHours: Number(module.requiredHours),
+      moduleFee: Number(module.moduleFee ?? 0),
       order: Number(module.order ?? 0),
       minimumHoursForCertification:
         module.minimumHoursForCertification === undefined || module.minimumHoursForCertification === null

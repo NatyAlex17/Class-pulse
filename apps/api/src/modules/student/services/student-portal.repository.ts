@@ -46,15 +46,15 @@ export class StudentPortalRepository {
       ? this.cohortsConfigService.findCohort(portal.profile.cohortId)
       : undefined;
     const modules = this.applyLearningResourcesConfig(portal.modules, undefined, cohort?.moduleIds);
-    // A registered cohort with a configured fee is the source of truth for tuition.
-    const financials =
-      cohort && cohort.feeAmount > 0
-        ? {
-            ...portal.financials,
-            totalTuition: cohort.feeAmount,
-            balance: Math.max(0, cohort.feeAmount - portal.financials.amountPaid),
-          }
-        : portal.financials;
+    // Tuition is always the sum of the module fees assigned to the student's registered cohort.
+    const cohortFeeTotal = cohort ? this.computeCohortFeeTotal(cohort.moduleIds) : 0;
+    const financials = cohort
+      ? {
+          ...portal.financials,
+          totalTuition: cohortFeeTotal,
+          balance: Math.max(0, cohortFeeTotal - portal.financials.amountPaid),
+        }
+      : portal.financials;
 
     return {
       ...portal,
@@ -90,6 +90,9 @@ export class StudentPortalRepository {
         preferredName: firstName,
         email: localUser.email,
         studentNumber: this.buildStudentNumber(localUser.id),
+        cohort: '',
+        cohortId: undefined,
+        levelLabel: 'Prospective Student',
       },
       workflowStage: 'entrance_exam',
       intakeJourney: {
@@ -150,6 +153,7 @@ export class StudentPortalRepository {
           diploma: false,
           tbTest: false,
         },
+        readinessDocumentFiles: {},
         steps: template.onboarding.steps.map((step) => ({
           ...step,
           complete: false,
@@ -161,8 +165,23 @@ export class StudentPortalRepository {
       })),
       activeModuleId: template.modules[0]?.id ?? template.activeModuleId,
       modules: this.applyLearningResourcesConfig(undefined, template.modules),
+      financials: {
+        totalTuition: 0,
+        amountPaid: 0,
+        balance: 0,
+        depositRequired: 0,
+        depositPaid: false,
+        status: 'Current',
+        paymentPlan: [],
+      },
+      threads: [],
+      activeThreadId: '',
+      clinicalSessions: [],
       clinicalLogs: [],
       attendanceRecords: [],
+      documents: [],
+      supportTickets: [],
+      auditTrail: [],
       learningMinutes: 0,
       learningSessionActive: false,
       activeLessonId: undefined,
@@ -270,6 +289,14 @@ export class StudentPortalRepository {
       ),
       'utf8',
     );
+  }
+
+  private computeCohortFeeTotal(moduleIds: string[]): number {
+    const modulesById = new Map(
+      this.learningResourcesConfigService.getConfig().modules.map((module) => [module.id, module]),
+    );
+
+    return moduleIds.reduce((sum, moduleId) => sum + Math.max(0, modulesById.get(moduleId)?.moduleFee ?? 0), 0);
   }
 
   private applyLearningResourcesConfig(
