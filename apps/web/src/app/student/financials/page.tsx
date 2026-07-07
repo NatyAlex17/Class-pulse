@@ -13,31 +13,47 @@ import {
   IconLock,
   IconAlertCircle,
   IconPrinter,
-  IconFile,
 } from '@tabler/icons-react';
-import { useStudentDemo } from '@/components/student/student-portal-store';
+import { useStudentDemo, type PaymentRecord } from '@/components/student/student-portal-store';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
 import { Input } from '@/components/ui/input';
 import { StudentShell } from '@/components/student/student-shell';
 
-type PaymentRow = {
-  date: string;
-  amount: string;
-  status: 'Completed';
-  transactionId: string;
-};
+function formatCurrency(amount: number) {
+  return `$${amount.toFixed(2)}`;
+}
 
-const paymentRows: PaymentRow[] = [
-  { date: 'July 15, 2024', amount: '$875.00', status: 'Completed', transactionId: '#TXN_JUL_24_001' },
-  { date: 'April 15, 2024', amount: '$875.00', status: 'Completed', transactionId: '#TXN_APR_24_001' },
-  { date: 'January 15, 2024', amount: '$875.00', status: 'Completed', transactionId: '#TXN_JAN_24_001' },
-];
+function transactionIdFor(payment: PaymentRecord) {
+  return payment.stripePaymentIntentId ?? `#${payment.id.toUpperCase()}`;
+}
 
 export default function StudentFinancialsPage() {
-  const { onboardingSteps, completeOnboardingStep, paymentHistory, paymentBalance, makePayment, lastAction } = useStudentDemo();
+  const {
+    onboardingSteps,
+    completeOnboardingStep,
+    paymentHistory,
+    paymentBalance,
+    amountPaid,
+    totalTuition,
+    financialStatus,
+    makePayment,
+    lastAction,
+  } = useStudentDemo();
   const billingStep = onboardingSteps.find((step) => step.id === 'billing');
+
+  const sortedPaymentHistory = React.useMemo(
+    () => [...paymentHistory].sort((a, b) => (a.date < b.date ? 1 : -1)),
+    [paymentHistory]
+  );
+  const nextUpcomingPayment = React.useMemo(
+    () =>
+      [...paymentHistory]
+        .filter((payment) => payment.status === 'Upcoming')
+        .sort((a, b) => (a.date > b.date ? 1 : -1))[0],
+    [paymentHistory]
+  );
 
   const [showPaymentModal, setShowPaymentModal] = React.useState(false);
   const [paymentStep, setPaymentStep] = React.useState<'select' | 'form' | 'processing' | 'success'>('select');
@@ -52,31 +68,39 @@ export default function StudentFinancialsPage() {
   const [processingError, setProcessingError] = React.useState('');
 
   const [showReceiptModal, setShowReceiptModal] = React.useState(false);
-  const [selectedReceipt, setSelectedReceipt] = React.useState<PaymentRow | null>(null);
+  const [selectedReceipt, setSelectedReceipt] = React.useState<PaymentRecord | null>(null);
 
-  const columns: DataTableColumn<PaymentRow>[] = [
+  const columns: DataTableColumn<PaymentRecord>[] = [
     { id: 'date', header: 'Date', accessorKey: 'date' },
-    { id: 'amount', header: 'Amount', accessorKey: 'amount' },
+    {
+      id: 'amount',
+      header: 'Amount',
+      cell: (row) => formatCurrency(row.amount),
+    },
+    { id: 'method', header: 'Method', accessorKey: 'method' },
     {
       id: 'status',
       header: 'Status',
-      cell: () => <Badge variant="success">Completed</Badge>,
+      cell: (row) => <Badge variant={row.status === 'Completed' ? 'success' : 'warning'}>{row.status}</Badge>,
     },
     {
       id: 'receipt',
       header: 'Receipt',
-      cell: (row) => (
-        <button
-          onClick={() => {
-            setSelectedReceipt(row);
-            setShowReceiptModal(true);
-          }}
-          className="text-outline transition hover:text-primary"
-          title="View Receipt"
-        >
-          <IconDownload className="size-5" />
-        </button>
-      ),
+      cell: (row) =>
+        row.status === 'Completed' ? (
+          <button
+            onClick={() => {
+              setSelectedReceipt(row);
+              setShowReceiptModal(true);
+            }}
+            className="text-outline transition hover:text-primary"
+            title="View Receipt"
+          >
+            <IconDownload className="size-5" />
+          </button>
+        ) : (
+          <span className="text-outline/40">—</span>
+        ),
     },
   ];
 
@@ -139,14 +163,22 @@ export default function StudentFinancialsPage() {
     >
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div />
-        <div className="flex items-center gap-3 rounded-[16px] border border-success/20 bg-success/10 px-4 py-2.5 text-success">
+        <div
+          className={`flex items-center gap-3 rounded-[16px] border px-4 py-2.5 ${
+            financialStatus === 'Current'
+              ? 'border-success/20 bg-success/10 text-success'
+              : 'border-warning/20 bg-warning/10 text-warning'
+          }`}
+        >
           <IconCheck className="size-5" />
           <div className="flex flex-col">
-            <span className="text-sm font-bold leading-none">On Track</span>
+            <span className="text-sm font-bold leading-none">{financialStatus}</span>
             <span className="text-[12px] opacity-90">
               {billingStep?.complete
                 ? 'Payment preference confirmed for the walkthrough'
-                : 'Final payment scheduled for Oct 15, 2024'}
+                : nextUpcomingPayment
+                  ? `Next payment of ${formatCurrency(nextUpcomingPayment.amount)} due ${nextUpcomingPayment.date}`
+                  : 'All payments complete'}
             </span>
           </div>
         </div>
@@ -156,23 +188,26 @@ export default function StudentFinancialsPage() {
         {[
           {
             label: 'Total Tuition',
-            value: '$3,500.00',
-            note: 'Annual Program Fee (2023-2024)',
+            value: formatCurrency(totalTuition),
+            note: 'Program Fee',
             width: '100%',
             tone: 'bg-primary',
           },
           {
             label: 'Amount Paid',
-            value: '$2,625.00',
-            note: '75% of total balance cleared',
-            width: '75%',
+            value: formatCurrency(amountPaid),
+            note: totalTuition > 0 ? `${Math.round((amountPaid / totalTuition) * 100)}% of total balance cleared` : 'No balance due',
+            width: totalTuition > 0 ? `${Math.min(100, Math.round((amountPaid / totalTuition) * 100))}%` : '0%',
             tone: 'bg-success',
           },
           {
             label: 'Balance Due',
-            value: '$875.00',
-            note: 'Remaining in 1 installment',
-            width: '25%',
+            value: formatCurrency(paymentBalance),
+            note:
+              paymentBalance > 0
+                ? `Remaining in ${paymentHistory.filter((payment) => payment.status === 'Upcoming').length} installment(s)`
+                : 'Fully paid',
+            width: totalTuition > 0 ? `${Math.min(100, Math.round((paymentBalance / totalTuition) * 100))}%` : '0%',
             tone: 'bg-primary-container',
           },
         ].map((card) => (
@@ -181,13 +216,7 @@ export default function StudentFinancialsPage() {
               <span className="font-mono text-[12px] uppercase tracking-[0.1em] text-outline">{card.label}</span>
               <IconCreditCard className="size-6 text-outline/50" />
             </div>
-            <div className="font-mono text-[32px] font-bold tracking-tight text-on-surface">
-              {card.label === 'Amount Paid'
-                ? `$${(3500 - paymentBalance).toFixed(2)}`
-                : card.label === 'Balance Due'
-                  ? `$${paymentBalance.toFixed(2)}`
-                  : card.value}
-            </div>
+            <div className="font-mono text-[32px] font-bold tracking-tight text-on-surface">{card.value}</div>
             <div className="mt-4 h-1.5 w-full rounded-full bg-surface-container">
               <div className={`h-full rounded-full ${card.tone}`} style={{ width: card.width }} />
             </div>
@@ -250,7 +279,7 @@ export default function StudentFinancialsPage() {
             <div className="p-6">
               <DataTable
                 columns={columns}
-                data={paymentRows}
+                data={sortedPaymentHistory}
                 classNames={{
                   desktopWrapper: 'rounded-none border-0 shadow-none bg-transparent',
                   toolbar: 'hidden',
@@ -334,7 +363,7 @@ export default function StudentFinancialsPage() {
                 <div className="mt-4 space-y-1 text-[11px]">
                   <div className="flex justify-between">
                     <span className="text-on-surface-variant">Receipt No.</span>
-                    <span className="font-mono font-bold text-on-surface">{selectedReceipt.transactionId}</span>
+                    <span className="font-mono font-bold text-on-surface">{transactionIdFor(selectedReceipt)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-on-surface-variant">Date</span>
@@ -362,7 +391,7 @@ export default function StudentFinancialsPage() {
                     <p className="text-sm font-semibold text-on-surface">Tuition Installment</p>
                     <p className="text-[11px] text-on-surface-variant mt-0.5">BNS Program Payment - 2024</p>
                   </div>
-                  <p className="text-sm font-mono font-bold text-on-surface whitespace-nowrap">{selectedReceipt.amount}</p>
+                  <p className="text-sm font-mono font-bold text-on-surface whitespace-nowrap">{formatCurrency(selectedReceipt.amount)}</p>
                 </div>
               </div>
 
@@ -370,7 +399,7 @@ export default function StudentFinancialsPage() {
               <div className="space-y-2 mb-6 pb-6 border-b border-on-surface-variant/20">
                 <div className="flex justify-between text-[11px]">
                   <span className="text-on-surface-variant">Subtotal</span>
-                  <span className="font-mono text-on-surface">{selectedReceipt.amount}</span>
+                  <span className="font-mono text-on-surface">{formatCurrency(selectedReceipt.amount)}</span>
                 </div>
                 <div className="flex justify-between text-[11px]">
                   <span className="text-on-surface-variant">Tax (0%)</span>
@@ -387,7 +416,7 @@ export default function StudentFinancialsPage() {
                 <div className="flex justify-between items-baseline">
                   <span className="text-sm font-bold text-on-surface">TOTAL</span>
                   <div className="text-right">
-                    <p className="font-mono text-2xl font-bold text-primary">{selectedReceipt.amount}</p>
+                    <p className="font-mono text-2xl font-bold text-primary">{formatCurrency(selectedReceipt.amount)}</p>
                   </div>
                 </div>
               </div>
@@ -398,7 +427,7 @@ export default function StudentFinancialsPage() {
                 <div className="space-y-1 text-[11px]">
                   <div className="flex justify-between">
                     <span className="text-on-surface-variant">Payment Method</span>
-                    <span className="font-mono text-on-surface">Visa •••• 4242</span>
+                    <span className="font-mono text-on-surface">{selectedReceipt.method}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-on-surface-variant">Status</span>
@@ -406,7 +435,7 @@ export default function StudentFinancialsPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-on-surface-variant">Transaction ID</span>
-                    <span className="font-mono text-on-surface text-[10px]">{selectedReceipt.transactionId}</span>
+                    <span className="font-mono text-on-surface text-[10px]">{transactionIdFor(selectedReceipt)}</span>
                   </div>
                 </div>
               </div>
@@ -433,7 +462,7 @@ export default function StudentFinancialsPage() {
                     <!DOCTYPE html>
                     <html>
                       <head>
-                        <title>Receipt - ${selectedReceipt.transactionId}</title>
+                        <title>Receipt - ${transactionIdFor(selectedReceipt)}</title>
                         <style>
                           body { font-family: monospace; margin: 20px; color: #333; background: white; }
                           .receipt { max-width: 400px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; }
@@ -459,7 +488,7 @@ export default function StudentFinancialsPage() {
                             <h2 style="font-size: 14px; margin: 0;">PAYMENT RECEIPT</h2>
                             <div class="line" style="margin-top: 10px;">
                               <span>Receipt No.</span>
-                              <span>${selectedReceipt.transactionId}</span>
+                              <span>${transactionIdFor(selectedReceipt)}</span>
                             </div>
                             <div class="line">
                               <span>Date</span>
@@ -481,14 +510,14 @@ export default function StudentFinancialsPage() {
                             </div>
                             <div class="line" style="font-size: 11px; color: #666; border-bottom: 1px solid #ddd; padding-bottom: 8px;">
                               <span>BNS Program Payment - 2024</span>
-                              <span>${selectedReceipt.amount}</span>
+                              <span>${formatCurrency(selectedReceipt.amount)}</span>
                             </div>
                           </div>
 
                           <div class="section">
                             <div class="line">
                               <span>Subtotal</span>
-                              <span>${selectedReceipt.amount}</span>
+                              <span>${formatCurrency(selectedReceipt.amount)}</span>
                             </div>
                             <div class="line">
                               <span>Tax</span>
@@ -496,14 +525,14 @@ export default function StudentFinancialsPage() {
                             </div>
                             <div class="line total">
                               <span>TOTAL</span>
-                              <span>${selectedReceipt.amount}</span>
+                              <span>${formatCurrency(selectedReceipt.amount)}</span>
                             </div>
                           </div>
 
                           <div class="section" style="font-size: 11px;">
                             <div class="line">
                               <span>Payment Method</span>
-                              <span>Visa •••• 4242</span>
+                              <span>${selectedReceipt.method}</span>
                             </div>
                             <div class="line">
                               <span>Status</span>
@@ -543,7 +572,7 @@ support@classpulse.com
 PAYMENT RECEIPT
 ========================================
 
-Receipt No: ${selectedReceipt.transactionId}
+Receipt No: ${transactionIdFor(selectedReceipt)}
 Date: ${selectedReceipt.date}
 
 BILL TO
@@ -554,21 +583,21 @@ BNS Nursing Student
 ========================================
 DESCRIPTION                       AMOUNT
 ========================================
-Tuition Installment               ${selectedReceipt.amount}
+Tuition Installment               ${formatCurrency(selectedReceipt.amount)}
 BNS Program Payment - 2024
 
 ========================================
-Subtotal                          ${selectedReceipt.amount}
+Subtotal                          ${formatCurrency(selectedReceipt.amount)}
 Tax (0%)                          $0.00
 Processing Fee                    $0.00
 ----------------------------------------
-TOTAL                             ${selectedReceipt.amount}
+TOTAL                             ${formatCurrency(selectedReceipt.amount)}
 ========================================
 
 PAYMENT DETAILS
-Payment Method: Visa •••• 4242
+Payment Method: ${selectedReceipt.method}
 Status: PAID
-Transaction ID: ${selectedReceipt.transactionId}
+Transaction ID: ${transactionIdFor(selectedReceipt)}
 
 ========================================
 Processed securely through Stripe
@@ -580,7 +609,7 @@ Please keep this receipt for your records
                   `;
                   const element = document.createElement('a');
                   element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(receiptText));
-                  element.setAttribute('download', `receipt_${selectedReceipt.transactionId.replace('#', '')}.txt`);
+                  element.setAttribute('download', `receipt_${transactionIdFor(selectedReceipt).replace('#', '')}.txt`);
                   element.style.display = 'none';
                   document.body.appendChild(element);
                   element.click();

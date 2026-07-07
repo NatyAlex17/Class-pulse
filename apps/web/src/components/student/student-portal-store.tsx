@@ -223,12 +223,13 @@ type SessionItem = {
   type: 'Clinical' | 'Theory';
 };
 
-type PaymentRecord = {
+export type PaymentRecord = {
   id: string;
   date: string;
   amount: number;
   status: 'Completed' | 'Upcoming';
   method: string;
+  stripePaymentIntentId?: string;
 };
 
 type ClinicalLog = {
@@ -380,7 +381,16 @@ type StudentIntakeJourney = {
   };
 };
 
+type StudentProfileSummary = {
+  fullName: string;
+  preferredName?: string;
+  email: string;
+  cohort: string;
+  studentNumber: string;
+};
+
 type StudentDemoState = {
+  profile: StudentProfileSummary;
   workflowStage: StudentWorkflowStage;
   intakeJourney: StudentIntakeJourney | null;
   entranceExam: EntranceExamState;
@@ -417,6 +427,10 @@ type StudentDemoState = {
   assignments: AssignmentItem[];
   upcomingSessions: SessionItem[];
   paymentHistory: PaymentRecord[];
+  totalTuition: number;
+  depositRequired: number;
+  depositPaid: boolean;
+  financialStatus: 'Current' | 'Payment Due' | 'Past Due';
   clinicalLogs: ClinicalLog[];
   textbookIssued: boolean;
   textbookOpened: boolean;
@@ -449,6 +463,7 @@ type StudentDemoContextValue = StudentDemoState & {
   moduleCertificatesReady: number;
   programCertificateReady: boolean;
   paymentBalance: number;
+  amountPaid: number;
   todayTheoryCheckedIn: boolean;
   todayClinicalCheckedIn: boolean;
   refreshLearning: () => Promise<void>;
@@ -517,6 +532,7 @@ type StudentDemoContextValue = StudentDemoState & {
 };
 
 type StudentPortalApi = {
+  profile: StudentProfileSummary;
   workflowStage: StudentWorkflowStage;
   intakeJourney: StudentIntakeJourney;
   tasks: TaskItem[];
@@ -552,6 +568,12 @@ type StudentPortalApi = {
     status: 'Verified' | 'Pending';
   }>;
   financials: {
+    totalTuition: number;
+    amountPaid: number;
+    balance: number;
+    depositRequired: number;
+    depositPaid: boolean;
+    status: 'Current' | 'Payment Due' | 'Past Due';
     paymentPlan: PaymentRecord[];
   };
   documents: Array<{
@@ -619,6 +641,7 @@ const StudentDemoContext = React.createContext<StudentDemoContextValue | null>(n
 
 function createFallbackState(): StudentDemoState {
   return {
+    profile: { fullName: '', email: '', cohort: '', studentNumber: '' },
     workflowStage: 'entrance_exam',
     intakeJourney: null,
     entranceExam: {
@@ -692,6 +715,10 @@ function createFallbackState(): StudentDemoState {
     assignments: [],
     upcomingSessions: [],
     paymentHistory: [],
+    totalTuition: TOTAL_TUITION,
+    depositRequired: 0,
+    depositPaid: false,
+    financialStatus: 'Current',
     clinicalLogs: [],
     textbookIssued: false,
     textbookOpened: false,
@@ -716,6 +743,7 @@ function createFallbackState(): StudentDemoState {
 
 function mapPortalToState(portal: StudentPortalApi): StudentDemoState {
   return {
+    profile: portal.profile,
     workflowStage: portal.workflowStage,
     intakeJourney: portal.intakeJourney,
     entranceExam: portal.entranceExam,
@@ -763,6 +791,10 @@ function mapPortalToState(portal: StudentPortalApi): StudentDemoState {
     assignments: portal.assignments,
     upcomingSessions: portal.clinicalSessions,
     paymentHistory: portal.financials.paymentPlan,
+    totalTuition: portal.financials.totalTuition,
+    depositRequired: portal.financials.depositRequired,
+    depositPaid: portal.financials.depositPaid,
+    financialStatus: portal.financials.status,
     clinicalLogs: portal.clinicalLogs.map((log) => ({
       id: log.id,
       date: log.date,
@@ -1600,7 +1632,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
   const paymentCompleted = state.paymentHistory
     .filter((payment) => payment.status === 'Completed')
     .reduce((total, payment) => total + payment.amount, 0);
-  const paymentBalance = Math.max(TOTAL_TUITION - paymentCompleted, 0);
+  const paymentBalance = Math.max(state.totalTuition - paymentCompleted, 0);
   const programCertificateReady =
     state.modules.every((module) => module.status === 'Complete') &&
     paymentBalance === 0 &&
@@ -1636,6 +1668,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       moduleCertificatesReady,
       programCertificateReady,
       paymentBalance,
+      amountPaid: paymentCompleted,
       todayTheoryCheckedIn,
       todayClinicalCheckedIn,
       refreshLearning,
@@ -1710,6 +1743,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       onboardingProgressPercent,
       overallProgressPercent,
       paymentBalance,
+      paymentCompleted,
       portalHydrated,
       portalUnlocked,
       programCertificateReady,

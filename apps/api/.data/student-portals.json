@@ -3321,7 +3321,7 @@
       "clinicalLogs": [],
       "financials": {
         "totalTuition": 765,
-        "amountPaid": 2515,
+        "amountPaid": 765,
         "balance": 0,
         "depositRequired": 500,
         "depositPaid": true,
@@ -3334,34 +3334,6 @@
             "status": "Completed",
             "method": "Stripe card (0TQHVJ)",
             "stripePaymentIntentId": "pi_3TqWTO2MN5nMyDPN0A0TqHvj"
-          },
-          {
-            "id": "pay-1",
-            "date": "2026-01-15",
-            "amount": 875,
-            "status": "Completed",
-            "method": "Visa ....4242"
-          },
-          {
-            "id": "pay-2",
-            "date": "2026-04-15",
-            "amount": 875,
-            "status": "Completed",
-            "method": "Visa ....4242"
-          },
-          {
-            "id": "pay-3",
-            "date": "2026-07-15",
-            "amount": 875,
-            "status": "Upcoming",
-            "method": "Visa ....4242"
-          },
-          {
-            "id": "pay-4",
-            "date": "2026-10-15",
-            "amount": 875,
-            "status": "Upcoming",
-            "method": "Visa ....4242"
           }
         ]
       },
