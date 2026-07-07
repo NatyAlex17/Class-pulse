@@ -15,7 +15,9 @@ import type {
   ClinicalLogEntry,
   CreateEnrollmentPaymentIntentDto,
   CurriculumModule,
+  DocumentChecklistItem,
   LogClinicalHoursDto,
+  OnboardingState,
   RecordPaymentDto,
   RegisterCohortDto,
   ReportLearningAttentionEventDto,
@@ -52,6 +54,7 @@ import type {
   UploadStudentDocumentDto,
 } from '../types/student-portal.types';
 import { CohortsConfigService } from './cohorts-config.service';
+import { DocumentRequirementsConfigService } from './document-requirements-config.service';
 import { ExamConfigService } from './exam-config.service';
 import { GeminiService } from './gemini.service';
 import { IntakeSubmissionService } from './intake-submission.service';
@@ -108,6 +111,7 @@ export class StudentPortalService {
     private readonly intakeSubmissionService: IntakeSubmissionService,
     private readonly learningResourcesConfigService: LearningResourcesConfigService,
     private readonly cohortsConfigService: CohortsConfigService,
+    private readonly documentRequirementsConfigService: DocumentRequirementsConfigService,
     private readonly geminiService: GeminiService,
     private readonly stripePaymentsService: StripePaymentsService,
   ) {}
@@ -116,8 +120,15 @@ export class StudentPortalService {
     return this.repository.ensureForLocalUser(localUser);
   }
 
-  getPortal(studentId: string): StudentPortalState {
-    return this.syncWorkflowState(this.repository.findByStudentId(studentId));
+  getPortal(studentId: string) {
+    const portal = this.syncWorkflowState(this.repository.findByStudentId(studentId));
+    return {
+      ...portal,
+      onboarding: {
+        ...portal.onboarding,
+        documentChecklist: this.buildDocumentChecklist(portal.onboarding),
+      },
+    };
   }
 
   getProfile(studentId: string) {
@@ -137,6 +148,13 @@ export class StudentPortalService {
     };
     this.recordAudit(portal, 'student.profile.updated', portal.profile.id, { ...payload });
     return this.repository.save(portal).profile;
+  }
+
+  getEnrollmentFeeSummary(): { amount: number; moduleCount: number } {
+    const modules = this.learningResourcesConfigService.getConfig().modules;
+    const amount = modules.reduce((sum, module) => sum + Math.max(0, module.moduleFee ?? 0), 0);
+
+    return { amount, moduleCount: modules.length };
   }
 
   getCohorts(studentId: string): StudentCohortsSnapshot {
@@ -169,6 +187,7 @@ export class StudentPortalService {
   }
 
   createEnrollmentPaymentIntent(studentId: string, payload: CreateEnrollmentPaymentIntentDto) {
+    this.assertStudentApproved(studentId);
     const cohortId = payload.cohortId?.trim();
 
     if (!cohortId) {
@@ -179,6 +198,7 @@ export class StudentPortalService {
   }
 
   async registerCohort(studentId: string, payload: RegisterCohortDto): Promise<StudentCohortsSnapshot> {
+    this.assertStudentApproved(studentId);
     const cohortId = payload.cohortId?.trim();
 
     if (!cohortId) {
@@ -358,6 +378,14 @@ export class StudentPortalService {
       throw new BadRequestException(`Question "${unansweredQuestion.prompt}" must be answered before submission.`);
     }
 
+    const missingDocument = this.documentRequirementsConfigService
+      .getDocumentsFor('student')
+      .find((document) => document.required && !portal.onboarding.readinessUploads[document.id]);
+
+    if (missingDocument) {
+      throw new BadRequestException(`Document "${missingDocument.name}" must be uploaded before submission.`);
+    }
+
     const submittedAt = new Date().toISOString();
 
     portal.entranceExam = {
@@ -386,6 +414,18 @@ export class StudentPortalService {
         studentAnswer: portal.entranceExam.answers[question.id]?.trim() ?? '',
         reviewStatus: 'pending',
       })),
+      documents: this.documentRequirementsConfigService.getDocumentsFor('student').map((document) => {
+        const file = portal.onboarding.readinessDocumentFiles[document.id];
+        return {
+          documentId: document.id,
+          name: document.name,
+          description: document.description,
+          required: document.required,
+          fileName: file?.fileName,
+          fileUrl: file?.url,
+          reviewStatus: 'pending',
+        };
+      }),
       enrollmentData: portal.enrollmentWizard,
     });
 
@@ -510,7 +550,69 @@ export class StudentPortalService {
   }
 
   getOnboarding(studentId: string) {
-    return this.repository.findByStudentId(studentId).onboarding;
+    const portal = this.repository.findByStudentId(studentId);
+    return {
+      ...portal.onboarding,
+      documentChecklist: this.buildDocumentChecklist(portal.onboarding),
+    };
+  }
+
+  uploadReadinessDocument(
+    studentId: string,
+    documentId: string,
+    file: { fileName: string; url: string },
+  ) {
+    this.assertEntranceExamEditable(studentId);
+
+    const document = this.documentRequirementsConfigService.getDocumentsFor('student').find(
+      (item) => item.id === documentId,
+    );
+
+    if (!document) {
+      throw new BadRequestException(`Document "${documentId}" was not found.`);
+    }
+
+    const portal = this.repository.findByStudentId(studentId);
+    portal.onboarding.readinessUploads = {
+      ...portal.onboarding.readinessUploads,
+      [documentId]: true,
+    };
+    portal.onboarding.readinessDocumentFiles = {
+      ...portal.onboarding.readinessDocumentFiles,
+      [documentId]: {
+        fileName: file.fileName,
+        url: file.url,
+        uploadedAt: new Date().toISOString(),
+      },
+    };
+    portal.lastAction = `Uploaded "${document.name}" for admissions review.`;
+    this.recordAudit(portal, 'student.onboarding.document.uploaded', documentId, {
+      documentId,
+      fileName: file.fileName,
+    });
+
+    const saved = this.repository.save(portal);
+    return {
+      ...saved.onboarding,
+      documentChecklist: this.buildDocumentChecklist(saved.onboarding),
+    };
+  }
+
+  private buildDocumentChecklist(
+    onboarding: Pick<OnboardingState, 'readinessUploads' | 'readinessDocumentFiles'>,
+  ): DocumentChecklistItem[] {
+    return this.documentRequirementsConfigService.getDocumentsFor('student').map((document) => {
+      const file = onboarding.readinessDocumentFiles[document.id];
+      return {
+        id: document.id,
+        name: document.name,
+        description: document.description,
+        required: document.required,
+        uploaded: Boolean(onboarding.readinessUploads[document.id]),
+        fileName: file?.fileName,
+        fileUrl: file?.url,
+      };
+    });
   }
 
   toggleTask(studentId: string, taskId: string) {
@@ -588,7 +690,12 @@ export class StudentPortalService {
     const portal = this.repository.findByStudentId(studentId);
     const allQuestionsAnswered = portal.onboarding.questions.every((question) => question.answer.trim().length > 0);
     const acknowledgementsComplete = Object.values(portal.onboarding.acknowledgements).every(Boolean);
-    const readinessComplete = Object.values(portal.onboarding.readinessUploads).every(Boolean);
+    const requiredDocuments = this.documentRequirementsConfigService
+      .getDocumentsFor('student')
+      .filter((document) => document.required);
+    const readinessComplete = requiredDocuments.every(
+      (document) => portal.onboarding.readinessUploads[document.id] === true,
+    );
 
     if (!allQuestionsAnswered || !acknowledgementsComplete || !readinessComplete) {
       throw new BadRequestException(

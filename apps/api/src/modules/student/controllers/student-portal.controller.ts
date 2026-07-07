@@ -1,8 +1,26 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Req,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Request } from 'express';
+import * as fs from 'fs';
+import { diskStorage } from 'multer';
+import * as path from 'path';
 
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { SupabaseAuthGuard } from '../../../common/auth/supabase-auth.guard';
 import { createApiResponse } from '../../../common/utils/create-api-response';
+import { READINESS_DOCUMENTS_UPLOADS_DIR, UPLOADS_URL_PREFIX } from '../../../common/utils/upload-paths';
 import type {
   AdvanceLearningDto,
   AnswerOnboardingQuestionDto,
@@ -67,6 +85,14 @@ export class StudentPortalController {
     return createApiResponse(
       this.studentPortalService.updateProfile(studentId, body),
       'Student profile updated successfully.',
+    );
+  }
+
+  @Get('enrollment/fee-summary')
+  getEnrollmentFeeSummary() {
+    return createApiResponse(
+      this.studentPortalService.getEnrollmentFeeSummary(),
+      'Enrollment fee summary retrieved successfully.',
     );
   }
 
@@ -259,6 +285,57 @@ export class StudentPortalController {
     return createApiResponse(
       this.studentPortalService.updateReadinessUploads(studentId, body),
       'Onboarding readiness uploads updated successfully.',
+    );
+  }
+
+  @Post('onboarding/documents/:documentId/upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: (_req, _file, callback) => {
+          fs.mkdirSync(READINESS_DOCUMENTS_UPLOADS_DIR, { recursive: true });
+          callback(null, READINESS_DOCUMENTS_UPLOADS_DIR);
+        },
+        filename: (_req, file, callback) => {
+          const extension = path.extname(file.originalname).toLowerCase();
+          const baseName =
+            path
+              .basename(file.originalname, extension)
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/(^-|-$)/g, '') || 'file';
+          callback(null, `${Date.now()}-${baseName}${extension}`);
+        },
+      }),
+      limits: { fileSize: 15 * 1024 * 1024 },
+      fileFilter: (_req, file, callback) => {
+        if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
+          callback(null, true);
+        } else {
+          callback(new BadRequestException('Only image or PDF files can be uploaded.'), false);
+        }
+      },
+    }),
+  )
+  uploadReadinessDocument(
+    @Param('studentId') studentId: string,
+    @Param('documentId') documentId: string,
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Req() request: Request,
+  ) {
+    if (!file) {
+      throw new BadRequestException('No file received. Attach a file under the "file" field.');
+    }
+
+    const baseUrl = `${request.protocol}://${request.get('host')}`;
+    const url = `${baseUrl}${UPLOADS_URL_PREFIX}/readiness-documents/${file.filename}`;
+
+    return createApiResponse(
+      this.studentPortalService.uploadReadinessDocument(studentId, documentId, {
+        fileName: file.originalname,
+        url,
+      }),
+      'Document uploaded successfully.',
     );
   }
 

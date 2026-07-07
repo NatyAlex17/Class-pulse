@@ -14,6 +14,7 @@ import {
   IconClockPause,
 } from '@tabler/icons-react';
 import { useAuth } from '@/components/auth/auth-provider';
+import { DocumentPreviewModal } from '@/components/ui/document-preview-modal';
 import { EnrollmentPaymentSection } from '@/components/student/enrollment-payment-section';
 import { useStudentDemo } from '@/components/student/student-portal-store';
 import { Badge } from '@/components/ui/badge';
@@ -84,7 +85,13 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
   const [isCreatingPaymentIntent, setIsCreatingPaymentIntent] = React.useState(false);
   const [paymentIntent, setPaymentIntent] = React.useState<EnrollmentPaymentIntentSnapshot | null>(null);
   const [paymentSuccessMessage, setPaymentSuccessMessage] = React.useState<string | null>(null);
+  const [feeSummary, setFeeSummary] = React.useState<{ amount: number; moduleCount: number } | null>(null);
   const paymentSectionRef = React.useRef<HTMLDivElement | null>(null);
+  const [uploadingDocumentId, setUploadingDocumentId] = React.useState<string | null>(null);
+  const [uploadErrors, setUploadErrors] = React.useState<Record<string, string>>({});
+  const readinessFileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const pendingUploadDocumentIdRef = React.useRef<string | null>(null);
+  const [previewDocument, setPreviewDocument] = React.useState<{ title: string; fileUrl: string } | null>(null);
 
   const {
     workflowStage,
@@ -92,7 +99,10 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
     entranceExam,
     enrollmentWizard,
     entranceSurvey,
+    readinessUploads,
+    documentChecklist,
     answerEntranceExamQuestion,
+    uploadReadinessDocument,
     updateEnrollmentWizardField,
     toggleEnrollmentAgreement,
     setEnrollmentWizardStep,
@@ -155,8 +165,12 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
 
       if (response.ok) {
         const payload = await response.json();
-        setCohorts(payload.data?.cohorts ?? []);
+        const availableCohorts: AvailableCohort[] = payload.data?.cohorts ?? [];
+        setCohorts(availableCohorts);
         setRegisteredCohortId(payload.data?.registeredCohortId ?? null);
+        // There is always exactly one enrollment path — pick it automatically
+        // instead of asking the student to choose a cohort.
+        setSelectedCohortId((current) => current ?? availableCohorts[0]?.id ?? null);
       }
     } catch {
       // Cohort registration is skipped when the list cannot be loaded.
@@ -165,10 +179,33 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
     }
   }, [hasAuth, isStudentUser, session?.access_token, studentId, syncedUser?.localUserId]);
 
+  const loadFeeSummary = React.useCallback(async () => {
+    if (!hasAuth || !isStudentUser || !syncedUser?.localUserId) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/students/${studentId}/enrollment/fee-summary`, {
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const payload = await response.json();
+        setFeeSummary(payload.data ?? null);
+      }
+    } catch {
+      // The payment button falls back to a $0 summary if this can't be loaded.
+    }
+  }, [hasAuth, isStudentUser, session?.access_token, studentId, syncedUser?.localUserId]);
+
   React.useEffect(() => {
     if (!open) return;
     void loadCohorts();
-  }, [loadCohorts, open]);
+    void loadFeeSummary();
+  }, [loadCohorts, loadFeeSummary, open]);
 
   React.useEffect(() => {
     setPaymentIntent((current) => (current && current.cohortId !== selectedCohortId ? null : current));
@@ -287,6 +324,35 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
     }
   };
 
+  const handleRequestDocumentUpload = (documentId: string) => {
+    pendingUploadDocumentIdRef.current = documentId;
+    readinessFileInputRef.current?.click();
+  };
+
+  const handleDocumentFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    const documentId = pendingUploadDocumentIdRef.current;
+    event.target.value = '';
+    if (!file || !documentId) return;
+
+    setUploadErrors((current) => {
+      const next = { ...current };
+      delete next[documentId];
+      return next;
+    });
+    setUploadingDocumentId(documentId);
+    try {
+      await uploadReadinessDocument(documentId, file);
+    } catch (err) {
+      setUploadErrors((current) => ({
+        ...current,
+        [documentId]: err instanceof Error ? err.message : 'Failed to upload document.',
+      }));
+    } finally {
+      setUploadingDocumentId(null);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await signOut();
@@ -307,20 +373,24 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
   const surveySections = journey?.orientationSurvey.sections ?? [];
   const hasStudentAccess = hasAuth && isStudentUser && Boolean(syncedUser?.localUserId);
 
-  // Students choose a cohort before anything else — it decides their modules and fee.
-  const needsCohortSelection =
+  // Enrollment payment only unlocks once admin has approved the entrance
+  // exam + documents — it's the gate into the enrollment wizard.
+  const needsEnrollmentConfirmation =
     cohortsLoaded &&
     hasStudentAccess &&
     !registeredCohortId &&
     cohorts.length > 0 &&
-    workflowStage === 'entrance_exam' &&
-    !entranceExam.taken;
+    workflowStage === 'enrollment_wizard' &&
+    approvalStatus === 'approved';
   const selectedCohort = cohorts.find((cohort) => cohort.id === selectedCohortId) ?? null;
-  const selectedCohortRequiresPayment = (selectedCohort?.feeAmount ?? 0) > 0;
+  const totalProgramFee = feeSummary?.amount ?? 0;
+  const selectedCohortRequiresPayment = totalProgramFee > 0;
 
   const examComplete = examQuestions.every((question) =>
     (entranceExam.answers[question.id] ?? '').trim(),
   );
+  const requiredDocuments = documentChecklist.filter((document) => document.required);
+  const requiredDocumentsUploaded = requiredDocuments.every((document) => readinessUploads[document.id]);
   const wizardStep = enrollmentWizard.step;
   const currentWizardDefinition =
     enrollmentSteps.find((item) => item.step === wizardStep) ?? enrollmentSteps[0];
@@ -488,7 +558,8 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
               <div className="flex-1">
                 <p className="font-semibold text-on-surface text-sm">Submit for Admin Review</p>
                 <p className="text-xs text-on-surface-variant mt-1">
-                  Complete the entrance exam and submit your application for admin review to access the platform.
+                  Complete the entrance exam and upload the required documents, then submit your application for
+                  admin review. Cohort selection and payment unlock after you're approved.
                 </p>
               </div>
             </div>
@@ -503,85 +574,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
 
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8">
-            {needsCohortSelection ? (
-              <section className="space-y-6">
-                <div className="rounded-[22px] border border-info/20 bg-info/5 p-5">
-                  <p className="text-sm leading-6 text-on-surface-variant">
-                    Choose the cohort you are enrolling into. Your cohort determines the modules you will
-                    learn and the program fee.
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  {cohorts.map((cohort) => {
-                    const selected = selectedCohortId === cohort.id;
-                    return (
-                      <button
-                        key={cohort.id}
-                        type="button"
-                        onClick={() => setSelectedCohortId(cohort.id)}
-                        className={cn(
-                          'w-full rounded-[20px] border p-5 text-left transition',
-                          selected
-                            ? 'border-primary bg-primary/5 shadow-md'
-                            : 'border-border-subtle bg-surface hover:border-primary/40',
-                        )}
-                      >
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <p className="text-base font-semibold text-on-surface">{cohort.name}</p>
-                            {cohort.description ? (
-                              <p className="mt-1 text-sm text-on-surface-variant">{cohort.description}</p>
-                            ) : null}
-                          </div>
-                          <div className="text-right">
-                            <p className="font-display text-[22px] font-semibold text-primary">
-                              {formatCohortFee(cohort.feeAmount)}
-                            </p>
-                            <p className="text-xs text-on-surface-variant">program fee</p>
-                          </div>
-                        </div>
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                          <Badge variant={selected ? 'success' : 'info'}>
-                            {selected ? 'Selected' : `${cohort.moduleCount} modules`}
-                          </Badge>
-                          {cohort.moduleTitles.slice(0, 4).map((title) => (
-                            <span
-                              key={title}
-                              className="rounded-full border border-border-subtle bg-surface-muted px-3 py-1 text-xs text-on-surface-variant"
-                            >
-                              {title}
-                            </span>
-                          ))}
-                          {cohort.moduleTitles.length > 4 ? (
-                            <span className="text-xs text-on-surface-variant">
-                              +{cohort.moduleTitles.length - 4} more
-                            </span>
-                          ) : null}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {paymentIntent && Number.isFinite(paymentIntent.amount) ? (
-                  <div ref={paymentSectionRef} className="scroll-mt-6">
-                    <EnrollmentPaymentSection
-                      amount={paymentIntent.amount}
-                      clientSecret={paymentIntent.clientSecret}
-                      cohortName={paymentIntent.cohortName}
-                      publishableKey={paymentIntent.publishableKey}
-                      onError={(message) => setSubmitError(message || null)}
-                      onSuccess={async (paymentIntentId) => {
-                        await handleRegisterCohort(paymentIntentId);
-                      }}
-                    />
-                  </div>
-                ) : null}
-              </section>
-            ) : null}
-
-            {workflowStage === 'entrance_exam' && !needsCohortSelection ? (
+            {workflowStage === 'entrance_exam' ? (
               <section className="space-y-6">
               <div className="rounded-[22px] border border-warning/20 bg-warning/5 p-5">
                 <p className="text-sm leading-6 text-on-surface-variant">
@@ -660,6 +653,74 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                   ))}
                 </div>
               )}
+
+              <div className="rounded-[22px] border border-border-subtle bg-surface p-6">
+                <h4 className="font-display text-[18px] font-semibold text-on-surface">Required Documents</h4>
+                <p className="mt-1 text-sm text-on-surface-variant">
+                  Upload these before submitting your application for admin review.
+                </p>
+                {documentChecklist.length === 0 ? (
+                  <p className="mt-4 text-sm text-on-surface-variant">No documents are required right now.</p>
+                ) : (
+                  <div className="mt-4 space-y-3">
+                    <input
+                      ref={readinessFileInputRef}
+                      type="file"
+                      accept="image/*,application/pdf"
+                      className="hidden"
+                      onChange={handleDocumentFileSelected}
+                    />
+                    {documentChecklist.map((document) => {
+                      const uploaded = Boolean(readinessUploads[document.id]);
+                      const isUploading = uploadingDocumentId === document.id;
+                      const uploadError = uploadErrors[document.id];
+                      return (
+                        <div
+                          key={document.id}
+                          className="flex items-center justify-between gap-3 rounded-[16px] border border-border-subtle bg-surface-muted p-4"
+                        >
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-semibold text-on-surface">{document.name}</p>
+                              <Badge variant={document.required ? 'warning' : 'neutral'}>
+                                {document.required ? 'Required' : 'Optional'}
+                              </Badge>
+                            </div>
+                            <p className="text-[12px] text-on-surface-variant">{document.description}</p>
+                            {uploadError ? (
+                              <p className="mt-1 text-[12px] text-error">{uploadError}</p>
+                            ) : null}
+                          </div>
+                          <div className="flex shrink-0 items-center gap-2">
+                            {uploaded && document.fileUrl ? (
+                              <Button
+                                variant="secondary"
+                                className="rounded-[12px]"
+                                onClick={() =>
+                                  setPreviewDocument({
+                                    title: document.fileName ?? document.name,
+                                    fileUrl: document.fileUrl as string,
+                                  })
+                                }
+                              >
+                                View
+                              </Button>
+                            ) : null}
+                            <Button
+                              variant={uploaded ? 'secondary' : 'default'}
+                              className="rounded-[12px]"
+                              disabled={entranceExam.taken || isUploading}
+                              onClick={() => handleRequestDocumentUpload(document.id)}
+                            >
+                              {isUploading ? 'Uploading...' : uploaded ? 'Replace' : 'Upload'}
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
               </section>
             ) : null}
 
@@ -684,7 +745,46 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
               </section>
             ) : null}
 
-            {workflowStage === 'enrollment_wizard' && approvalStatus === 'approved' ? (
+            {workflowStage === 'enrollment_wizard' && approvalStatus === 'approved' && needsEnrollmentConfirmation ? (
+              <section className="space-y-6">
+                <div className="rounded-[22px] border border-info/20 bg-info/5 p-5">
+                  <p className="text-sm leading-6 text-on-surface-variant">
+                    You&apos;re approved! Review your program fee below to continue.
+                  </p>
+                </div>
+
+                <div className="rounded-[20px] border border-border-subtle bg-surface p-6">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-base font-semibold text-on-surface">Total Program Fee</p>
+                      <p className="mt-1 text-sm text-on-surface-variant">
+                        The sum of every module&apos;s fee in the program.
+                      </p>
+                    </div>
+                    <p className="font-display text-[28px] font-semibold text-primary">
+                      {formatCohortFee(totalProgramFee)}
+                    </p>
+                  </div>
+                </div>
+
+                {paymentIntent && Number.isFinite(paymentIntent.amount) ? (
+                  <div ref={paymentSectionRef} className="scroll-mt-6">
+                    <EnrollmentPaymentSection
+                      amount={paymentIntent.amount}
+                      clientSecret={paymentIntent.clientSecret}
+                      cohortName={paymentIntent.cohortName}
+                      publishableKey={paymentIntent.publishableKey}
+                      onError={(message) => setSubmitError(message || null)}
+                      onSuccess={async (paymentIntentId) => {
+                        await handleRegisterCohort(paymentIntentId);
+                      }}
+                    />
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+
+            {workflowStage === 'enrollment_wizard' && approvalStatus === 'approved' && !needsEnrollmentConfirmation ? (
               <section className="space-y-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -1103,7 +1203,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
             ) : null}
           </div>
 
-          {needsCohortSelection && (
+          {needsEnrollmentConfirmation && (
             <div className="shrink-0 border-t border-border-subtle bg-surface px-6 py-4 sm:px-8">
               {paymentIntent ? (
                 <p className="text-center text-sm font-semibold text-on-surface-variant">
@@ -1113,7 +1213,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                 </p>
               ) : (
                 <Button
-                  disabled={!selectedCohortId || isRegisteringCohort || isCreatingPaymentIntent}
+                  disabled={!selectedCohort || isRegisteringCohort || isCreatingPaymentIntent}
                   onClick={() => {
                     if (!selectedCohort) {
                       return;
@@ -1132,30 +1232,39 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                     ? 'Completing enrollment...'
                     : isCreatingPaymentIntent
                       ? 'Preparing secure payment...'
-                    : selectedCohort
-                      ? selectedCohortRequiresPayment
-                        ? `Continue to payment for ${selectedCohort.name} — ${formatCohortFee(selectedCohort.feeAmount)}`
-                        : `Register for ${selectedCohort.name}`
-                      : 'Select a cohort to continue'}
+                      : selectedCohortRequiresPayment
+                        ? `Continue to Payment — ${formatCohortFee(totalProgramFee)}`
+                        : 'Complete Enrollment'}
                 </Button>
               )}
             </div>
           )}
 
-          {workflowStage === 'entrance_exam' && !needsCohortSelection && (
+          {workflowStage === 'entrance_exam' && (
             <div className="shrink-0 border-t border-border-subtle bg-surface px-6 py-4 sm:px-8">
               <Button
-                disabled={!examComplete || approvalStatus === 'pending' || isSubmittingExam || !hasStudentAccess}
+                disabled={
+                  !examComplete ||
+                  !requiredDocumentsUploaded ||
+                  approvalStatus === 'pending' ||
+                  isSubmittingExam ||
+                  !hasStudentAccess
+                }
                 onClick={handleSubmitExam}
                 className="w-full"
               >
                 {isSubmittingExam ? 'Submitting...' : 'Submit for Admin Review'}
               </Button>
+              {examComplete && !requiredDocumentsUploaded ? (
+                <p className="mt-2 text-center text-xs text-on-surface-variant">
+                  Upload all required documents above to continue.
+                </p>
+              ) : null}
             </div>
           )}
 
           {/* Sticky button footer for enrollment wizard */}
-          {workflowStage === 'enrollment_wizard' && (
+          {workflowStage === 'enrollment_wizard' && approvalStatus === 'approved' && !needsEnrollmentConfirmation && (
             <div className="shrink-0 border-t border-border-subtle bg-surface px-6 py-4 sm:px-8">
               <div className="flex items-center justify-between gap-3">
                 <Button
@@ -1223,6 +1332,13 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
           )}
         </div>
       </div>
+      {previewDocument ? (
+        <DocumentPreviewModal
+          title={previewDocument.title}
+          fileUrl={previewDocument.fileUrl}
+          onClose={() => setPreviewDocument(null)}
+        />
+      ) : null}
     </div>
   );
 }

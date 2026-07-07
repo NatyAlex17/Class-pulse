@@ -36,11 +36,10 @@ export class StripePaymentsService {
     const modulesById = new Map(
       this.learningResourcesConfigService.getConfig().modules.map((module) => [module.id, module]),
     );
-    const moduleFeeTotal = cohort.moduleIds.reduce((sum, moduleId) => {
+    const amount = cohort.moduleIds.reduce((sum, moduleId) => {
       const module = modulesById.get(moduleId);
       return sum + Math.max(0, module?.moduleFee ?? 0);
     }, 0);
-    const amount = cohort.feeAmount > 0 ? cohort.feeAmount : moduleFeeTotal;
 
     return {
       cohortId: cohort.id,
@@ -61,9 +60,7 @@ export class StripePaymentsService {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: this.toMinorUnit(pricing.amount),
       currency: 'usd',
-      automatic_payment_methods: {
-        enabled: true,
-      },
+      payment_method_types: ['card'],
       metadata: {
         studentId,
         cohortId: pricing.cohortId,

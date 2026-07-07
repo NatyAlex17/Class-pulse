@@ -64,10 +64,24 @@ export interface OnboardingAcknowledgements {
   technology: boolean;
 }
 
-export interface ReadinessUploads {
-  photoId: boolean;
-  diploma: boolean;
-  tbTest: boolean;
+export type ReadinessUploads = Record<string, boolean>;
+
+export interface ReadinessDocumentFile {
+  fileName: string;
+  url: string;
+  uploadedAt: string;
+}
+
+export type ReadinessDocumentFiles = Record<string, ReadinessDocumentFile>;
+
+export interface DocumentChecklistItem {
+  id: string;
+  name: string;
+  description: string;
+  required: boolean;
+  uploaded: boolean;
+  fileName?: string;
+  fileUrl?: string;
 }
 
 export interface OnboardingState {
@@ -76,7 +90,12 @@ export interface OnboardingState {
   questions: OnboardingQuestion[];
   acknowledgements: OnboardingAcknowledgements;
   readinessUploads: ReadinessUploads;
+  readinessDocumentFiles: ReadinessDocumentFiles;
   submitted: boolean;
+}
+
+export interface OnboardingSnapshot extends OnboardingState {
+  documentChecklist: DocumentChecklistItem[];
 }
 
 export type LearningStepType = 'Video' | 'PDF' | 'Link' | 'Reading' | 'Skill Check' | 'Quiz';
@@ -336,6 +355,18 @@ export interface SubmittedEntranceExamQuestion {
   options: IntakeOptionDefinition[];
   studentAnswer: string;
   reviewStatus: IntakeQuestionReviewStatus;
+}
+
+export type IntakeDocumentReviewStatus = 'pending' | 'approved' | 'rejected';
+
+export interface SubmittedIntakeDocument {
+  documentId: string;
+  name: string;
+  description: string;
+  required: boolean;
+  fileName?: string;
+  fileUrl?: string;
+  reviewStatus: IntakeDocumentReviewStatus;
 }
 
 export interface CdphForm {
@@ -600,11 +631,7 @@ export interface UpdateOnboardingAcknowledgementsDto {
   technology?: boolean;
 }
 
-export interface UpdateReadinessUploadsDto {
-  photoId?: boolean;
-  diploma?: boolean;
-  tbTest?: boolean;
-}
+export type UpdateReadinessUploadsDto = Record<string, boolean>;
 
 export interface SendStudentMessageDto {
   threadId?: string;
@@ -852,6 +879,7 @@ export interface StudentIntakeSubmission {
   entranceExamPassed: boolean | null;
   passingScore: number;
   questions: SubmittedEntranceExamQuestion[];
+  documents: SubmittedIntakeDocument[];
   enrollmentData: EnrollmentWizardState;
   submittedAt: string;
   approvedAt?: string;
@@ -864,6 +892,7 @@ export interface SubmitStudentIntakeDto {
   entranceExamPassed: boolean | null;
   passingScore: number;
   questions: SubmittedEntranceExamQuestion[];
+  documents: SubmittedIntakeDocument[];
   enrollmentData: EnrollmentWizardState;
 }
 
@@ -871,4 +900,5 @@ export interface ApproveIntakeDto {
   approved: boolean;
   rejectionReason?: string;
   questionReviews?: Record<string, 'correct' | 'wrong'>;
+  documentReviews?: Record<string, 'approved' | 'rejected'>;
 }

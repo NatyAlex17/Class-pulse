@@ -5,7 +5,23 @@
       "name": "CNA Paid",
       "description": "Paid cohort",
       "moduleIds": [
-        "intro-care"
+        "cna-m1",
+        "cna-m2",
+        "cna-m3",
+        "cna-m4",
+        "cna-m5",
+        "cna-m6",
+        "cna-m7",
+        "cna-m8",
+        "cna-m9",
+        "cna-m10",
+        "cna-m11",
+        "cna-m12",
+        "cna-m13",
+        "cna-m14",
+        "cna-m15",
+        "cna-m16",
+        "cna-m17"
       ],
       "feeAmount": 0,
       "isOpen": true

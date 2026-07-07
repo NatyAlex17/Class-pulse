@@ -18,6 +18,16 @@ type OnboardingQuestion = {
   answer: string;
 };
 
+type DocumentChecklistItem = {
+  id: string;
+  name: string;
+  description: string;
+  required: boolean;
+  uploaded: boolean;
+  fileName?: string;
+  fileUrl?: string;
+};
+
 type TaskItem = {
   id: string;
   title: string;
@@ -383,11 +393,8 @@ type StudentDemoState = {
     attendance: boolean;
     technology: boolean;
   };
-  readinessUploads: {
-    photoId: boolean;
-    diploma: boolean;
-    tbTest: boolean;
-  };
+  readinessUploads: Record<string, boolean>;
+  documentChecklist: DocumentChecklistItem[];
   onboardingSubmitted: boolean;
   tasks: TaskItem[];
   modules: ModuleItem[];
@@ -462,7 +469,7 @@ type StudentDemoContextValue = StudentDemoState & {
   completeOnboardingStep: (stepId: string) => void;
   answerOnboardingQuestion: (questionId: string, answer: string) => void;
   toggleAcknowledgement: (key: keyof StudentDemoState['acknowledgements']) => void;
-  toggleReadinessUpload: (key: keyof StudentDemoState['readinessUploads']) => void;
+  uploadReadinessDocument: (documentId: string, file: File) => Promise<void>;
   submitOnboardingPackage: () => void;
   selectThread: (threadId: string) => void;
   sendMessage: (threadId: string, text: string) => void;
@@ -519,6 +526,7 @@ type StudentPortalApi = {
     questions: OnboardingQuestion[];
     acknowledgements: StudentDemoState['acknowledgements'];
     readinessUploads: StudentDemoState['readinessUploads'];
+    documentChecklist: DocumentChecklistItem[];
     submitted: boolean;
   };
   modules: ModuleItem[];
@@ -636,7 +644,8 @@ function createFallbackState(): StudentDemoState {
     onboardingSteps: [],
     onboardingQuestions: [],
     acknowledgements: { schedule: false, attendance: false, technology: false },
-    readinessUploads: { photoId: false, diploma: false, tbTest: false },
+    readinessUploads: {},
+    documentChecklist: [],
     onboardingSubmitted: false,
     tasks: [],
     modules: [
@@ -716,6 +725,7 @@ function mapPortalToState(portal: StudentPortalApi): StudentDemoState {
     onboardingQuestions: portal.onboarding.questions,
     acknowledgements: portal.onboarding.acknowledgements,
     readinessUploads: portal.onboarding.readinessUploads,
+    documentChecklist: portal.onboarding.documentChecklist ?? [],
     onboardingSubmitted: portal.onboarding.submitted,
     tasks: portal.tasks,
     modules: portal.modules,
@@ -1092,19 +1102,32 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
     [mutate, state.acknowledgements]
   );
 
-  const toggleReadinessUpload = React.useCallback(
-    (key: keyof StudentDemoState['readinessUploads']) => {
-      const value = !state.readinessUploads[key];
-      setState((current) => ({
-        ...current,
-        readinessUploads: {
-          ...current.readinessUploads,
-          [key]: value,
-        },
-      }));
-      mutate('/onboarding/uploads', 'PATCH', { [key]: value });
+  const uploadReadinessDocument = React.useCallback(
+    async (documentId: string, file: File) => {
+      if (!studentId || !accessToken || !isStudentUser) {
+        throw new Error('Student portal is not authenticated.');
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(
+        `${API_BASE_URL}/students/${studentId}/onboarding/documents/${documentId}/upload`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error?.message ?? 'Failed to upload document.');
+      }
+
+      await refreshPortal();
     },
-    [mutate, state.readinessUploads]
+    [accessToken, isStudentUser, refreshPortal, studentId]
   );
 
   const submitOnboardingPackage = React.useCallback(() => {
@@ -1630,7 +1653,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       completeOnboardingStep,
       answerOnboardingQuestion,
       toggleAcknowledgement,
-      toggleReadinessUpload,
+      uploadReadinessDocument,
       submitOnboardingPackage,
       selectThread,
       sendMessage,
@@ -1724,7 +1747,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       toggleAcknowledgement,
       toggleEnrollmentAgreement,
       toggleLearningSession,
-      toggleReadinessUpload,
+      uploadReadinessDocument,
       toggleTask,
       toggleLiveScanUpload,
       unreadCount,

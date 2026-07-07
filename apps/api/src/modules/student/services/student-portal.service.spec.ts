@@ -5,6 +5,7 @@ import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { CohortsConfigService } from './cohorts-config.service';
+import { DocumentRequirementsConfigService } from './document-requirements-config.service';
 import { ExamConfigService } from './exam-config.service';
 import { GeminiService } from './gemini.service';
 import { IntakeSubmissionService } from './intake-submission.service';
@@ -59,6 +60,7 @@ describe('StudentPortalService', () => {
       intakeSubmissionService,
       learningResourcesConfigService,
       cohortsConfigService,
+      new DocumentRequirementsConfigService(),
       new GeminiService(new ConfigService()),
       stripePaymentsService,
     );
@@ -164,6 +166,16 @@ describe('StudentPortalService', () => {
       methodLabel: 'Stripe card (TEST12)',
     });
 
+    const submission = intakeSubmissionService.submitIntake('student-amara-singh', {
+      entranceExamScore: null,
+      entranceExamPassed: null,
+      passingScore: 1,
+      questions: [],
+      documents: [],
+      enrollmentData: {} as never,
+    });
+    intakeSubmissionService.approveIntake(submission.id, 'admin-test');
+
     const cohorts = await service.registerCohort('student-amara-singh', {
       cohortId: 'cna-paid',
       paymentIntentId: 'pi_test_123',
@@ -198,6 +210,7 @@ describe('StudentPortalService', () => {
     service.answerEntranceExamQuestion('student-amara-singh', 'q6', {
       answer: 'Following instructions is crucial in healthcare to ensure patient safety and quality care.',
     });
+    service.updateReadinessUploads('student-amara-singh', { photoId: true, diploma: true, tbTest: true });
 
     const exam = service.submitEntranceExam('student-amara-singh');
     const intake = service.getIntake('student-amara-singh');
@@ -234,6 +247,7 @@ describe('StudentPortalService', () => {
           reviewStatus: 'pending',
         },
       ],
+      documents: [],
       enrollmentData: service.getIntake('student-amara-singh').enrollmentWizard,
     });
     const approvedSubmission = intakeSubmissionService.approveIntake(submission.id, 'admin-001', { q1: 'correct' });
@@ -266,6 +280,7 @@ describe('StudentPortalService', () => {
           reviewStatus: 'pending',
         },
       ],
+      documents: [],
       enrollmentData: service.getIntake('student-amara-singh').enrollmentWizard,
     });
 
@@ -311,6 +326,7 @@ describe('StudentPortalService', () => {
           reviewStatus: 'pending',
         },
       ],
+      documents: [],
       enrollmentData: service.getIntake('student-amara-singh').enrollmentWizard,
     });
 
@@ -405,6 +421,7 @@ describe('StudentPortalService', () => {
           reviewStatus: 'pending',
         },
       ],
+      documents: [],
       enrollmentData: service.getIntake('student-amara-singh').enrollmentWizard,
     });
 
@@ -448,6 +465,7 @@ describe('StudentPortalService', () => {
       reloadedIntakeSubmissionService,
       reloadedLearningResourcesConfigService,
       reloadedCohortsConfigService,
+      new DocumentRequirementsConfigService(),
       new GeminiService(new ConfigService()),
       new StripePaymentsService(
         new ConfigService({
@@ -480,6 +498,7 @@ describe('StudentPortalService', () => {
           reviewStatus: 'pending',
         },
       ],
+      documents: [],
       enrollmentData: service.getIntake('student-amara-singh').enrollmentWizard,
     });
 
