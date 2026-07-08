@@ -152,7 +152,7 @@ export default function InstructorIntakeSubmissionDetailPage() {
         throw new Error(payload?.error?.message ?? `Failed to approve application (${response.status}).`);
       }
 
-      router.push('/admin/applications/instructor-intake-submissions');
+      router.push('/admin/applications?tab=instructor');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to approve application.');
     } finally {
@@ -182,7 +182,7 @@ export default function InstructorIntakeSubmissionDetailPage() {
         throw new Error(payload?.error?.message ?? `Failed to reject application (${response.status}).`);
       }
 
-      router.push('/admin/applications/instructor-intake-submissions');
+      router.push('/admin/applications?tab=instructor');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to reject application.');
     } finally {
@@ -195,7 +195,7 @@ export default function InstructorIntakeSubmissionDetailPage() {
       title="Instructor Onboarding Submission"
       subtitle="Review onboarding answers, documents, and requested modules, then approve or reject."
       topActions={
-        <Button variant="secondary" size="sm" onClick={() => router.push('/admin/applications/instructor-intake-submissions')}>
+        <Button variant="secondary" size="sm" onClick={() => router.push('/admin/applications?tab=instructor')}>
           <IconArrowLeft className="size-4" />
           Back to submissions
         </Button>
@@ -386,7 +386,7 @@ export default function InstructorIntakeSubmissionDetailPage() {
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <Button variant="secondary" onClick={() => router.push('/admin/applications/instructor-intake-submissions')}>
+                <Button variant="secondary" onClick={() => router.push('/admin/applications?tab=instructor')}>
                   Cancel
                 </Button>
                 <Button
