@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UploadedFile,
   UseGuards,
@@ -165,9 +166,9 @@ export class AdminPortalController {
   }
 
   @Get('reports')
-  getReports(@Param('adminId') adminId: string) {
+  getReports(@Param('adminId') adminId: string, @Query('range') range?: '7d' | '30d' | 'quarter') {
     return createApiResponse(
-      this.adminPortalService.getReports(adminId),
+      this.adminPortalService.getReports(adminId, range ?? '30d'),
       'Admin reports retrieved successfully.',
     );
   }

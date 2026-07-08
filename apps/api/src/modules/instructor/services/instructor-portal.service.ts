@@ -73,6 +73,10 @@ export class InstructorPortalService {
     return this.repository.findByInstructorId(instructorId).profile;
   }
 
+  findAllInstructorPortals() {
+    return this.repository.findAll();
+  }
+
   updateProfile(instructorId: string, payload: UpdateInstructorProfileDto) {
     const portal = this.repository.findByInstructorId(instructorId);
 
