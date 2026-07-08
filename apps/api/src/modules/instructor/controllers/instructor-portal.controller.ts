@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Param, Patch, Post, Req, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Patch, Post, Query, Req, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request } from 'express';
 import * as fs from 'fs';
@@ -6,7 +6,11 @@ import { diskStorage } from 'multer';
 import * as path from 'path';
 
 import { createApiResponse } from '../../../common/utils/create-api-response';
-import { INSTRUCTOR_READINESS_DOCUMENTS_UPLOADS_DIR, UPLOADS_URL_PREFIX } from '../../../common/utils/upload-paths';
+import {
+  INSTRUCTOR_DOCUMENTS_UPLOADS_DIR,
+  INSTRUCTOR_READINESS_DOCUMENTS_UPLOADS_DIR,
+  UPLOADS_URL_PREFIX,
+} from '../../../common/utils/upload-paths';
 import type {
   AddInstructorStudentNoteDto,
   AnswerInstructorOnboardingQuestionDto,
@@ -17,6 +21,8 @@ import type {
   ReviewSkillChecklistItemDto,
   SelectInstructorModulesDto,
   SendInstructorMessageDto,
+  StartClinicalTimerDto,
+  StopClinicalTimerDto,
   UpdateInstructorAvailabilityDto,
   UpdateInstructorOnboardingAgreementDto,
   UpdateInstructorProfileDto,
@@ -302,6 +308,30 @@ export class InstructorPortalController {
     );
   }
 
+  @Get('clinical-logs/timer')
+  getClinicalTimer(@Param('instructorId') instructorId: string) {
+    return createApiResponse(
+      this.instructorPortalService.getClinicalTimer(instructorId),
+      'Active clinical timer retrieved successfully.',
+    );
+  }
+
+  @Post('clinical-logs/timer/start')
+  startClinicalTimer(@Param('instructorId') instructorId: string, @Body() body: StartClinicalTimerDto) {
+    return createApiResponse(
+      this.instructorPortalService.startClinicalTimer(instructorId, body),
+      'Clinical timer started successfully.',
+    );
+  }
+
+  @Post('clinical-logs/timer/stop')
+  stopClinicalTimer(@Param('instructorId') instructorId: string, @Body() body: StopClinicalTimerDto) {
+    return createApiResponse(
+      this.instructorPortalService.stopClinicalTimer(instructorId, body),
+      'Clinical timer stopped and hours logged successfully.',
+    );
+  }
+
   @Get('availability')
   getAvailability(@Param('instructorId') instructorId: string) {
     return createApiResponse(
@@ -330,17 +360,111 @@ export class InstructorPortalController {
   }
 
   @Post('documents')
-  uploadDocument(@Param('instructorId') instructorId: string, @Body() body: UploadInstructorDocumentDto) {
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: (_req, _file, callback) => {
+          fs.mkdirSync(INSTRUCTOR_DOCUMENTS_UPLOADS_DIR, { recursive: true });
+          callback(null, INSTRUCTOR_DOCUMENTS_UPLOADS_DIR);
+        },
+        filename: (_req, file, callback) => {
+          const extension = path.extname(file.originalname).toLowerCase();
+          const baseName =
+            path
+              .basename(file.originalname, extension)
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/(^-|-$)/g, '') || 'file';
+          callback(null, `${Date.now()}-${baseName}${extension}`);
+        },
+      }),
+      limits: { fileSize: 15 * 1024 * 1024 },
+      fileFilter: (_req, file, callback) => {
+        if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
+          callback(null, true);
+        } else {
+          callback(new BadRequestException('Only image or PDF files can be uploaded.'), false);
+        }
+      },
+    }),
+  )
+  uploadDocument(
+    @Param('instructorId') instructorId: string,
+    @Body() body: UploadInstructorDocumentDto,
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Req() request: Request,
+  ) {
+    if (!file) {
+      throw new BadRequestException('No file received. Attach a file under the "file" field.');
+    }
+
+    const baseUrl = `${request.protocol}://${request.get('host')}`;
+    const url = `${baseUrl}${UPLOADS_URL_PREFIX}/instructor-documents/${file.filename}`;
+
     return createApiResponse(
-      this.instructorPortalService.uploadDocument(instructorId, body),
+      this.instructorPortalService.uploadDocument(instructorId, body, {
+        fileName: file.originalname,
+        url,
+      }),
       'Instructor document uploaded successfully.',
     );
   }
 
-  @Get('reports')
-  getReports(@Param('instructorId') instructorId: string) {
+  @Patch('documents/:documentId/replace')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: (_req, _file, callback) => {
+          fs.mkdirSync(INSTRUCTOR_DOCUMENTS_UPLOADS_DIR, { recursive: true });
+          callback(null, INSTRUCTOR_DOCUMENTS_UPLOADS_DIR);
+        },
+        filename: (_req, file, callback) => {
+          const extension = path.extname(file.originalname).toLowerCase();
+          const baseName =
+            path
+              .basename(file.originalname, extension)
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/(^-|-$)/g, '') || 'file';
+          callback(null, `${Date.now()}-${baseName}${extension}`);
+        },
+      }),
+      limits: { fileSize: 15 * 1024 * 1024 },
+      fileFilter: (_req, file, callback) => {
+        if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
+          callback(null, true);
+        } else {
+          callback(new BadRequestException('Only image or PDF files can be uploaded.'), false);
+        }
+      },
+    }),
+  )
+  replaceDocument(
+    @Param('instructorId') instructorId: string,
+    @Param('documentId') documentId: string,
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Req() request: Request,
+  ) {
+    if (!file) {
+      throw new BadRequestException('No file received. Attach a file under the "file" field.');
+    }
+
+    const baseUrl = `${request.protocol}://${request.get('host')}`;
+    const url = `${baseUrl}${UPLOADS_URL_PREFIX}/instructor-documents/${file.filename}`;
+
     return createApiResponse(
-      this.instructorPortalService.getReports(instructorId),
+      this.instructorPortalService.replaceDocument(instructorId, documentId, {
+        fileName: file.originalname,
+        url,
+      }),
+      'Instructor document replaced successfully.',
+    );
+  }
+
+  @Get('reports')
+  getReports(@Param('instructorId') instructorId: string, @Query('range') range?: '7d' | '30d' | 'term') {
+    return createApiResponse(
+      this.instructorPortalService.getReports(instructorId, range ?? '30d'),
       'Instructor reports retrieved successfully.',
     );
   }

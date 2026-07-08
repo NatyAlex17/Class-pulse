@@ -9,7 +9,7 @@ export type ModuleStatus = 'Complete' | 'In Progress' | 'Locked';
 export type MessageStatus = 'Unread' | 'New' | 'Read';
 export type DocumentStatus = 'Verified' | 'Pending Review' | 'Missing';
 export type PaymentStatus = 'Completed' | 'Upcoming';
-export type ClinicalLogStatus = 'Verified' | 'Pending';
+export type ClinicalLogStatus = 'Verified' | 'Pending' | 'Flagged';
 export type AttendanceType = 'Theory' | 'Clinical';
 export type AttendanceStatus = 'Present' | 'Planned Absence' | 'Unplanned Absence';
 

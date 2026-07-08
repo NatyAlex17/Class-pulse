@@ -24,8 +24,19 @@ type LogRow = {
   module: string;
   hours: string;
   instructor: string;
-  status: 'Verified' | 'Pending';
+  status: 'Verified' | 'Pending' | 'Flagged';
+  note?: string;
 };
+
+function formatClinicalHours(hours: number): string {
+  const totalMinutes = Math.round(hours * 60);
+  if (totalMinutes < 60) {
+    return `${totalMinutes} min`;
+  }
+  const wholeHours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return minutes === 0 ? `${wholeHours} hr${wholeHours === 1 ? '' : 's'}` : `${wholeHours}h ${minutes}m`;
+}
 
 const logColumns: DataTableColumn<LogRow>[] = [
   { id: 'date', header: 'DATE', accessorKey: 'date' },
@@ -36,7 +47,9 @@ const logColumns: DataTableColumn<LogRow>[] = [
     id: 'status',
     header: 'STATUS',
     cell: (row) => (
-      <Badge variant={row.status === 'Verified' ? 'success' : 'warning'}>{row.status}</Badge>
+      <Badge variant={row.status === 'Verified' ? 'success' : row.status === 'Flagged' ? 'error' : 'warning'}>
+        {row.status}
+      </Badge>
     ),
   },
 ];
@@ -64,9 +77,10 @@ export default function StudentClinicalHoursPage() {
   const logRows: LogRow[] = clinicalLogs.map((log) => ({
     date: log.date,
     module: log.module,
-    hours: `${log.hours.toFixed(1)} hrs`,
+    hours: formatClinicalHours(log.hours),
     instructor: log.instructor,
     status: log.status,
+    note: log.note,
   }));
 
   const handleSubmitLog = () => {

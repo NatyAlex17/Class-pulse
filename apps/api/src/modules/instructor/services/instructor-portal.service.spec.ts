@@ -43,10 +43,49 @@ const fakeStudentPortal = {
   ],
   clinicalSessions: [],
   attendanceRecords: [],
+  clinicalLogs: [
+    {
+      id: 'log-1',
+      date: '2026-06-28',
+      moduleId: 'm1',
+      moduleTitle: 'Foundation of Patient Care',
+      hours: 6,
+      instructor: 'Dr. Sarah Chen',
+      status: 'Pending',
+    },
+  ],
 } as unknown as StudentPortalState;
 
 const studentPortalServiceStub = {
   findAllStudentPortals: () => [fakeStudentPortal],
+  reviewClinicalLogForInstructor: (studentId: string, logId: string, status: string, note?: string) => {
+    const log = (fakeStudentPortal as unknown as { clinicalLogs: Array<Record<string, unknown>> }).clinicalLogs.find(
+      (item) => item.id === logId,
+    );
+    if (log) {
+      log.status = status;
+      log.note = note ?? log.note;
+    }
+    return log;
+  },
+  logClinicalHoursFromInstructor: (
+    studentId: string,
+    payload: { moduleId: string; moduleTitle: string; hours: number; instructor: string; note?: string },
+  ) => {
+    const logs = (fakeStudentPortal as unknown as { clinicalLogs: Array<Record<string, unknown>> }).clinicalLogs;
+    const logEntry = {
+      id: `log-${logs.length + 1}`,
+      date: '2026-07-08',
+      moduleId: payload.moduleId,
+      moduleTitle: payload.moduleTitle,
+      hours: payload.hours,
+      instructor: payload.instructor,
+      note: payload.note,
+      status: 'Verified',
+    };
+    logs.unshift(logEntry);
+    return logEntry;
+  },
 } as unknown as StudentPortalService;
 
 describe('InstructorPortalService', () => {
@@ -109,17 +148,81 @@ describe('InstructorPortalService', () => {
       note: 'Need supervisor initials before verification.',
     });
 
-    expect(log?.status).toBe('Flagged');
-    expect(log?.note).toContain('supervisor initials');
+    expect(log.status).toBe('Flagged');
+    expect(log.note).toContain('supervisor initials');
   });
 
   it('queues a report export request', () => {
     const exportRow = service.generateReportExport('instructor-sarah-chen', {
-      reportId: 'report-hours-audit',
+      reportId: 'clinical-compliance-audit',
       format: 'csv',
     });
 
     expect(exportRow.status).toBe('Queued');
     expect(exportRow.format).toBe('CSV');
+  });
+
+  it('starts and stops a clinical timer, logging verified hours for the student', () => {
+    jest.useFakeTimers();
+    try {
+      service.startClinicalTimer('instructor-sarah-chen', {
+        studentId: 'student-alice-smith',
+        moduleId: 'm1',
+      });
+      jest.advanceTimersByTime(60 * 60 * 1000);
+
+      const log = service.stopClinicalTimer('instructor-sarah-chen', {
+        note: 'Observed vitals check.',
+      });
+
+      expect(log.status).toBe('Verified');
+      expect(log.hours).toBeCloseTo(1, 1);
+      expect(log.note).toContain('Observed vitals check');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('prevents starting a second clinical timer while one is already running', () => {
+    service.startClinicalTimer('instructor-sarah-chen', {
+      studentId: 'student-alice-smith',
+      moduleId: 'm1',
+    });
+
+    try {
+      expect(() =>
+        service.startClinicalTimer('instructor-sarah-chen', {
+          studentId: 'student-alice-smith',
+          moduleId: 'm1',
+        }),
+      ).toThrow(BadRequestException);
+    } finally {
+      // Clean up so this test's timer doesn't leak into the persisted dev data file.
+      expect(() => service.stopClinicalTimer('instructor-sarah-chen', {})).toThrow(BadRequestException);
+    }
+  });
+
+  it('rejects starting a timer for a student outside the instructor’s assigned modules', () => {
+    expect(() =>
+      service.startClinicalTimer('instructor-sarah-chen', {
+        studentId: 'student-alice-smith',
+        moduleId: 'not-a-real-module',
+      }),
+    ).toThrow(BadRequestException);
+  });
+
+  it('reports no availability conflicts when the declared window covers the real schedule', () => {
+    const availability = service.getAvailability('instructor-sarah-chen');
+    expect(availability.conflicts).toEqual([]);
+  });
+
+  it('flags a real booked session that falls outside the instructor’s declared availability', () => {
+    // The seeded schedule has a real Monday 08:00 slot; narrowing Monday's window past
+    // that time should surface it as a conflict instead of the old hardcoded copy.
+    const withConflict = service.updateAvailability('instructor-sarah-chen', { monday: '09:00 - 05:00' });
+    expect(withConflict.conflicts.some((conflict) => conflict.startsWith('Monday 08:00'))).toBe(true);
+
+    const restored = service.updateAvailability('instructor-sarah-chen', { monday: '08:00 - 04:00' });
+    expect(restored.conflicts).toEqual([]);
   });
 });

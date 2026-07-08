@@ -207,27 +207,6 @@ export const instructorPortalSeed: InstructorPortalState[] = [
       },
     ],
     skillReviews: {},
-    clinicalLogs: [
-      {
-        id: 'log-1',
-        studentId: 'student-alice-smith',
-        student: 'Alice Smith',
-        site: 'Sunrise Care',
-        date: '2026-06-28',
-        hours: 6,
-        status: 'Pending',
-      },
-      {
-        id: 'log-2',
-        studentId: 'student-marcus-chen',
-        student: 'Marcus Chen',
-        site: 'Oak Ridge Rehab',
-        date: '2026-06-28',
-        hours: 4.5,
-        status: 'Flagged',
-        note: 'Missing supervisor initials.',
-      },
-    ],
     availability: {
       monday: '08:00 - 04:00',
       tuesday: '08:00 - 04:00',
@@ -237,10 +216,7 @@ export const instructorPortalSeed: InstructorPortalState[] = [
       weekend: 'Reserved for make-up sessions and approvals only.',
       allowAutoPlacement: true,
       travelBuffer: true,
-      conflicts: [
-        'Wednesday 09:00 - 12:00 overlaps with Marcus Chen / competency assessment',
-        'Friday 01:30 PM site visit ends 15 minutes after your recurring block',
-      ],
+      conflicts: [],
     },
     documents: [
       {
@@ -261,28 +237,28 @@ export const instructorPortalSeed: InstructorPortalState[] = [
       },
     ],
     reports: {
-      cards: [
-        {
-          id: 'report-hours-audit',
-          title: 'Clinical Hours Audit',
-          detail: 'Cross-check verified hours by student, cohort, and site.',
-          badge: 'Most used',
-        },
-        {
-          id: 'report-checklist-matrix',
-          title: 'Checklist Completion Matrix',
-          detail: 'Compare competency completion against program requirements.',
-          badge: 'Daily',
-        },
-      ],
+      generatedAt: '2026-06-28T07:10:00.000Z',
+      selectedRange: '30d',
+      availableRanges: ['7d', '30d', 'term'],
+      reports: [],
+      summaryMetrics: [],
+      narratives: [],
+      teachingTrend: [],
+      modulePerformance: [],
+      teachingMix: [],
+      cohortSnapshots: [],
+      studentAttention: [],
+      highlights: [],
       exports: [
         {
           id: 'export-1',
+          reportId: 'clinical-compliance-audit',
           report: 'Clinical Hours Audit',
           format: 'CSV',
           cadence: 'Daily',
           updated: '2026-06-28 07:10',
           status: 'Ready',
+          range: '30d',
         },
       ],
     },

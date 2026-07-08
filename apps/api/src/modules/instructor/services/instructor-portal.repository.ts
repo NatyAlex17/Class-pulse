@@ -67,7 +67,6 @@ export class InstructorPortalRepository {
       conversations: [],
       activeConversationId: '',
       schedule: [],
-      clinicalLogs: [],
       documents: [],
       auditTrail: [],
     });

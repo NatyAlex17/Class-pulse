@@ -8,13 +8,17 @@ import {
   IconPlus,
   IconX,
 } from '@tabler/icons-react';
+import { useAuth } from '@/components/auth/auth-provider';
 import { InstructorShell } from '@/components/instructor/instructor-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+
 type ScheduledStudent = {
+  id: string;
   name: string;
   cohort: string;
 };
@@ -28,22 +32,10 @@ type ScheduleSlot = {
   notes: string;
 };
 
-const students = [
-  { label: 'Alice Smith', value: 'Alice Smith' },
-  { label: 'Marcus Chen', value: 'Marcus Chen' },
-  { label: 'Elena Ford', value: 'Elena Ford' },
-  { label: 'Priya Patel', value: 'Priya Patel' },
-  { label: 'James Rodriguez', value: 'James Rodriguez' },
-  { label: 'Lisa Wong', value: 'Lisa Wong' },
-] as const;
-
-const studentCohorts: Record<string, string> = {
-  'Alice Smith': 'CNA 12',
-  'Marcus Chen': 'CNA 12',
-  'Elena Ford': 'HHA',
-  'Priya Patel': 'CNA 13',
-  'James Rodriguez': 'CNA 13',
-  'Lisa Wong': 'HHA',
+type TaughtStudent = {
+  id: string;
+  name: string;
+  cohort: string;
 };
 
 const times = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'];
@@ -96,159 +88,185 @@ function isCurrentWeek(weekStart: Date) {
 }
 
 export default function InstructorClinicalSchedulingPage() {
-  const initialWeekStart = React.useMemo(() => startOfWeek(new Date('2026-06-30')), []);
-  const [selectedWeekStart, setSelectedWeekStart] = React.useState(initialWeekStart);
-  const [schedule, setSchedule] = React.useState<ScheduleSlot[]>([
-    {
-      id: '1',
-      weekStart: '2026-06-29',
-      day: 0,
-      time: '08:00',
-      students: [{ name: 'Alice Smith', cohort: 'CNA 12' }],
-      notes: 'Vitals Lab - Simulation',
-    },
-    {
-      id: '2',
-      weekStart: '2026-06-29',
-      day: 1,
-      time: '10:00',
-      students: [{ name: 'Marcus Chen', cohort: 'CNA 12' }],
-      notes: 'Sunrise Care Rotation',
-    },
-    {
-      id: '3',
-      weekStart: '2026-06-29',
-      day: 2,
-      time: '13:00',
-      students: [
-        { name: 'Elena Ford', cohort: 'HHA' },
-        { name: 'Priya Patel', cohort: 'CNA 13' },
-      ],
-      notes: 'Competency Assessment',
-    },
-  ]);
+  const { session, syncedUser } = useAuth();
+  const instructorId = syncedUser?.localUserId;
+  const accessToken = session?.access_token;
 
-  const [selectedSlot, setSelectedSlot] = React.useState<ScheduleSlot | null>(null);
+  const initialWeekStart = React.useMemo(() => startOfWeek(new Date()), []);
+  const [selectedWeekStart, setSelectedWeekStart] = React.useState(initialWeekStart);
+  const [schedule, setSchedule] = React.useState<ScheduleSlot[]>([]);
+  const [taughtStudents, setTaughtStudents] = React.useState<TaughtStudent[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const [selectedSlot, setSelectedSlot] = React.useState<{ id: string | null; day: number; time: string } | null>(
+    null,
+  );
   const [showAddModal, setShowAddModal] = React.useState(false);
-  const [selectedStudent, setSelectedStudent] = React.useState('');
+  const [selectedStudentId, setSelectedStudentId] = React.useState('');
   const [slotNotes, setSlotNotes] = React.useState('');
+  const [modalError, setModalError] = React.useState<string | null>(null);
+  const [saving, setSaving] = React.useState(false);
+
+  const fetchAll = React.useCallback(async () => {
+    if (!instructorId || !accessToken) {
+      setError('Sign in as an instructor to load your clinical schedule.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      const headers = { Authorization: `Bearer ${accessToken}` };
+      const [scheduleResponse, studentsResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/instructors/${instructorId}/clinical-scheduling`, { headers, cache: 'no-store' }),
+        fetch(`${API_BASE_URL}/instructors/${instructorId}/students`, { headers, cache: 'no-store' }),
+      ]);
+
+      if (!scheduleResponse.ok) {
+        throw new Error(`Failed to fetch schedule (${scheduleResponse.status}).`);
+      }
+      if (!studentsResponse.ok) {
+        throw new Error(`Failed to fetch students (${studentsResponse.status}).`);
+      }
+
+      const scheduleData = await scheduleResponse.json();
+      const studentsData = await studentsResponse.json();
+      setSchedule(scheduleData.data ?? []);
+      setTaughtStudents(studentsData.data?.students ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load clinical scheduling.');
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken, instructorId]);
+
+  React.useEffect(() => {
+    void fetchAll();
+  }, [fetchAll]);
 
   const weekStartIso = toIsoDate(selectedWeekStart);
   const weekSchedule = schedule.filter((slot) => slot.weekStart === weekStartIso);
   const totalStudentsScheduled = weekSchedule.reduce((sum, slot) => sum + slot.students.length, 0);
 
   const getSlotContent = React.useCallback(
-    (day: number, time: string) =>
-      weekSchedule.find((slot) => slot.day === day && slot.time === time),
+    (day: number, time: string) => weekSchedule.find((slot) => slot.day === day && slot.time === time),
     [weekSchedule],
   );
 
   function handleAddToSlot(day: number, time: string) {
     const existingSlot = getSlotContent(day, time);
-
-    setSelectedSlot(
-      existingSlot ?? {
-        id: Date.now().toString(),
-        weekStart: weekStartIso,
-        day,
-        time,
-        students: [],
-        notes: '',
-      },
-    );
+    setSelectedSlot({ id: existingSlot?.id ?? null, day, time });
     setSlotNotes(existingSlot?.notes ?? '');
-    setSelectedStudent('');
+    setSelectedStudentId('');
+    setModalError(null);
     setShowAddModal(true);
   }
 
-  function handleSaveStudent() {
-    if (!selectedStudent || !selectedSlot) {
+  async function handleSaveStudent() {
+    if (!selectedStudentId || !selectedSlot || !instructorId || !accessToken) {
       return;
     }
 
-    const existingSlot = schedule.find(
-      (slot) =>
-        slot.weekStart === selectedSlot.weekStart &&
-        slot.day === selectedSlot.day &&
-        slot.time === selectedSlot.time,
-    );
+    try {
+      setSaving(true);
+      setModalError(null);
+      const headers = {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      };
 
-    if (existingSlot) {
-      const alreadyScheduled = existingSlot.students.some(
-        (student) => student.name === selectedStudent,
-      );
+      let slotId = selectedSlot.id;
 
-      setSchedule(
-        schedule.map((slot) =>
-          slot.id === existingSlot.id
-            ? {
-                ...slot,
-                students: alreadyScheduled
-                  ? slot.students
-                  : [
-                      ...slot.students,
-                      {
-                        name: selectedStudent,
-                        cohort: studentCohorts[selectedStudent] ?? 'CNA 12',
-                      },
-                    ],
-                notes: slotNotes || slot.notes,
-              }
-            : slot,
-        ),
-      );
-    } else {
-      setSchedule([
-        ...schedule,
+      if (!slotId) {
+        const createResponse = await fetch(`${API_BASE_URL}/instructors/${instructorId}/clinical-scheduling/slots`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            weekStart: weekStartIso,
+            day: selectedSlot.day,
+            time: selectedSlot.time,
+            notes: slotNotes,
+          }),
+        });
+
+        if (!createResponse.ok) {
+          const payload = await createResponse.json().catch(() => null);
+          throw new Error(payload?.error?.message ?? `Failed to create slot (${createResponse.status}).`);
+        }
+
+        const createData = await createResponse.json();
+        slotId = createData.data.id;
+      }
+
+      const assignResponse = await fetch(
+        `${API_BASE_URL}/instructors/${instructorId}/clinical-scheduling/slots/${slotId}/students`,
         {
-          ...selectedSlot,
-          students: [
-            {
-              name: selectedStudent,
-              cohort: studentCohorts[selectedStudent] ?? 'CNA 12',
-            },
-          ],
-          notes: slotNotes,
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ studentId: selectedStudentId, notes: slotNotes || undefined }),
         },
-      ]);
+      );
+
+      if (!assignResponse.ok) {
+        const payload = await assignResponse.json().catch(() => null);
+        throw new Error(payload?.error?.message ?? `Failed to assign student (${assignResponse.status}).`);
+      }
+
+      await fetchAll();
+      setShowAddModal(false);
+      setSelectedSlot(null);
+      setSelectedStudentId('');
+      setSlotNotes('');
+    } catch (err) {
+      setModalError(err instanceof Error ? err.message : 'Failed to update schedule.');
+    } finally {
+      setSaving(false);
     }
-
-    setShowAddModal(false);
-    setSelectedSlot(null);
-    setSelectedStudent('');
-    setSlotNotes('');
   }
 
-  function handleRemoveStudent(slotId: string, studentName: string) {
-    setSchedule(
-      schedule
-        .map((slot) =>
-          slot.id === slotId
-            ? {
-                ...slot,
-                students: slot.students.filter((student) => student.name !== studentName),
-              }
-            : slot,
-        )
-        .filter((slot) => slot.students.length > 0),
-    );
+  async function handleRemoveStudent(slotId: string, studentId: string) {
+    if (!instructorId || !accessToken) return;
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/instructors/${instructorId}/clinical-scheduling/slots/${slotId}/students/${studentId}/remove`,
+        {
+          method: 'PATCH',
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
+      );
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error?.message ?? `Failed to remove student (${response.status}).`);
+      }
+
+      await fetchAll();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to remove student.');
+    }
   }
+
+  const studentOptions = taughtStudents.map((student) => ({ label: student.name, value: student.id }));
 
   return (
     <InstructorShell
       title="Clinical Scheduling"
       subtitle="Manage rotations, student placements, and assessment blocks."
       topActions={
-        <Button
-          className="gap-2 rounded-[16px] px-5"
-          onClick={() => handleAddToSlot(0, times[0])}
-        >
+        <Button className="gap-2 rounded-[16px] px-5" onClick={() => handleAddToSlot(0, times[0])}>
           <IconPlus className="size-4" />
           Add Slot
         </Button>
       }
     >
       <div className="space-y-6">
+        {error ? (
+          <div className="rounded-[16px] border border-error/20 bg-error/5 p-4 text-sm text-error">{error}</div>
+        ) : null}
+
         <section className="overflow-x-auto rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
           <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
@@ -315,83 +333,87 @@ export default function InstructorClinicalSchedulingPage() {
             </div>
           </div>
 
-          <div className="min-w-[980px]">
-            <div className="grid gap-1" style={{ gridTemplateColumns: '80px repeat(5, 1fr)' }}>
-              <div className="rounded-t-[12px] bg-surface-muted p-3 text-center text-xs font-bold uppercase">
-                Time
-              </div>
-              {days.map((day, index) => (
-                <div
-                  key={day}
-                  className="rounded-t-[12px] bg-primary p-3 text-center text-xs font-bold uppercase text-on-primary"
-                >
-                  <div>{day}</div>
-                  <div className="mt-1 text-[10px] font-medium text-on-primary/80">
-                    {formatDayLabel(selectedWeekStart, index)}
+          {loading ? (
+            <div className="py-8 text-center text-on-surface-variant">Loading schedule...</div>
+          ) : (
+            <div className="min-w-[980px]">
+              <div className="grid gap-1" style={{ gridTemplateColumns: '80px repeat(5, 1fr)' }}>
+                <div className="rounded-t-[12px] bg-surface-muted p-3 text-center text-xs font-bold uppercase">
+                  Time
+                </div>
+                {days.map((day, index) => (
+                  <div
+                    key={day}
+                    className="rounded-t-[12px] bg-primary p-3 text-center text-xs font-bold uppercase text-on-primary"
+                  >
+                    <div>{day}</div>
+                    <div className="mt-1 text-[10px] font-medium text-on-primary/80">
+                      {formatDayLabel(selectedWeekStart, index)}
+                    </div>
                   </div>
+                ))}
+              </div>
+
+              {times.map((time) => (
+                <div key={time} className="grid gap-1" style={{ gridTemplateColumns: '80px repeat(5, 1fr)' }}>
+                  <div className="bg-surface-muted p-3 text-center text-xs font-mono font-bold text-on-surface-variant">
+                    {time}
+                  </div>
+                  {days.map((_, dayIndex) => {
+                    const slotContent = getSlotContent(dayIndex, time);
+
+                    return (
+                      <button
+                        key={`${dayIndex}-${time}`}
+                        onClick={() => handleAddToSlot(dayIndex, time)}
+                        className={`relative min-h-24 rounded-[8px] border-2 p-2 text-left transition ${
+                          slotContent
+                            ? 'border-primary bg-primary/10'
+                            : 'border-dashed border-border-subtle bg-surface hover:border-primary hover:bg-primary/5'
+                        }`}
+                      >
+                        {slotContent ? (
+                          <div className="space-y-2">
+                            {slotContent.students.map((student) => (
+                              <div
+                                key={student.id}
+                                className="relative rounded-[8px] bg-primary px-2 py-1.5 text-[11px] font-semibold text-on-primary"
+                              >
+                                <div className="flex items-center justify-between gap-1">
+                                  <div className="truncate">
+                                    <p className="font-bold">{student.name}</p>
+                                    <p className="text-[9px] opacity-80">{student.cohort}</p>
+                                  </div>
+                                  <div
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      void handleRemoveStudent(slotContent.id, student.id);
+                                    }}
+                                    className="cursor-pointer text-on-primary/70 transition hover:text-on-primary"
+                                  >
+                                    <IconX className="h-3 w-3" />
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                            {slotContent.notes ? (
+                              <div className="line-clamp-2 rounded-[6px] bg-warning/15 p-1.5 text-[9px] text-warning">
+                                {slotContent.notes}
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-[12px] text-on-surface-variant/50">
+                            <IconPlus className="h-4 w-4" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               ))}
             </div>
-
-            {times.map((time) => (
-              <div key={time} className="grid gap-1" style={{ gridTemplateColumns: '80px repeat(5, 1fr)' }}>
-                <div className="bg-surface-muted p-3 text-center text-xs font-mono font-bold text-on-surface-variant">
-                  {time}
-                </div>
-                {days.map((_, dayIndex) => {
-                  const slotContent = getSlotContent(dayIndex, time);
-
-                  return (
-                    <button
-                      key={`${dayIndex}-${time}`}
-                      onClick={() => handleAddToSlot(dayIndex, time)}
-                      className={`relative min-h-24 rounded-[8px] border-2 p-2 text-left transition ${
-                        slotContent
-                          ? 'border-primary bg-primary/10'
-                          : 'border-dashed border-border-subtle bg-surface hover:border-primary hover:bg-primary/5'
-                      }`}
-                    >
-                      {slotContent ? (
-                        <div className="space-y-2">
-                          {slotContent.students.map((student) => (
-                            <div
-                              key={student.name}
-                              className="relative rounded-[8px] bg-primary px-2 py-1.5 text-[11px] font-semibold text-on-primary"
-                            >
-                              <div className="flex items-center justify-between gap-1">
-                                <div className="truncate">
-                                  <p className="font-bold">{student.name}</p>
-                                  <p className="text-[9px] opacity-80">{student.cohort}</p>
-                                </div>
-                                <div
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    handleRemoveStudent(slotContent.id, student.name);
-                                  }}
-                                  className="cursor-pointer text-on-primary/70 transition hover:text-on-primary"
-                                >
-                                  <IconX className="h-3 w-3" />
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                          {slotContent.notes ? (
-                            <div className="line-clamp-2 rounded-[6px] bg-warning/15 p-1.5 text-[9px] text-warning">
-                              {slotContent.notes}
-                            </div>
-                          ) : null}
-                        </div>
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-[12px] text-on-surface-variant/50">
-                          <IconPlus className="h-4 w-4" />
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
+          )}
         </section>
 
         <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
@@ -436,6 +458,12 @@ export default function InstructorClinicalSchedulingPage() {
               </button>
             </div>
 
+            {modalError ? (
+              <div className="mb-4 rounded-[12px] border border-error/20 bg-error/5 p-3 text-sm text-error">
+                {modalError}
+              </div>
+            ) : null}
+
             <div className="mb-6 space-y-4">
               <div>
                 <label className="mb-2 block text-sm font-semibold text-on-surface">Selected Week</label>
@@ -444,13 +472,20 @@ export default function InstructorClinicalSchedulingPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-semibold text-on-surface">Select Student</label>
-                <Select
-                  value={selectedStudent}
-                  onChange={(event) => setSelectedStudent(event.target.value)}
-                  options={[...students]}
-                  placeholder="Choose a student..."
-                  className="rounded-[12px]"
-                />
+                {studentOptions.length === 0 ? (
+                  <p className="text-sm text-on-surface-variant">
+                    You don&apos;t have any students yet. Students appear here once they&apos;re enrolled in a
+                    module you teach.
+                  </p>
+                ) : (
+                  <Select
+                    value={selectedStudentId}
+                    onChange={(event) => setSelectedStudentId(event.target.value)}
+                    options={studentOptions}
+                    placeholder="Choose a student..."
+                    className="rounded-[12px]"
+                  />
+                )}
               </div>
 
               <div>
@@ -465,19 +500,15 @@ export default function InstructorClinicalSchedulingPage() {
             </div>
 
             <div className="flex gap-3">
-              <Button
-                variant="secondary"
-                onClick={() => setShowAddModal(false)}
-                className="flex-1 rounded-[12px]"
-              >
+              <Button variant="secondary" onClick={() => setShowAddModal(false)} className="flex-1 rounded-[12px]">
                 Cancel
               </Button>
               <Button
-                onClick={handleSaveStudent}
-                disabled={!selectedStudent}
+                onClick={() => void handleSaveStudent()}
+                disabled={!selectedStudentId || saving}
                 className="flex-1 rounded-[12px]"
               >
-                Add to Schedule
+                {saving ? 'Saving...' : 'Add to Schedule'}
               </Button>
             </div>
           </div>

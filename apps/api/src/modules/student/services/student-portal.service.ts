@@ -13,6 +13,7 @@ import type {
   AttendanceRecord,
   CdphForm,
   ClinicalLogEntry,
+  ClinicalLogStatus,
   CreateEnrollmentPaymentIntentDto,
   CurriculumModule,
   DocumentChecklistItem,
@@ -1463,6 +1464,57 @@ export class StudentPortalService {
     );
     portal.lastAction = 'Clinical practice session logged and sent for verification.';
     this.recordAudit(portal, 'student.clinical-log.created', logEntry.id, {
+      moduleId: payload.moduleId,
+      hours: payload.hours,
+    });
+    return this.repository.save(portal).clinicalLogs[0];
+  }
+
+  /** Lets a supervising instructor verify/flag a student's self-logged clinical hours. */
+  reviewClinicalLogForInstructor(
+    studentId: string,
+    logId: string,
+    status: ClinicalLogStatus,
+    note?: string,
+  ): ClinicalLogEntry {
+    const portal = this.repository.findByStudentId(studentId);
+    const log = portal.clinicalLogs.find((item) => item.id === logId);
+
+    if (!log) {
+      throw new BadRequestException(`Clinical log "${logId}" was not found.`);
+    }
+
+    log.status = status;
+    log.note = note?.trim() || log.note;
+    this.recordAudit(portal, 'student.clinical-log.reviewed', logId, { status });
+    const saved = this.repository.save(portal);
+    return saved.clinicalLogs.find((item) => item.id === logId) as ClinicalLogEntry;
+  }
+
+  /**
+   * Logs clinical hours a supervising instructor personally timed for a student.
+   * Since the instructor directly observed the session, the entry is verified immediately
+   * rather than starting in the 'Pending' state a student's own self-report would use.
+   */
+  logClinicalHoursFromInstructor(
+    studentId: string,
+    payload: { moduleId: string; moduleTitle: string; hours: number; instructor: string; note?: string },
+  ): ClinicalLogEntry {
+    const portal = this.repository.findByStudentId(studentId);
+    const logEntry: ClinicalLogEntry = {
+      id: `log-${Date.now()}`,
+      date: this.formatIsoDay(),
+      moduleId: payload.moduleId,
+      moduleTitle: payload.moduleTitle,
+      hours: payload.hours,
+      instructor: payload.instructor,
+      note: payload.note?.trim(),
+      status: 'Verified',
+    };
+
+    portal.clinicalLogs = [logEntry, ...portal.clinicalLogs];
+    portal.lastAction = `Clinical hours logged and verified by ${payload.instructor}.`;
+    this.recordAudit(portal, 'student.clinical-log.instructor-logged', logEntry.id, {
       moduleId: payload.moduleId,
       hours: payload.hours,
     });

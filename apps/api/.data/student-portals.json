@@ -1,0 +1,1052 @@
+{
+  "portals": [
+    {
+      "profile": {
+        "id": "student-amara-singh",
+        "fullName": "Amara Singh",
+        "preferredName": "Amara",
+        "email": "amara.singh@classpulse.edu",
+        "phone": "(555) 010-2291",
+        "location": "San Francisco, CA",
+        "cohort": "CNA Cohort 12",
+        "levelLabel": "Lvl 4 Student",
+        "studentNumber": "CV-S-10012"
+      },
+      "workflowStage": "active",
+      "intakeJourney": {
+        "header": {
+          "eyebrow": "Student Journey",
+          "title": "Intake, Enrollment, and Orientation",
+          "description": "This mirrors the intended student intake flow, and each step now persists through the backend student workflow."
+        },
+        "stages": [
+          {
+            "id": "entrance_exam",
+            "label": "Entrance Exam"
+          },
+          {
+            "id": "enrollment_wizard",
+            "label": "Enrollment Wizard"
+          },
+          {
+            "id": "admin_review",
+            "label": "Admin Review"
+          },
+          {
+            "id": "orientation_survey",
+            "label": "Orientation Survey"
+          },
+          {
+            "id": "active",
+            "label": "Portal Active"
+          }
+        ],
+        "entranceExam": {
+          "intro": "Each question can include a preferred answer for reviewer guidance, but staff scoring is finalized during intake review.",
+          "passingScore": 5,
+          "questions": [
+            {
+              "id": "q1",
+              "prompt": "What must students do in the self-paced program?",
+              "type": "choice",
+              "preferredAnswer": "B. Read instructions and finish work",
+              "options": [
+                {
+                  "label": "A. Only watch videos",
+                  "value": "A. Only watch videos"
+                },
+                {
+                  "label": "B. Read instructions and finish work",
+                  "value": "B. Read instructions and finish work"
+                },
+                {
+                  "label": "C. Skip assignments",
+                  "value": "C. Skip assignments"
+                },
+                {
+                  "label": "D. Wait for instructors to do everything",
+                  "value": "D. Wait for instructors to do everything"
+                }
+              ]
+            },
+            {
+              "id": "q2",
+              "prompt": "Why is English important in this program?",
+              "type": "choice",
+              "preferredAnswer": "B. To understand lessons and exams",
+              "options": [
+                {
+                  "label": "A. Only for chatting",
+                  "value": "A. Only for chatting"
+                },
+                {
+                  "label": "B. To understand lessons and exams",
+                  "value": "B. To understand lessons and exams"
+                },
+                {
+                  "label": "C. To avoid clinical hours",
+                  "value": "C. To avoid clinical hours"
+                },
+                {
+                  "label": "D. Only for orientation day",
+                  "value": "D. Only for orientation day"
+                }
+              ]
+            },
+            {
+              "id": "q3",
+              "prompt": "When can students ask instructors questions?",
+              "type": "choice",
+              "preferredAnswer": "C. During scheduled support hours",
+              "options": [
+                {
+                  "label": "A. Never",
+                  "value": "A. Never"
+                },
+                {
+                  "label": "B. Only after graduation",
+                  "value": "B. Only after graduation"
+                },
+                {
+                  "label": "C. During scheduled support hours",
+                  "value": "C. During scheduled support hours"
+                },
+                {
+                  "label": "D. Only on weekends",
+                  "value": "D. Only on weekends"
+                }
+              ]
+            },
+            {
+              "id": "q4",
+              "prompt": "What can happen if a student does not understand instructions?",
+              "type": "choice",
+              "preferredAnswer": "B. They may fail assignments or exams",
+              "options": [
+                {
+                  "label": "A. Nothing changes",
+                  "value": "A. Nothing changes"
+                },
+                {
+                  "label": "B. They may fail assignments or exams",
+                  "value": "B. They may fail assignments or exams"
+                },
+                {
+                  "label": "C. They automatically pass",
+                  "value": "C. They automatically pass"
+                },
+                {
+                  "label": "D. The program pauses for everyone",
+                  "value": "D. The program pauses for everyone"
+                }
+              ]
+            },
+            {
+              "id": "q5",
+              "prompt": "What is the main point of the readiness passage?",
+              "type": "choice",
+              "preferredAnswer": "B. English comprehension is required to succeed",
+              "options": [
+                {
+                  "label": "A. Clinical practice is optional",
+                  "value": "A. Clinical practice is optional"
+                },
+                {
+                  "label": "B. English comprehension is required to succeed",
+                  "value": "B. English comprehension is required to succeed"
+                },
+                {
+                  "label": "C. Instructors complete the work",
+                  "value": "C. Instructors complete the work"
+                },
+                {
+                  "label": "D. Technology is never used",
+                  "value": "D. Technology is never used"
+                }
+              ]
+            },
+            {
+              "id": "q6",
+              "prompt": "Write one complete sentence explaining why following instructions matters in healthcare training.",
+              "type": "text",
+              "preferredAnswer": "Following instructions is crucial in healthcare to ensure patient safety and quality care.",
+              "placeholder": "Write one complete sentence...",
+              "options": []
+            }
+          ]
+        },
+        "enrollmentWizard": {
+          "steps": [
+            {
+              "step": 1,
+              "title": "Step 1: Career Boost",
+              "description": "Choose whether to add the Home Health Aide pathway to the program plan.",
+              "sections": [
+                {
+                  "id": "career-boost",
+                  "title": "Home Health Aide Add-On",
+                  "description": "Add a second certification track to the student journey.",
+                  "fields": [
+                    {
+                      "id": "hhaAddon",
+                      "label": "Would you like to add the Home Health Aide track?",
+                      "type": "choice",
+                      "options": [
+                        {
+                          "label": "Add HHA track",
+                          "value": "true",
+                          "badge": "+$500"
+                        },
+                        {
+                          "label": "Keep CNA only",
+                          "value": "false"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "step": 2,
+              "title": "Step 2: Gear Up",
+              "description": "Capture scrub sizes, delivery preference, and state exam testing preference.",
+              "sections": [
+                {
+                  "id": "uniforms",
+                  "title": "Scrub Sizing",
+                  "fields": [
+                    {
+                      "id": "scrubTop",
+                      "label": "Scrub top size",
+                      "type": "select",
+                      "options": [
+                        {
+                          "label": "XS",
+                          "value": "XS"
+                        },
+                        {
+                          "label": "S",
+                          "value": "S"
+                        },
+                        {
+                          "label": "M",
+                          "value": "M"
+                        },
+                        {
+                          "label": "L",
+                          "value": "L"
+                        },
+                        {
+                          "label": "XL",
+                          "value": "XL"
+                        },
+                        {
+                          "label": "2XL",
+                          "value": "2XL"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "scrubBottom",
+                      "label": "Scrub bottom size",
+                      "type": "select",
+                      "options": [
+                        {
+                          "label": "XS",
+                          "value": "XS"
+                        },
+                        {
+                          "label": "S",
+                          "value": "S"
+                        },
+                        {
+                          "label": "M",
+                          "value": "M"
+                        },
+                        {
+                          "label": "L",
+                          "value": "L"
+                        },
+                        {
+                          "label": "XL",
+                          "value": "XL"
+                        },
+                        {
+                          "label": "2XL",
+                          "value": "2XL"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "delivery",
+                  "title": "Delivery Preference",
+                  "fields": [
+                    {
+                      "id": "shipping",
+                      "label": "How should supplies be delivered?",
+                      "type": "choice",
+                      "options": [
+                        {
+                          "label": "Pick up at orientation",
+                          "value": "pickup"
+                        },
+                        {
+                          "label": "Ship to home (+$10)",
+                          "value": "ship"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "exam-preference",
+                  "title": "State Exam Preference",
+                  "fields": [
+                    {
+                      "id": "wantsToTestAtDaisy",
+                      "label": "Where would you like to test?",
+                      "type": "choice",
+                      "options": [
+                        {
+                          "label": "Yes, test at Daisy Medical Institute",
+                          "value": "true"
+                        },
+                        {
+                          "label": "No, use another regional testing site",
+                          "value": "false"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "step": 3,
+              "title": "Step 3: Orientation Briefing",
+              "description": "Record that the student reviewed the orientation and expectations briefing.",
+              "sections": [
+                {
+                  "id": "orientation-briefing",
+                  "title": "Program Orientation",
+                  "description": "This checkpoint represents the orientation briefing and records that the student completed the review stage.",
+                  "fields": []
+                }
+              ]
+            },
+            {
+              "step": 4,
+              "title": "Step 4: Terms of Agreement",
+              "description": "Collect acknowledgement of required policies before submission.",
+              "sections": [
+                {
+                  "id": "agreements",
+                  "title": "Program Agreements",
+                  "fields": [
+                    {
+                      "id": "ip",
+                      "label": "I understand curriculum and AI tools are proprietary.",
+                      "type": "choice",
+                      "options": [
+                        {
+                          "label": "Acknowledge",
+                          "value": "true"
+                        },
+                        {
+                          "label": "Not yet",
+                          "value": "false"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "refund",
+                      "label": "I understand the refund and withdrawal timeline.",
+                      "type": "choice",
+                      "options": [
+                        {
+                          "label": "Acknowledge",
+                          "value": "true"
+                        },
+                        {
+                          "label": "Not yet",
+                          "value": "false"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "conduct",
+                      "label": "I understand conduct standards can affect enrollment status.",
+                      "type": "choice",
+                      "options": [
+                        {
+                          "label": "Acknowledge",
+                          "value": "true"
+                        },
+                        {
+                          "label": "Not yet",
+                          "value": "false"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "lateFee",
+                      "label": "I understand installment timing and late-fee policy.",
+                      "type": "choice",
+                      "options": [
+                        {
+                          "label": "Acknowledge",
+                          "value": "true"
+                        },
+                        {
+                          "label": "Not yet",
+                          "value": "false"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "step": 5,
+              "title": "Step 5: Review & Sign",
+              "description": "Review the packet summary and provide the required signature.",
+              "sections": [
+                {
+                  "id": "signature",
+                  "title": "Program Signature",
+                  "description": "Type the required signature exactly to submit enrollment.",
+                  "fields": [
+                    {
+                      "id": "signature",
+                      "label": "Signature",
+                      "type": "text",
+                      "placeholder": "Type the required signature"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "signatureRequirement": {
+            "value": "Amara Singh",
+            "hint": "Signature must match Amara Singh to continue."
+          },
+          "summaryItems": [
+            {
+              "id": "hhaAddon",
+              "label": "HHA add-on"
+            },
+            {
+              "id": "scrubs",
+              "label": "Scrubs"
+            },
+            {
+              "id": "shipping",
+              "label": "Delivery"
+            },
+            {
+              "id": "wantsToTestAtDaisy",
+              "label": "State exam preference"
+            }
+          ]
+        },
+        "adminReview": {
+          "badgeLabel": "Pending Review",
+          "title": "Admissions is reviewing the packet",
+          "description": "This stage mirrors the reference dashboard where the student sees a waiting state before the main portal is unlocked.",
+          "checklist": [
+            "Entrance exam passed and attached to admissions record",
+            "Enrollment selections captured for logistics and billing",
+            "Packet awaiting approval from student operations"
+          ]
+        },
+        "orientationSurvey": {
+          "sections": [
+            {
+              "id": "student-background",
+              "title": "Student Background",
+              "fields": [
+                {
+                  "id": "healthcare_exp",
+                  "label": "Have you worked in healthcare before?",
+                  "type": "select",
+                  "options": [
+                    {
+                      "label": "No, this is my first time",
+                      "value": "first_time"
+                    },
+                    {
+                      "label": "Yes, unpaid or volunteer",
+                      "value": "volunteer"
+                    },
+                    {
+                      "label": "Yes, paid experience",
+                      "value": "paid"
+                    }
+                  ]
+                },
+                {
+                  "id": "motivation",
+                  "label": "What motivated you to enroll?",
+                  "type": "textarea"
+                }
+              ]
+            },
+            {
+              "id": "confidence-readiness",
+              "title": "Confidence & Readiness",
+              "fields": [
+                {
+                  "id": "confidence",
+                  "label": "How confident do you feel starting the program?",
+                  "type": "select",
+                  "options": [
+                    {
+                      "label": "Very confident",
+                      "value": "very_confident"
+                    },
+                    {
+                      "label": "Somewhat confident",
+                      "value": "somewhat_confident"
+                    },
+                    {
+                      "label": "A little nervous",
+                      "value": "nervous"
+                    }
+                  ]
+                },
+                {
+                  "id": "support_needs",
+                  "label": "Where do you expect to need the most support?",
+                  "type": "textarea"
+                }
+              ]
+            },
+            {
+              "id": "expectations",
+              "title": "Expectations",
+              "fields": [
+                {
+                  "id": "expectations",
+                  "label": "What do you expect to gain from this program?",
+                  "type": "textarea"
+                },
+                {
+                  "id": "success_definition",
+                  "label": "What does a successful student experience look like to you?",
+                  "type": "textarea"
+                }
+              ]
+            },
+            {
+              "id": "goals-outcomes",
+              "title": "Goals & Outcomes",
+              "fields": [
+                {
+                  "id": "post_grad_goals",
+                  "label": "What are your goals after completing the program?",
+                  "type": "textarea"
+                },
+                {
+                  "id": "work_timeline",
+                  "label": "How soon do you hope to start working after certification?",
+                  "type": "select",
+                  "options": [
+                    {
+                      "label": "Immediately",
+                      "value": "immediately"
+                    },
+                    {
+                      "label": "Within 1-3 months",
+                      "value": "one_to_three_months"
+                    },
+                    {
+                      "label": "Not sure yet",
+                      "value": "not_sure"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "support-communication",
+              "title": "Support & Communication",
+              "fields": [
+                {
+                  "id": "instructor_support",
+                  "label": "What kind of support do you expect from instructors?",
+                  "type": "textarea"
+                },
+                {
+                  "id": "additional_info",
+                  "label": "Anything else you would like the team to know?",
+                  "type": "textarea"
+                }
+              ]
+            }
+          ]
+        },
+        "activation": {
+          "badgeLabel": "Portal Active",
+          "title": "Student flow fully unlocked",
+          "description": "The student can now move through learning, forms, documents, financials, and messaging through the live student portal workflow.",
+          "checklist": [
+            "Entrance exam stored",
+            "Enrollment package submitted",
+            "Orientation survey completed",
+            "Student tools available"
+          ]
+        }
+      },
+      "tasks": [
+        {
+          "id": "theory-hours",
+          "title": "Complete 2 theory hours",
+          "detail": "Required to unlock the Module 3 exam.",
+          "complete": false,
+          "urgent": true
+        },
+        {
+          "id": "entrance-survey",
+          "title": "Finish onboarding intake survey",
+          "detail": "Administrative review is waiting on your final response.",
+          "complete": false,
+          "urgent": true
+        },
+        {
+          "id": "clinical-log",
+          "title": "Submit Clinical Log #04",
+          "detail": "Skills lab follow-up needs one pending hour entry.",
+          "complete": false
+        }
+      ],
+      "onboarding": {
+        "workflowStage": "active",
+        "steps": [
+          {
+            "id": "profile",
+            "title": "Confirm student profile",
+            "description": "Review your legal name, emergency contact, and mailing details.",
+            "complete": true,
+            "actionLabel": "Reviewed"
+          },
+          {
+            "id": "documents",
+            "title": "Upload admissions documents",
+            "description": "Submit your ID, diploma, and health-clearance packet.",
+            "complete": true,
+            "actionLabel": "Open documents"
+          },
+          {
+            "id": "orientation",
+            "title": "Finish orientation checklist",
+            "description": "Acknowledge schedule, attendance policy, and online study readiness.",
+            "complete": false,
+            "actionLabel": "Finish now"
+          },
+          {
+            "id": "billing",
+            "title": "Set payment preference",
+            "description": "Confirm your installment plan and active card on file.",
+            "complete": false,
+            "actionLabel": "Review billing"
+          }
+        ],
+        "questions": [
+          {
+            "id": "motivation",
+            "prompt": "Why are you pursuing this healthcare training program right now?",
+            "answer": "I want to transition into patient care with a stronger clinical foundation."
+          },
+          {
+            "id": "schedule",
+            "prompt": "How will you protect time for theory study, labs, and clinical shifts each week?",
+            "answer": "I have blocked weekday evenings and Saturday mornings for theory and prep."
+          },
+          {
+            "id": "support",
+            "prompt": "What kind of support will help you stay consistent through the program?",
+            "answer": ""
+          }
+        ],
+        "acknowledgements": {
+          "schedule": true,
+          "attendance": true,
+          "technology": false
+        },
+        "readinessUploads": {
+          "photoId": true,
+          "diploma": true,
+          "tbTest": false
+        },
+        "readinessDocumentFiles": {},
+        "submitted": false
+      },
+      "modules": [
+        {
+          "id": "intro-care",
+          "title": "Intro Care",
+          "summary": "Basics",
+          "status": "In Progress",
+          "progressPercent": 0,
+          "requiredHours": 10,
+          "completedHours": 0,
+          "sessionMinutes": 0,
+          "certificateUnlocked": false,
+          "skills": [],
+          "steps": []
+        }
+      ],
+      "activeModuleId": "intro-care",
+      "threads": [
+        {
+          "id": "lisa-wong",
+          "recipientName": "Lisa Wong",
+          "recipientRole": "Senior Instructor",
+          "moduleId": "m3",
+          "moduleName": "Vital Signs & Monitoring",
+          "status": "Unread",
+          "preview": "Great progress on your vital signs drill. I've left feedback on your charting.",
+          "time": "2026-06-30T10:45:00.000Z",
+          "unread": true,
+          "messages": [
+            {
+              "id": "lw-1",
+              "sender": "staff",
+              "text": "Great progress on your vital signs drill. I've left feedback on your charting.",
+              "time": "2026-06-30T10:45:00.000Z"
+            },
+            {
+              "id": "lw-2",
+              "sender": "student",
+              "text": "Thank you. I'm reviewing the charting notes before I upload the skill check.",
+              "time": "2026-06-30T11:02:00.000Z"
+            }
+          ]
+        },
+        {
+          "id": "james-miller",
+          "recipientName": "James Miller",
+          "recipientRole": "Clinical Supervisor",
+          "moduleId": "m4",
+          "moduleName": "Clinical Readiness",
+          "status": "New",
+          "preview": "Bring your printed checklist to Thursday lab so we can verify your skills signoff.",
+          "time": "2026-06-29T15:00:00.000Z",
+          "unread": true,
+          "messages": [
+            {
+              "id": "jm-1",
+              "sender": "staff",
+              "text": "Bring your printed checklist to Thursday lab so we can verify your skills signoff.",
+              "time": "2026-06-29T15:00:00.000Z"
+            }
+          ]
+        }
+      ],
+      "activeThreadId": "lisa-wong",
+      "aiTutorConversations": [],
+      "clinicalSessions": [
+        {
+          "id": "session-1",
+          "title": "Skills Lab: Vitals Rotation",
+          "date": "2026-07-01T14:00:00.000Z",
+          "location": "Skills Lab B",
+          "instructor": "James Miller",
+          "type": "Clinical",
+          "status": "Scheduled"
+        },
+        {
+          "id": "session-2",
+          "title": "Theory Review Live Session",
+          "date": "2026-07-03T09:00:00.000Z",
+          "location": "Virtual Classroom",
+          "instructor": "Lisa Wong",
+          "type": "Theory",
+          "status": "Scheduled"
+        }
+      ],
+      "clinicalLogs": [
+        {
+          "id": "log-1783483548953",
+          "date": "2026-07-08",
+          "moduleId": "intro-care",
+          "moduleTitle": "Intro Care",
+          "hours": 0.02,
+          "instructor": "Rrptfrm3ut",
+          "status": "Verified"
+        },
+        {
+          "id": "log-1783483449310",
+          "date": "2026-07-08",
+          "moduleId": "intro-care",
+          "moduleTitle": "Intro Care",
+          "hours": 0.04,
+          "instructor": "Rrptfrm3ut",
+          "note": "",
+          "status": "Verified"
+        },
+        {
+          "id": "log-1783482888492",
+          "date": "2026-07-08",
+          "moduleId": "intro-care",
+          "moduleTitle": "Intro Care",
+          "hours": 0.01,
+          "instructor": "Rrptfrm3ut",
+          "note": "test session",
+          "status": "Verified"
+        },
+        {
+          "id": "log-1",
+          "date": "2026-06-10",
+          "moduleId": "m2",
+          "moduleTitle": "Patient Mobility",
+          "hours": 12,
+          "instructor": "James Miller",
+          "status": "Verified"
+        },
+        {
+          "id": "log-2",
+          "date": "2026-06-17",
+          "moduleId": "m2",
+          "moduleTitle": "Bedside Care",
+          "hours": 14,
+          "instructor": "Lisa Wong",
+          "status": "Verified"
+        },
+        {
+          "id": "log-3",
+          "date": "2026-06-24",
+          "moduleId": "m3",
+          "moduleTitle": "Vitals Simulation",
+          "hours": 12,
+          "instructor": "James Miller",
+          "status": "Pending"
+        }
+      ],
+      "financials": {
+        "totalTuition": 3500,
+        "amountPaid": 1750,
+        "balance": 1750,
+        "depositRequired": 500,
+        "depositPaid": true,
+        "status": "Current",
+        "paymentPlan": [
+          {
+            "id": "pay-1",
+            "date": "2026-01-15",
+            "amount": 875,
+            "status": "Completed",
+            "method": "Visa ....4242"
+          },
+          {
+            "id": "pay-2",
+            "date": "2026-04-15",
+            "amount": 875,
+            "status": "Completed",
+            "method": "Visa ....4242"
+          },
+          {
+            "id": "pay-3",
+            "date": "2026-07-15",
+            "amount": 875,
+            "status": "Upcoming",
+            "method": "Visa ....4242"
+          },
+          {
+            "id": "pay-4",
+            "date": "2026-10-15",
+            "amount": 875,
+            "status": "Upcoming",
+            "method": "Visa ....4242"
+          }
+        ]
+      },
+      "documents": [
+        {
+          "id": "photo-id",
+          "title": "Photo ID",
+          "category": "admissions",
+          "subtitle": "California driver's license",
+          "status": "Verified",
+          "submittedAt": "2026-03-12",
+          "required": true,
+          "fileName": "amara-singh-photo-id.pdf"
+        },
+        {
+          "id": "diploma",
+          "title": "High School Diploma",
+          "category": "admissions",
+          "subtitle": "Education eligibility proof",
+          "status": "Verified",
+          "submittedAt": "2026-02-28",
+          "required": true,
+          "fileName": "amara-singh-diploma.pdf"
+        },
+        {
+          "id": "tb-clearance",
+          "title": "Physical + TB Clearance",
+          "category": "clinical",
+          "subtitle": "Clinical health-compliance packet",
+          "status": "Pending Review",
+          "submittedAt": "2026-06-11",
+          "required": true,
+          "fileName": "amara-singh-tb-clearance.pdf"
+        }
+      ],
+      "forms": [
+        {
+          "id": "cdph-283b",
+          "title": "CDPH 283B Application",
+          "status": "Pending Signature",
+          "description": "State application package required before certification scheduling.",
+          "lastUpdated": "2026-06-28T13:00:00.000Z",
+          "actionLabel": "Complete form"
+        },
+        {
+          "id": "attendance-policy",
+          "title": "Attendance Policy Acknowledgement",
+          "status": "Submitted",
+          "description": "Program attendance and absence accountability policy.",
+          "lastUpdated": "2026-06-12T08:30:00.000Z",
+          "actionLabel": "View form"
+        }
+      ],
+      "entranceExam": {
+        "answers": {},
+        "score": null,
+        "totalQuestions": 6,
+        "rank": null,
+        "taken": false,
+        "passed": false
+      },
+      "enrollmentWizard": {
+        "step": 1,
+        "hhaAddon": false,
+        "scrubTop": "",
+        "scrubBottom": "",
+        "shipping": "pickup",
+        "wantsToTestAtDaisy": null,
+        "agreements": {
+          "ip": false,
+          "refund": false,
+          "conduct": false,
+          "lateFee": false
+        },
+        "signature": "",
+        "submitted": false
+      },
+      "entranceSurvey": {
+        "step": 1,
+        "answers": {},
+        "completed": false
+      },
+      "settings": {
+        "email_updates": true,
+        "sms_alerts": false,
+        "remember_device": true
+      },
+      "attendanceRecords": [],
+      "assignments": [
+        {
+          "id": "assign-1",
+          "title": "Charting practice sheet",
+          "due": "Jul 02",
+          "detail": "Upload one completed set of sample vital-sign notes.",
+          "moduleId": "m3",
+          "status": "Pending"
+        },
+        {
+          "id": "assign-2",
+          "title": "Hand hygiene checklist",
+          "due": "Jul 05",
+          "detail": "Review the PDF and confirm each compliance step.",
+          "moduleId": "m4",
+          "status": "Pending"
+        }
+      ],
+      "supportTickets": [
+        {
+          "id": "ticket-001",
+          "subject": "Clinical schedule clarification",
+          "category": "Scheduling",
+          "message": "Need confirmation on the arrival time for Thursday skills lab.",
+          "status": "In Review",
+          "createdAt": "2026-06-30T08:14:00.000Z"
+        }
+      ],
+      "cdphForm": {
+        "lastName": "Singh",
+        "firstName": "Amara",
+        "dob": "",
+        "phone": "(555) 010-2291",
+        "email": "amara.singh@classpulse.edu",
+        "city": "San Francisco",
+        "zip": "94110",
+        "conviction": false,
+        "convictionDetails": ""
+      },
+      "cdphSigned": false,
+      "liveScanGenerated": false,
+      "liveScanUploaded": false,
+      "textbookIssued": true,
+      "textbookOpened": false,
+      "exitSurveyComplete": false,
+      "learningMinutes": 390,
+      "learningSessionActive": false,
+      "lessonElapsedMinutes": {},
+      "reflectionResponse": "",
+      "questionOfDayAnswer": "",
+      "lastAction": "Clinical hours logged and verified by Rrptfrm3ut.",
+      "auditTrail": [
+        {
+          "id": "audit-1783483548953-744",
+          "actor": "student-amara-singh",
+          "action": "student.clinical-log.instructor-logged",
+          "target": "log-1783483548953",
+          "occurredAt": "2026-07-08T04:05:48.953Z",
+          "details": {
+            "moduleId": "intro-care",
+            "hours": 0.02
+          }
+        },
+        {
+          "id": "audit-1783483449310-87",
+          "actor": "student-amara-singh",
+          "action": "student.clinical-log.instructor-logged",
+          "target": "log-1783483449310",
+          "occurredAt": "2026-07-08T04:04:09.310Z",
+          "details": {
+            "moduleId": "intro-care",
+            "hours": 0.04
+          }
+        },
+        {
+          "id": "audit-1783482888492-543",
+          "actor": "student-amara-singh",
+          "action": "student.clinical-log.instructor-logged",
+          "target": "log-1783482888492",
+          "occurredAt": "2026-07-08T03:54:48.492Z",
+          "details": {
+            "moduleId": "intro-care",
+            "hours": 0.01
+          }
+        },
+        {
+          "id": "audit-1",
+          "actor": "system",
+          "action": "student.portal.seeded",
+          "target": "student-amara-singh",
+          "occurredAt": "2026-06-30T07:00:00.000Z",
+          "details": {
+            "source": "student-portal-seed"
+          }
+        }
+      ]
+    }
+  ]
+}

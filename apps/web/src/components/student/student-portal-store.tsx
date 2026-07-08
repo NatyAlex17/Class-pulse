@@ -240,7 +240,8 @@ type ClinicalLog = {
   module: string;
   hours: number;
   instructor: string;
-  status: 'Verified' | 'Pending';
+  status: 'Verified' | 'Pending' | 'Flagged';
+  note?: string;
 };
 
 type CdphForm = {
@@ -569,7 +570,8 @@ type StudentPortalApi = {
     moduleTitle: string;
     hours: number;
     instructor: string;
-    status: 'Verified' | 'Pending';
+    status: 'Verified' | 'Pending' | 'Flagged';
+    note?: string;
   }>;
   financials: {
     totalTuition: number;
@@ -806,6 +808,7 @@ function mapPortalToState(portal: StudentPortalApi): StudentDemoState {
       hours: log.hours,
       instructor: log.instructor,
       status: log.status,
+      note: log.note,
     })),
     textbookIssued: portal.textbookIssued,
     textbookOpened: portal.textbookOpened,

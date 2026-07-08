@@ -5,6 +5,7 @@ export type SkillItemStatus = 'Verified' | 'Needs observation' | 'Ready for sign
 export type ClinicalLogReviewStatus = 'Pending' | 'Verified' | 'Flagged';
 export type InstructorDocumentStatus = 'Approved' | 'Pending' | 'Needs update';
 export type InstructorExportStatus = 'Ready' | 'Queued';
+export type InstructorReportRange = '7d' | '30d' | 'term';
 
 export interface InstructorCredential {
   id: string;
@@ -56,6 +57,25 @@ export interface InstructorStudentRecord {
   engagementScore: number;
   recentNotes: InstructorStudentNote[];
   skills: InstructorStudentSkill[];
+  /** Modules this student is taking with this instructor, for clinical timer/log targeting. */
+  modules: Array<{ id: string; title: string }>;
+}
+
+export interface InstructorActiveClinicalTimer {
+  studentId: string;
+  studentName: string;
+  moduleId: string;
+  moduleTitle: string;
+  startedAt: string;
+}
+
+export interface StartClinicalTimerDto {
+  studentId: string;
+  moduleId: string;
+}
+
+export interface StopClinicalTimerDto {
+  note?: string;
 }
 
 export interface InstructorDashboardMetric {
@@ -170,7 +190,8 @@ export interface InstructorClinicalLog {
   id: string;
   studentId: string;
   student: string;
-  site: string;
+  moduleId: string;
+  moduleTitle: string;
   date: string;
   hours: number;
   status: ClinicalLogReviewStatus;
@@ -196,6 +217,8 @@ export interface InstructorDocument {
   owner: string;
   updated: string;
   status: InstructorDocumentStatus;
+  fileName?: string;
+  fileUrl?: string;
 }
 
 export interface InstructorReportCard {
@@ -205,6 +228,76 @@ export interface InstructorReportCard {
   badge: string;
 }
 
+export interface InstructorReportDefinition {
+  id: string;
+  title: string;
+  description: string;
+  category: 'teaching' | 'students' | 'compliance' | 'operations';
+  formats: Array<'CSV' | 'PDF' | 'JSON'>;
+}
+
+export interface InstructorReportSummaryMetric {
+  label: string;
+  value: string;
+  tone: 'primary' | 'success' | 'warning' | 'error';
+  note: string;
+}
+
+export interface InstructorReportNarrative {
+  title: string;
+  text: string;
+}
+
+export interface InstructorTeachingTrendPoint {
+  label: string;
+  teachingHours: number;
+  studentContacts: number;
+  signoffsCompleted: number;
+  attendanceRate: number;
+}
+
+export interface InstructorModulePerformancePoint {
+  moduleId: string;
+  moduleTitle: string;
+  students: number;
+  completion: number;
+  attendance: number;
+  signoffLag: number;
+}
+
+export interface InstructorTeachingMixSlice {
+  name: string;
+  value: number;
+}
+
+export interface InstructorCohortSnapshot {
+  cohort: string;
+  learners: number;
+  attendance: number;
+  readiness: number;
+  risk: 'Low' | 'Moderate' | 'High';
+}
+
+export interface InstructorStudentAttentionRow {
+  studentId: string;
+  student: string;
+  cohort: string;
+  module: string;
+  progress: number;
+  attendance: number;
+  hoursRemaining: number;
+  signoffsOpen: number;
+  risk: 'Stable' | 'Watch' | 'Critical';
+  action: string;
+}
+
+export interface InstructorOperationalHighlight {
+  title: string;
+  detail: string;
+  supportingText: string;
+  tone: 'primary' | 'success' | 'warning' | 'error';
+}
+
 export interface InstructorReportExport {
   id: string;
   report: string;
@@ -212,10 +305,23 @@ export interface InstructorReportExport {
   cadence: string;
   updated: string;
   status: InstructorExportStatus;
+  reportId?: string;
+  range?: InstructorReportRange;
 }
 
 export interface InstructorReportsWorkspace {
-  cards: InstructorReportCard[];
+  generatedAt: string;
+  selectedRange: InstructorReportRange;
+  availableRanges: InstructorReportRange[];
+  reports: InstructorReportDefinition[];
+  summaryMetrics: InstructorReportSummaryMetric[];
+  narratives: InstructorReportNarrative[];
+  teachingTrend: InstructorTeachingTrendPoint[];
+  modulePerformance: InstructorModulePerformancePoint[];
+  teachingMix: InstructorTeachingMixSlice[];
+  cohortSnapshots: InstructorCohortSnapshot[];
+  studentAttention: InstructorStudentAttentionRow[];
+  highlights: InstructorOperationalHighlight[];
   exports: InstructorReportExport[];
 }
 
@@ -345,7 +451,8 @@ export interface InstructorPortalState {
   schedule: InstructorScheduleSlot[];
   /** Instructor-authored skill reviews, keyed by student id then skill id. */
   skillReviews: Record<string, Record<string, InstructorSkillReview>>;
-  clinicalLogs: InstructorClinicalLog[];
+  /** The one clinical session this instructor is actively timing, if any. */
+  activeClinicalTimer?: InstructorActiveClinicalTimer;
   availability: InstructorAvailabilityState;
   documents: InstructorDocument[];
   reports: InstructorReportsWorkspace;
@@ -413,11 +520,10 @@ export interface UpdateInstructorAvailabilityDto {
 export interface UploadInstructorDocumentDto {
   name: string;
   category: string;
-  owner: string;
-  status?: InstructorDocumentStatus;
 }
 
 export interface GenerateInstructorReportDto {
   reportId: string;
   format: string;
+  range?: InstructorReportRange;
 }
