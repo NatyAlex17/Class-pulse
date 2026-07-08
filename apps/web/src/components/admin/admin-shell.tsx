@@ -20,6 +20,7 @@ import {
   IconAdjustments,
   IconShieldExclamation,
   IconUser,
+  IconUserPlus,
   IconUsersGroup,
   IconX,
   IconChevronDown,
@@ -92,6 +93,7 @@ const navItems: AdminNavItem[] = [
   { label: 'Applications', href: '/admin/applications', icon: IconClipboardList },
   { label: 'Review Workspace', href: '/admin/applications/review', icon: IconAppWindow },
   { label: 'Violations Log', href: '/admin/violations', icon: IconShieldExclamation },
+  { label: 'Manage Auditors', href: '/admin/manage-auditors', icon: IconUserPlus },
   { label: 'Support Requests', href: '/admin/support', icon: IconHeadset },
   { label: 'Reports', href: '/admin/reports', icon: IconFileAnalytics },
   {

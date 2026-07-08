@@ -321,3 +321,20 @@ export interface GenerateAdminReportExportDto {
   format: string;
   range?: AdminReportRange;
 }
+
+export interface CreateAuditorAccountDto {
+  email: string;
+  password: string;
+  fullName?: string;
+}
+
+export interface AdminAuditorAccount {
+  id: string;
+  email: string;
+  role: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  fullName: string;
+  title: string;
+}

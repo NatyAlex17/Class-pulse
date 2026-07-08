@@ -1,4 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { AuditLogService } from '../../../common/services/audit-log.service';
+import { LocalUsersService } from '../../auth/services/local-users.service';
+import { SupabaseService } from '../../auth/services/supabase.service';
+import { AuditorPortalService } from '../../auditor/services/auditor-portal.service';
 import type { InstructorPortalState } from '../../instructor/types/instructor-portal.types';
 import { InstructorIntakeSubmissionService } from '../../instructor/services/instructor-intake-submission.service';
 import { InstructorPortalService } from '../../instructor/services/instructor-portal.service';
@@ -8,6 +12,7 @@ import type { StudentPortalState, StudentIntakeSubmission } from '../../student/
 
 import type {
   AddAdminApplicationNoteDto,
+  AdminAuditorAccount,
   AdminApplicationDetail,
   AdminAuditEvent,
   AdminCohortRecord,
@@ -24,6 +29,7 @@ import type {
   AdminReportRange,
   AdminReportStatusSlice,
   AdminReportTrendPoint,
+  CreateAuditorAccountDto,
   GenerateAdminReportExportDto,
   UpdateAdminApplicationStatusDto,
   UploadAdminDocumentDto,
@@ -38,6 +44,10 @@ export class AdminPortalService {
     private readonly studentPortalService: StudentPortalService,
     private readonly instructorPortalService: InstructorPortalService,
     private readonly instructorIntakeSubmissionService: InstructorIntakeSubmissionService,
+    private readonly supabaseService: SupabaseService,
+    private readonly localUsersService: LocalUsersService,
+    private readonly auditorPortalService: AuditorPortalService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   getPortal(adminId: string) {
@@ -322,6 +332,90 @@ export class AdminPortalService {
 
   getSettingsSummary(adminId: string) {
     return this.repository.findByAdminId(adminId).settings;
+  }
+
+  async listAuditors(): Promise<AdminAuditorAccount[]> {
+    const auditors = await this.localUsersService.listByRoles(['auditor']);
+
+    return auditors.map((auditor) => {
+      const profile = this.auditorPortalService.ensurePortalForLocalUser(auditor).profile;
+      return {
+        id: auditor.id,
+        email: auditor.email,
+        role: auditor.role,
+        status: auditor.status,
+        createdAt: auditor.createdAt,
+        updatedAt: auditor.updatedAt,
+        fullName: profile.fullName,
+        title: profile.title,
+      };
+    });
+  }
+
+  async createAuditorAccount(adminId: string, payload: CreateAuditorAccountDto): Promise<AdminAuditorAccount> {
+    const email = payload.email.trim().toLowerCase();
+    const password = payload.password.trim();
+    const fullName = payload.fullName?.trim();
+
+    if (!email || !email.includes('@')) {
+      throw new BadRequestException('A valid auditor email address is required.');
+    }
+
+    if (password.length < 8) {
+      throw new BadRequestException('Auditor passwords must be at least 8 characters long.');
+    }
+
+    const existingLocalUser = await this.localUsersService.findByEmail(email);
+    if (existingLocalUser) {
+      throw new BadRequestException('A user with that email address already exists.');
+    }
+
+    const { data, error } = await this.supabaseService.adminClient.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        role: 'auditor',
+        ...(fullName ? { full_name: fullName } : {}),
+      },
+    });
+
+    if (error || !data.user) {
+      throw new BadRequestException(error?.message ?? 'Unable to create the auditor account.');
+    }
+
+    const localUser = await this.localUsersService.syncSupabaseUser(data.user);
+    const portal = this.auditorPortalService.ensurePortalForLocalUser(localUser, {
+      fullName,
+    });
+
+    await this.auditLogService.record({
+      actorUserId: adminId,
+      actionType: 'admin.auditor.created',
+      targetEntityType: 'user',
+      targetEntityId: localUser.id,
+      afterValue: {
+        id: localUser.id,
+        email: localUser.email,
+        role: localUser.role,
+        status: localUser.status,
+      },
+      context: {
+        fullName: portal.profile.fullName,
+        provisionedBy: adminId,
+      },
+    });
+
+    return {
+      id: localUser.id,
+      email: localUser.email,
+      role: localUser.role,
+      status: localUser.status,
+      createdAt: localUser.createdAt,
+      updatedAt: localUser.updatedAt,
+      fullName: portal.profile.fullName,
+      title: portal.profile.title,
+    };
   }
 
   private getApplicationOrThrow(portal: AdminPortalState, applicationId: string): AdminApplicationDetail {

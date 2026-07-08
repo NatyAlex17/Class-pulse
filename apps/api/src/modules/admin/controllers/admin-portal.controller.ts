@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   Get,
   NotFoundException,
   Param,
@@ -19,6 +20,9 @@ import * as fs from 'fs';
 import { diskStorage } from 'multer';
 import * as path from 'path';
 
+import type { AuthenticatedUserContext } from '../../../common/auth/authenticated-request.interface';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { Roles } from '../../../common/decorators/roles.decorator';
 import { SupabaseAuthGuard } from '../../../common/auth/supabase-auth.guard';
 import { createApiResponse } from '../../../common/utils/create-api-response';
 import { LEARNING_RESOURCES_UPLOADS_DIR, UPLOADS_URL_PREFIX } from '../../../common/utils/upload-paths';
@@ -46,6 +50,7 @@ import { InstructorPortalService } from '../../instructor/services/instructor-po
 import type { ApproveInstructorIntakeDto } from '../../instructor/types/instructor-portal.types';
 import type {
   AddAdminApplicationNoteDto,
+  CreateAuditorAccountDto,
   GenerateAdminReportExportDto,
   UpdateAdminApplicationStatusDto,
   UploadAdminDocumentDto,
@@ -226,6 +231,35 @@ export class AdminPortalController {
     return createApiResponse(
       this.adminPortalService.getSettingsSummary(adminId),
       'Admin settings summary retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Roles('admin')
+  @Get('auditors')
+  async listAuditors(
+    @Param('adminId') adminId: string,
+    @CurrentUser() currentUser: AuthenticatedUserContext,
+  ) {
+    this.assertAdminAccess(adminId, currentUser);
+    return createApiResponse(
+      await this.adminPortalService.listAuditors(),
+      'Auditor accounts retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Roles('admin')
+  @Post('auditors')
+  async createAuditorAccount(
+    @Param('adminId') adminId: string,
+    @Body() body: CreateAuditorAccountDto,
+    @CurrentUser() currentUser: AuthenticatedUserContext,
+  ) {
+    this.assertAdminAccess(adminId, currentUser);
+    return createApiResponse(
+      await this.adminPortalService.createAuditorAccount(adminId, body),
+      'Auditor account created successfully.',
     );
   }
 
@@ -515,6 +549,16 @@ export class AdminPortalController {
       return { ...submission, instructorName: profile.fullName, instructorEmail: profile.email };
     } catch {
       return { ...submission, instructorName: submission.instructorId };
+    }
+  }
+
+  private assertAdminAccess(adminId: string, currentUser: AuthenticatedUserContext) {
+    if (currentUser.localUser.role !== 'admin') {
+      throw new ForbiddenException('Only admin users can manage auditor accounts.');
+    }
+
+    if (currentUser.localUser.id !== adminId) {
+      throw new ForbiddenException('You can only manage auditor accounts from your own admin workspace.');
     }
   }
 

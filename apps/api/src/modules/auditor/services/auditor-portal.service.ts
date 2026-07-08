@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 
+import type { LocalUserRecord } from '../../auth/types/auth-user.types';
 import type {
   AddAuditorStudentNoteDto,
   AuditorAuditEvent,
@@ -21,6 +22,10 @@ import { AuditorPortalRepository } from './auditor-portal.repository';
 @Injectable()
 export class AuditorPortalService {
   constructor(private readonly repository: AuditorPortalRepository) {}
+
+  ensurePortalForLocalUser(localUser: LocalUserRecord, options?: { fullName?: string }) {
+    return this.repository.ensureForLocalUser(localUser, options);
+  }
 
   getPortal(auditorId: string) {
     return this.repository.findByAuditorId(auditorId);

@@ -1,0 +1,2408 @@
+{
+  "portals": [
+    {
+      "profile": {
+        "id": "auditor-alex",
+        "fullName": "Alex Auditor",
+        "title": "Compliance Officer",
+        "email": "alex.auditor@classpulse.edu",
+        "phone": "(555) 987-6543",
+        "location": "San Francisco, CA",
+        "memberSince": "2023-01-15",
+        "status": "Active",
+        "credentials": [
+          "CAHC - Certified Auditor of Healthcare Compliance",
+          "CCEP - Certified Compliance and Ethics Professional",
+          "HIPAA Privacy Certified",
+          "Healthcare Quality Improvement Certified"
+        ],
+        "assignedPrograms": [
+          "Golden State Nurse Assistant Training Program",
+          "Medical Assistant Program",
+          "Radiologic Technology Program"
+        ]
+      },
+      "dashboard": {
+        "profile": {
+          "id": "auditor-alex",
+          "fullName": "Alex Auditor",
+          "title": "Compliance Officer",
+          "email": "alex.auditor@classpulse.edu",
+          "phone": "(555) 987-6543",
+          "location": "San Francisco, CA",
+          "memberSince": "2023-01-15",
+          "status": "Active",
+          "credentials": [
+            "CAHC - Certified Auditor of Healthcare Compliance",
+            "CCEP - Certified Compliance and Ethics Professional",
+            "HIPAA Privacy Certified",
+            "Healthcare Quality Improvement Certified"
+          ],
+          "assignedPrograms": [
+            "Golden State Nurse Assistant Training Program",
+            "Medical Assistant Program",
+            "Radiologic Technology Program"
+          ]
+        },
+        "cohortLabel": "NATP Cohort #2024-B",
+        "kpis": [
+          {
+            "label": "COHORT COMPLIANCE",
+            "value": "94%",
+            "tone": "primary",
+            "note": "+2% this cycle"
+          },
+          {
+            "label": "MISSING EVIDENCE",
+            "value": "07",
+            "tone": "warning",
+            "note": "2 urgent"
+          },
+          {
+            "label": "INSTRUCTOR STATUS",
+            "value": "100%",
+            "tone": "success",
+            "note": "All current"
+          },
+          {
+            "label": "AUDIT READINESS",
+            "value": "91%",
+            "tone": "info",
+            "note": "3 issues open"
+          }
+        ],
+        "summaryCards": [
+          {
+            "id": "student-file-verification",
+            "title": "Student file verification",
+            "detail": "Attendance, theory hours, and clinical completion evidence remain in sync.",
+            "badge": "Stable",
+            "tone": "success"
+          },
+          {
+            "id": "certification-readiness",
+            "title": "Certification readiness",
+            "detail": "Two candidates are blocked by final evidence review before certification release.",
+            "badge": "Needs review",
+            "tone": "warning"
+          },
+          {
+            "id": "exceptions-and-gaps",
+            "title": "Exceptions and gaps",
+            "detail": "Open evidence requests and one policy variance require documented disposition.",
+            "badge": "Open",
+            "tone": "error"
+          }
+        ],
+        "evidenceReadiness": [
+          {
+            "id": "student-records",
+            "label": "Student records",
+            "value": 97,
+            "tone": "success"
+          },
+          {
+            "id": "instructor-qualifications",
+            "label": "Instructor qualifications",
+            "value": 100,
+            "tone": "primary"
+          },
+          {
+            "id": "clinical-compliance",
+            "label": "Clinical compliance",
+            "value": 89,
+            "tone": "warning"
+          },
+          {
+            "id": "program-requirements",
+            "label": "Program requirements",
+            "value": 92,
+            "tone": "info"
+          }
+        ],
+        "openExceptions": [
+          {
+            "id": "exception-1",
+            "title": "Missing immunization evidence",
+            "detail": "One student file remains blocked pending final immunization proof.",
+            "priority": "High",
+            "status": "Open"
+          },
+          {
+            "id": "exception-2",
+            "title": "Clinical session signoff pending",
+            "detail": "One instructor still needs to sign a completed clinical session.",
+            "priority": "Medium",
+            "status": "Monitoring"
+          },
+          {
+            "id": "exception-3",
+            "title": "Policy variance archive reference",
+            "detail": "Program policy revision note needs archive cross-reference before closeout.",
+            "priority": "Low",
+            "status": "Open"
+          }
+        ],
+        "auditTrailSnapshot": {
+          "lastEvidenceExport": "2026-06-30T08:08:00.000Z",
+          "latestVerificationEvent": "Clinical roster locked",
+          "certificationBatch": "2 pending release"
+        }
+      },
+      "studentRecords": {
+        "summary": {
+          "totalStudents": 6,
+          "recordsCompleteAverage": "91%",
+          "needsReview": 1
+        },
+        "activeStudentId": "student-alice",
+        "records": [
+          {
+            "id": "student-alice",
+            "name": "Alice Smith",
+            "cohort": "CNA 12",
+            "status": "On Track",
+            "recordsComplete": "94%",
+            "lastReview": "2026-06-28",
+            "theoryHours": 60,
+            "clinicalHours": 98,
+            "attendanceRate": 97,
+            "certificationEligibility": "Eligible",
+            "missingEvidence": [],
+            "notes": [
+              "Attendance and completion evidence verified."
+            ]
+          },
+          {
+            "id": "student-marcus",
+            "name": "Marcus Chen",
+            "cohort": "CNA 12",
+            "status": "On Track",
+            "recordsComplete": "89%",
+            "lastReview": "2026-06-27",
+            "theoryHours": 58,
+            "clinicalHours": 93,
+            "attendanceRate": 95,
+            "certificationEligibility": "Pending Review",
+            "missingEvidence": [
+              "Final shift signoff"
+            ],
+            "notes": [
+              "One clinical signoff still pending."
+            ]
+          },
+          {
+            "id": "student-elena",
+            "name": "Elena Ford",
+            "cohort": "HHA",
+            "status": "On Track",
+            "recordsComplete": "78%",
+            "lastReview": "2026-07-08",
+            "theoryHours": 49,
+            "clinicalHours": 71,
+            "attendanceRate": 82,
+            "certificationEligibility": "Pending Review",
+            "missingEvidence": [
+              "Safety training completion",
+              "Updated immunization record"
+            ],
+            "notes": [
+              "Blocker remains open until safety evidence is uploaded.",
+              "Safety evidence received and awaiting final transcript reconciliation.",
+              "Safety evidence received and awaiting final transcript reconciliation."
+            ]
+          },
+          {
+            "id": "student-priya",
+            "name": "Priya Patel",
+            "cohort": "CNA 13",
+            "status": "On Track",
+            "recordsComplete": "92%",
+            "lastReview": "2026-06-28",
+            "theoryHours": 57,
+            "clinicalHours": 96,
+            "attendanceRate": 96,
+            "certificationEligibility": "Eligible",
+            "missingEvidence": [],
+            "notes": [
+              "Ready for final completion review."
+            ]
+          },
+          {
+            "id": "student-james",
+            "name": "James Rodriguez",
+            "cohort": "CNA 13",
+            "status": "Complete",
+            "recordsComplete": "100%",
+            "lastReview": "2026-06-28",
+            "theoryHours": 60,
+            "clinicalHours": 100,
+            "attendanceRate": 99,
+            "certificationEligibility": "Eligible",
+            "missingEvidence": [],
+            "notes": [
+              "Full file complete and regulator-ready."
+            ]
+          },
+          {
+            "id": "student-lisa",
+            "name": "Lisa Wong",
+            "cohort": "MA",
+            "status": "On Track",
+            "recordsComplete": "87%",
+            "lastReview": "2026-06-27",
+            "theoryHours": 54,
+            "clinicalHours": 88,
+            "attendanceRate": 93,
+            "certificationEligibility": "Pending Review",
+            "missingEvidence": [
+              "Transcript request queued"
+            ],
+            "notes": [
+              "Awaiting transcript export bundle."
+            ]
+          }
+        ]
+      },
+      "instructorQualifications": {
+        "summary": {
+          "totalInstructors": 4,
+          "compliant": 3,
+          "reviewRequired": 1
+        },
+        "activeInstructorId": "instructor-sarah",
+        "instructors": [
+          {
+            "id": "instructor-sarah",
+            "name": "Dr. Sarah Chen",
+            "role": "Lead Clinical Instructor",
+            "credentials": [
+              "RN-BSN",
+              "ACLS",
+              "BLS",
+              "Clinical Instructor Cert"
+            ],
+            "certifications": {
+              "valid": 3,
+              "expired": 0
+            },
+            "status": "Compliant",
+            "lastReview": "2026-06-28",
+            "nextExpiration": "2027-03-10",
+            "notes": [
+              "All credentials verified."
+            ]
+          },
+          {
+            "id": "instructor-michael",
+            "name": "Michael Torres",
+            "role": "Clinical Instructor",
+            "credentials": [
+              "LVN",
+              "ACLS",
+              "BLS"
+            ],
+            "certifications": {
+              "valid": 3,
+              "expired": 0
+            },
+            "status": "Compliant",
+            "lastReview": "2026-06-27",
+            "nextExpiration": "2026-12-14",
+            "notes": [
+              "No open qualification issues."
+            ]
+          },
+          {
+            "id": "instructor-jennifer",
+            "name": "Jennifer Park",
+            "role": "Classroom Instructor",
+            "credentials": [
+              "RN",
+              "BSN",
+              "ACLS"
+            ],
+            "certifications": {
+              "valid": 2,
+              "expired": 1
+            },
+            "status": "Compliant",
+            "lastReview": "2026-07-08",
+            "nextExpiration": "2026-06-20",
+            "notes": [
+              "One expired certification needs remediation plan.",
+              "Remediation evidence accepted and credential is current."
+            ]
+          },
+          {
+            "id": "instructor-david",
+            "name": "David Martinez",
+            "role": "Clinical Coordinator",
+            "credentials": [
+              "RN",
+              "ACLS",
+              "BLS"
+            ],
+            "certifications": {
+              "valid": 3,
+              "expired": 0
+            },
+            "status": "Compliant",
+            "lastReview": "2026-06-28",
+            "nextExpiration": "2027-01-22",
+            "notes": [
+              "Current and approved."
+            ]
+          }
+        ]
+      },
+      "clinicalCompliance": {
+        "summary": {
+          "complianceRate": "100%",
+          "issuesOpen": 0,
+          "lastAudit": "2026-07-08T13:36:03.036Z"
+        },
+        "items": [
+          {
+            "id": "clinical-hours",
+            "category": "Clinical Hours",
+            "standard": "100 hours minimum",
+            "status": "Compliant",
+            "details": "95% of students are on pace to satisfy clinical minimums.",
+            "lastAudit": "2026-06-28T09:40:00.000Z",
+            "evidenceLinks": [
+              "hours-ledger",
+              "rotation-summary"
+            ]
+          },
+          {
+            "id": "supervision-ratios",
+            "category": "Supervision Ratios",
+            "standard": "1:8 instructor to student",
+            "status": "Compliant",
+            "details": "All placements verified against roster and staffing rules.",
+            "lastAudit": "2026-06-28T09:00:00.000Z",
+            "evidenceLinks": [
+              "staffing-grid"
+            ]
+          },
+          {
+            "id": "facility-standards",
+            "category": "Facility Standards",
+            "standard": "Approved clinical partner documentation",
+            "status": "Compliant",
+            "details": "All five active sites have current agreements and approvals.",
+            "lastAudit": "2026-06-27T15:30:00.000Z",
+            "evidenceLinks": [
+              "facility-agreements"
+            ]
+          },
+          {
+            "id": "safety-protocols",
+            "category": "Safety Protocols",
+            "standard": "Annual training required",
+            "status": "Compliant",
+            "details": "Two students are pending completion of safety training documentation.",
+            "lastAudit": "2026-07-08T13:36:03.036Z",
+            "evidenceLinks": [
+              "safety-training-roster"
+            ]
+          },
+          {
+            "id": "documentation",
+            "category": "Documentation",
+            "standard": "Digital records with backup",
+            "status": "Compliant",
+            "details": "Daily backup completed and evidence bundles are current.",
+            "lastAudit": "2026-06-27T18:00:00.000Z",
+            "evidenceLinks": [
+              "backup-log",
+              "evidence-bundle-index"
+            ]
+          },
+          {
+            "id": "assessment-standards",
+            "category": "Assessment Standards",
+            "standard": "Curriculum-aligned competency evidence",
+            "status": "Compliant",
+            "details": "Assessment completion is aligned with program requirements.",
+            "lastAudit": "2026-06-27T13:10:00.000Z",
+            "evidenceLinks": [
+              "assessment-map"
+            ]
+          }
+        ],
+        "immediateAction": {
+          "title": "Immediate Action Required",
+          "detail": "Safety training completion for 2 students",
+          "targetItemId": "safety-protocols"
+        }
+      },
+      "programRequirements": {
+        "activeProgramId": "program-cna-12",
+        "programs": [
+          {
+            "id": "program-cna-12",
+            "name": "CNA Cohort 12",
+            "completion": "100%",
+            "theoryHoursRequired": 60,
+            "clinicalHoursRequired": 100,
+            "stateExamRequired": true,
+            "requirements": [
+              {
+                "id": "req-1",
+                "item": "Classroom hours (60)",
+                "completed": true
+              },
+              {
+                "id": "req-2",
+                "item": "Clinical hours (100)",
+                "completed": true
+              },
+              {
+                "id": "req-3",
+                "item": "Skills assessment",
+                "completed": true
+              },
+              {
+                "id": "req-4",
+                "item": "State exam preparation",
+                "completed": true
+              },
+              {
+                "id": "req-5",
+                "item": "Capstone project",
+                "completed": true
+              }
+            ]
+          },
+          {
+            "id": "program-cna-13",
+            "name": "CNA Cohort 13",
+            "completion": "60%",
+            "theoryHoursRequired": 60,
+            "clinicalHoursRequired": 100,
+            "stateExamRequired": true,
+            "requirements": [
+              {
+                "id": "req-6",
+                "item": "Classroom hours (60)",
+                "completed": true
+              },
+              {
+                "id": "req-7",
+                "item": "Clinical hours (100)",
+                "completed": true
+              },
+              {
+                "id": "req-8",
+                "item": "Skills assessment",
+                "completed": false
+              },
+              {
+                "id": "req-9",
+                "item": "State exam preparation",
+                "completed": true
+              },
+              {
+                "id": "req-10",
+                "item": "Capstone project",
+                "completed": false
+              }
+            ]
+          },
+          {
+            "id": "program-ma",
+            "name": "Medical Assistant",
+            "completion": "80%",
+            "theoryHoursRequired": 100,
+            "clinicalHoursRequired": 160,
+            "stateExamRequired": true,
+            "requirements": [
+              {
+                "id": "req-11",
+                "item": "Classroom hours (100)",
+                "completed": true
+              },
+              {
+                "id": "req-12",
+                "item": "Clinical hours (160)",
+                "completed": true
+              },
+              {
+                "id": "req-13",
+                "item": "Skills assessment",
+                "completed": true
+              },
+              {
+                "id": "req-14",
+                "item": "Externship (160)",
+                "completed": true
+              },
+              {
+                "id": "req-15",
+                "item": "Certification exam",
+                "completed": false
+              }
+            ]
+          }
+        ]
+      },
+      "documents": {
+        "summary": {
+          "totalDocuments": 6,
+          "current": 5,
+          "needsReview": 1
+        },
+        "documents": [
+          {
+            "id": "doc-attendance",
+            "title": "Student Attendance Records",
+            "type": "Spreadsheet",
+            "category": "Attendance",
+            "status": "Current",
+            "lastUpdated": "2026-06-28 10:15 AM",
+            "size": "2.4 MB",
+            "owner": "Operations"
+          },
+          {
+            "id": "doc-clinical",
+            "title": "Clinical Skills Assessment Forms",
+            "type": "PDF",
+            "category": "Clinical",
+            "status": "Current",
+            "lastUpdated": "2026-06-28 09:30 AM",
+            "size": "15.8 MB",
+            "owner": "Clinical Education"
+          },
+          {
+            "id": "doc-instructors",
+            "title": "Instructor Credential Files",
+            "type": "Archive",
+            "category": "Instructor",
+            "status": "Current",
+            "lastUpdated": "2026-06-27 02:00 PM",
+            "size": "48.2 MB",
+            "owner": "HR Compliance"
+          },
+          {
+            "id": "doc-safety",
+            "title": "Safety Training Completion",
+            "type": "Spreadsheet",
+            "category": "Regulatory",
+            "status": "Needs Review",
+            "lastUpdated": "2026-06-25 11:45 AM",
+            "size": "1.2 MB",
+            "owner": "Student Services"
+          },
+          {
+            "id": "doc-curriculum",
+            "title": "Program Curriculum Documentation",
+            "type": "PDF",
+            "category": "Policy",
+            "status": "Current",
+            "lastUpdated": "2026-06-20 03:15 PM",
+            "size": "5.6 MB",
+            "owner": "Academic Affairs"
+          },
+          {
+            "id": "doc-placement",
+            "title": "Clinical Placement Agreements",
+            "type": "PDF",
+            "category": "Clinical",
+            "status": "Current",
+            "lastUpdated": "2026-06-28 08:00 AM",
+            "size": "3.1 MB",
+            "owner": "Clinical Education"
+          }
+        ]
+      },
+      "reports": {
+        "cards": [
+          {
+            "id": "comprehensive-compliance-report",
+            "title": "Comprehensive Compliance Report",
+            "detail": "A 360-degree view of institutional compliance across cohorts, modules, and instructor certifications.",
+            "badge": "Up to date",
+            "tone": "success",
+            "primaryAction": "Generate PDF",
+            "secondaryAction": "Export CSV"
+          },
+          {
+            "id": "instructor-qualifications-summary",
+            "title": "Instructor Qualifications Summary",
+            "detail": "Aggregated credential and qualification evidence for accreditation and regulatory review.",
+            "badge": "Review req.",
+            "tone": "warning",
+            "primaryAction": "Generate PDF",
+            "secondaryAction": "Export CSV"
+          },
+          {
+            "id": "clinical-hour-audit",
+            "title": "Clinical Hour Audit",
+            "detail": "Detailed clinical logs mapped to regulator-facing hour validation and signature evidence.",
+            "badge": "Preset: CDPH",
+            "tone": "primary",
+            "primaryAction": "CDPH PDF",
+            "secondaryAction": "Audit Feed"
+          },
+          {
+            "id": "state-regulatory-packet",
+            "title": "State Regulatory Packet",
+            "detail": "Submission-ready bundle for regulator reviews, including curriculum maps and pass-rate evidence.",
+            "badge": "Packet",
+            "tone": "info",
+            "primaryAction": "Generate PDF",
+            "secondaryAction": "Export ZIP"
+          }
+        ],
+        "exportHistory": [
+          {
+            "id": "export-1783517763102",
+            "report": "Clinical Hour Audit",
+            "status": "Preset: CDPH",
+            "generated": "2026-07-08 13:36",
+            "format": "PDF",
+            "category": "Clinical"
+          },
+          {
+            "id": "export-1783517763043",
+            "report": "Clinical Hour Audit",
+            "status": "Preset: CDPH",
+            "generated": "2026-07-08 13:36",
+            "format": "PDF",
+            "category": "Clinical"
+          },
+          {
+            "id": "export-1",
+            "report": "Comprehensive Compliance Report",
+            "status": "Up to date",
+            "generated": "2026-06-30 08:32 AM",
+            "format": "PDF / CSV",
+            "category": "Compliance"
+          },
+          {
+            "id": "export-2",
+            "report": "Instructor Qualifications Summary",
+            "status": "Review req.",
+            "generated": "2026-06-29 09:15 AM",
+            "format": "PDF / CSV",
+            "category": "Qualifications"
+          },
+          {
+            "id": "export-3",
+            "report": "Clinical Hour Audit",
+            "status": "Preset: CDPH",
+            "generated": "2026-06-30 06:45 AM",
+            "format": "CDPH PDF / Feed",
+            "category": "Clinical"
+          },
+          {
+            "id": "export-4",
+            "report": "State Regulatory Packet",
+            "status": "Packet",
+            "generated": "2026-06-28 11:20 AM",
+            "format": "Submission Bundle",
+            "category": "Regulatory"
+          }
+        ]
+      },
+      "settings": {
+        "preferences": [
+          {
+            "id": "daily-compliance-reports",
+            "label": "Daily Compliance Reports",
+            "description": "Receive automated daily compliance summaries.",
+            "enabled": true,
+            "group": "notifications"
+          },
+          {
+            "id": "critical-alerts",
+            "label": "Critical Alerts",
+            "description": "Get notified immediately of critical compliance issues.",
+            "enabled": true,
+            "group": "notifications"
+          },
+          {
+            "id": "document-updates",
+            "label": "Document Updates",
+            "description": "Notifications when files are updated or added.",
+            "enabled": true,
+            "group": "notifications"
+          },
+          {
+            "id": "student-record-changes",
+            "label": "Student Record Changes",
+            "description": "Alerts when student records are modified.",
+            "enabled": true,
+            "group": "notifications"
+          },
+          {
+            "id": "automatic-daily-exports",
+            "label": "Automatic Daily Exports",
+            "description": "Automatically export compliance data daily.",
+            "enabled": true,
+            "group": "exports"
+          },
+          {
+            "id": "cloud-backup",
+            "label": "Cloud Backup",
+            "description": "Enable automatic cloud backup of audit logs.",
+            "enabled": false,
+            "group": "exports"
+          },
+          {
+            "id": "encryption",
+            "label": "Encryption",
+            "description": "Encrypt all exported files.",
+            "enabled": true,
+            "group": "exports"
+          }
+        ],
+        "accountActions": [
+          "Change Password",
+          "View Login History",
+          "Download My Data"
+        ]
+      },
+      "regulatorAccess": {
+        "regulator": "CDPH",
+        "accessMode": "Read Only",
+        "transcriptExportsReady": 6,
+        "auditPacketsReady": 6,
+        "evidenceBundlesReady": 9,
+        "lastAccessReview": "2026-06-29T16:00:00.000Z"
+      },
+      "auditTrail": [
+        {
+          "id": "audit-1783517763162-858",
+          "timestamp": "2026-07-08 13:36",
+          "action": "Auditor setting updated",
+          "actor": "Alex Auditor",
+          "status": "Success",
+          "details": "Cloud Backup disabled.",
+          "target": "cloud-backup",
+          "metadata": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "audit-1783517763102-131",
+          "timestamp": "2026-07-08 13:36",
+          "action": "Evidence export initiated",
+          "actor": "Alex Auditor",
+          "status": "Success",
+          "details": "Clinical Hour Audit generated in PDF.",
+          "target": "export-1783517763102",
+          "metadata": {
+            "reportId": "clinical-hour-audit",
+            "format": "PDF"
+          }
+        },
+        {
+          "id": "audit-1783517763043-948",
+          "timestamp": "2026-07-08 13:36",
+          "action": "Evidence export initiated",
+          "actor": "Alex Auditor",
+          "status": "Success",
+          "details": "Clinical Hour Audit generated in PDF.",
+          "target": "export-1783517763043",
+          "metadata": {
+            "reportId": "clinical-hour-audit",
+            "format": "PDF"
+          }
+        },
+        {
+          "id": "audit-1783517763036-789",
+          "timestamp": "2026-07-08 13:36",
+          "action": "Clinical compliance item reviewed",
+          "actor": "Alex Auditor",
+          "status": "Success",
+          "details": "Safety Protocols marked Compliant.",
+          "target": "safety-protocols",
+          "metadata": {
+            "status": "Compliant"
+          }
+        },
+        {
+          "id": "audit-1783517763029-189",
+          "timestamp": "2026-07-08 13:36",
+          "action": "Clinical compliance item reviewed",
+          "actor": "Alex Auditor",
+          "status": "Success",
+          "details": "Safety Protocols marked Compliant.",
+          "target": "safety-protocols",
+          "metadata": {
+            "status": "Compliant"
+          }
+        },
+        {
+          "id": "audit-1783517762993-108",
+          "timestamp": "2026-07-08 13:36",
+          "action": "Instructor qualification reviewed",
+          "actor": "Alex Auditor",
+          "status": "Success",
+          "details": "Remediation evidence accepted and credential is current.",
+          "target": "instructor-jennifer",
+          "metadata": {
+            "status": "Compliant"
+          }
+        },
+        {
+          "id": "audit-1783517762948-566",
+          "timestamp": "2026-07-08 13:36",
+          "action": "Student record verified",
+          "actor": "Alex Auditor",
+          "status": "Success",
+          "details": "Safety evidence received and awaiting final transcript reconciliation.",
+          "target": "student-elena",
+          "metadata": {
+            "status": "On Track",
+            "certificationEligibility": "Pending Review"
+          }
+        },
+        {
+          "id": "audit-1783517762917-641",
+          "timestamp": "2026-07-08 13:36",
+          "action": "Student record verified",
+          "actor": "Alex Auditor",
+          "status": "Success",
+          "details": "Safety evidence received and awaiting final transcript reconciliation.",
+          "target": "student-elena",
+          "metadata": {
+            "status": "On Track",
+            "certificationEligibility": "Pending Review"
+          }
+        },
+        {
+          "id": "audit-1",
+          "timestamp": "2026-06-28 11:08 AM",
+          "action": "Evidence export initiated",
+          "actor": "Alex Auditor",
+          "status": "Success",
+          "details": "Clinical hours audit - CSV format, 156 records",
+          "target": "clinical-hour-audit",
+          "metadata": {
+            "format": "CSV"
+          }
+        },
+        {
+          "id": "audit-2",
+          "timestamp": "2026-06-28 10:45 AM",
+          "action": "Student record verified",
+          "actor": "Alex Auditor",
+          "status": "Success",
+          "details": "Marcus Chen - All documentation complete",
+          "target": "student-marcus"
+        },
+        {
+          "id": "audit-3",
+          "timestamp": "2026-06-28 10:12 AM",
+          "action": "Certification readiness check",
+          "actor": "System",
+          "status": "Alert",
+          "details": "2 students flagged - missing final evidence",
+          "target": "certification-batch"
+        }
+      ]
+    },
+    {
+      "profile": {
+        "id": "auditor-new",
+        "fullName": "New Auditor",
+        "title": "Compliance Auditor",
+        "email": "new.auditor@classpulse.edu",
+        "phone": "",
+        "location": "",
+        "memberSince": "2026-07-08",
+        "status": "Active",
+        "credentials": [],
+        "assignedPrograms": []
+      },
+      "dashboard": {
+        "profile": {
+          "id": "auditor-new",
+          "fullName": "New Auditor",
+          "title": "Compliance Auditor",
+          "email": "new.auditor@classpulse.edu",
+          "phone": "",
+          "location": "",
+          "memberSince": "2026-07-08",
+          "status": "Active",
+          "credentials": [],
+          "assignedPrograms": []
+        },
+        "cohortLabel": "NATP Cohort #2024-B",
+        "kpis": [
+          {
+            "label": "COHORT COMPLIANCE",
+            "value": "94%",
+            "tone": "primary",
+            "note": "+2% this cycle"
+          },
+          {
+            "label": "MISSING EVIDENCE",
+            "value": "07",
+            "tone": "warning",
+            "note": "2 urgent"
+          },
+          {
+            "label": "INSTRUCTOR STATUS",
+            "value": "100%",
+            "tone": "success",
+            "note": "All current"
+          },
+          {
+            "label": "AUDIT READINESS",
+            "value": "91%",
+            "tone": "info",
+            "note": "3 issues open"
+          }
+        ],
+        "summaryCards": [
+          {
+            "id": "student-file-verification",
+            "title": "Student file verification",
+            "detail": "Attendance, theory hours, and clinical completion evidence remain in sync.",
+            "badge": "Stable",
+            "tone": "success"
+          },
+          {
+            "id": "certification-readiness",
+            "title": "Certification readiness",
+            "detail": "Two candidates are blocked by final evidence review before certification release.",
+            "badge": "Needs review",
+            "tone": "warning"
+          },
+          {
+            "id": "exceptions-and-gaps",
+            "title": "Exceptions and gaps",
+            "detail": "Open evidence requests and one policy variance require documented disposition.",
+            "badge": "Open",
+            "tone": "error"
+          }
+        ],
+        "evidenceReadiness": [
+          {
+            "id": "student-records",
+            "label": "Student records",
+            "value": 97,
+            "tone": "success"
+          },
+          {
+            "id": "instructor-qualifications",
+            "label": "Instructor qualifications",
+            "value": 100,
+            "tone": "primary"
+          },
+          {
+            "id": "clinical-compliance",
+            "label": "Clinical compliance",
+            "value": 89,
+            "tone": "warning"
+          },
+          {
+            "id": "program-requirements",
+            "label": "Program requirements",
+            "value": 92,
+            "tone": "info"
+          }
+        ],
+        "openExceptions": [
+          {
+            "id": "exception-1",
+            "title": "Missing immunization evidence",
+            "detail": "One student file remains blocked pending final immunization proof.",
+            "priority": "High",
+            "status": "Open"
+          },
+          {
+            "id": "exception-2",
+            "title": "Clinical session signoff pending",
+            "detail": "One instructor still needs to sign a completed clinical session.",
+            "priority": "Medium",
+            "status": "Monitoring"
+          },
+          {
+            "id": "exception-3",
+            "title": "Policy variance archive reference",
+            "detail": "Program policy revision note needs archive cross-reference before closeout.",
+            "priority": "Low",
+            "status": "Open"
+          }
+        ],
+        "auditTrailSnapshot": {
+          "lastEvidenceExport": "2026-06-30T08:08:00.000Z",
+          "latestVerificationEvent": "Clinical roster locked",
+          "certificationBatch": "2 pending release"
+        }
+      },
+      "studentRecords": {
+        "summary": {
+          "totalStudents": 6,
+          "recordsCompleteAverage": "91%",
+          "needsReview": 1
+        },
+        "activeStudentId": "student-alice",
+        "records": [
+          {
+            "id": "student-alice",
+            "name": "Alice Smith",
+            "cohort": "CNA 12",
+            "status": "On Track",
+            "recordsComplete": "94%",
+            "lastReview": "2026-06-28",
+            "theoryHours": 60,
+            "clinicalHours": 98,
+            "attendanceRate": 97,
+            "certificationEligibility": "Eligible",
+            "missingEvidence": [],
+            "notes": [
+              "Attendance and completion evidence verified."
+            ]
+          },
+          {
+            "id": "student-marcus",
+            "name": "Marcus Chen",
+            "cohort": "CNA 12",
+            "status": "On Track",
+            "recordsComplete": "89%",
+            "lastReview": "2026-06-27",
+            "theoryHours": 58,
+            "clinicalHours": 93,
+            "attendanceRate": 95,
+            "certificationEligibility": "Pending Review",
+            "missingEvidence": [
+              "Final shift signoff"
+            ],
+            "notes": [
+              "One clinical signoff still pending."
+            ]
+          },
+          {
+            "id": "student-elena",
+            "name": "Elena Ford",
+            "cohort": "HHA",
+            "status": "At Risk",
+            "recordsComplete": "78%",
+            "lastReview": "2026-06-25",
+            "theoryHours": 49,
+            "clinicalHours": 71,
+            "attendanceRate": 82,
+            "certificationEligibility": "Blocked",
+            "missingEvidence": [
+              "Safety training completion",
+              "Updated immunization record"
+            ],
+            "notes": [
+              "Blocker remains open until safety evidence is uploaded."
+            ]
+          },
+          {
+            "id": "student-priya",
+            "name": "Priya Patel",
+            "cohort": "CNA 13",
+            "status": "On Track",
+            "recordsComplete": "92%",
+            "lastReview": "2026-06-28",
+            "theoryHours": 57,
+            "clinicalHours": 96,
+            "attendanceRate": 96,
+            "certificationEligibility": "Eligible",
+            "missingEvidence": [],
+            "notes": [
+              "Ready for final completion review."
+            ]
+          },
+          {
+            "id": "student-james",
+            "name": "James Rodriguez",
+            "cohort": "CNA 13",
+            "status": "Complete",
+            "recordsComplete": "100%",
+            "lastReview": "2026-06-28",
+            "theoryHours": 60,
+            "clinicalHours": 100,
+            "attendanceRate": 99,
+            "certificationEligibility": "Eligible",
+            "missingEvidence": [],
+            "notes": [
+              "Full file complete and regulator-ready."
+            ]
+          },
+          {
+            "id": "student-lisa",
+            "name": "Lisa Wong",
+            "cohort": "MA",
+            "status": "On Track",
+            "recordsComplete": "87%",
+            "lastReview": "2026-06-27",
+            "theoryHours": 54,
+            "clinicalHours": 88,
+            "attendanceRate": 93,
+            "certificationEligibility": "Pending Review",
+            "missingEvidence": [
+              "Transcript request queued"
+            ],
+            "notes": [
+              "Awaiting transcript export bundle."
+            ]
+          }
+        ]
+      },
+      "instructorQualifications": {
+        "summary": {
+          "totalInstructors": 4,
+          "compliant": 3,
+          "reviewRequired": 1
+        },
+        "activeInstructorId": "instructor-sarah",
+        "instructors": [
+          {
+            "id": "instructor-sarah",
+            "name": "Dr. Sarah Chen",
+            "role": "Lead Clinical Instructor",
+            "credentials": [
+              "RN-BSN",
+              "ACLS",
+              "BLS",
+              "Clinical Instructor Cert"
+            ],
+            "certifications": {
+              "valid": 3,
+              "expired": 0
+            },
+            "status": "Compliant",
+            "lastReview": "2026-06-28",
+            "nextExpiration": "2027-03-10",
+            "notes": [
+              "All credentials verified."
+            ]
+          },
+          {
+            "id": "instructor-michael",
+            "name": "Michael Torres",
+            "role": "Clinical Instructor",
+            "credentials": [
+              "LVN",
+              "ACLS",
+              "BLS"
+            ],
+            "certifications": {
+              "valid": 3,
+              "expired": 0
+            },
+            "status": "Compliant",
+            "lastReview": "2026-06-27",
+            "nextExpiration": "2026-12-14",
+            "notes": [
+              "No open qualification issues."
+            ]
+          },
+          {
+            "id": "instructor-jennifer",
+            "name": "Jennifer Park",
+            "role": "Classroom Instructor",
+            "credentials": [
+              "RN",
+              "BSN",
+              "ACLS"
+            ],
+            "certifications": {
+              "valid": 2,
+              "expired": 1
+            },
+            "status": "Review Required",
+            "lastReview": "2026-06-26",
+            "nextExpiration": "2026-06-20",
+            "notes": [
+              "One expired certification needs remediation plan."
+            ]
+          },
+          {
+            "id": "instructor-david",
+            "name": "David Martinez",
+            "role": "Clinical Coordinator",
+            "credentials": [
+              "RN",
+              "ACLS",
+              "BLS"
+            ],
+            "certifications": {
+              "valid": 3,
+              "expired": 0
+            },
+            "status": "Compliant",
+            "lastReview": "2026-06-28",
+            "nextExpiration": "2027-01-22",
+            "notes": [
+              "Current and approved."
+            ]
+          }
+        ]
+      },
+      "clinicalCompliance": {
+        "summary": {
+          "complianceRate": "92%",
+          "issuesOpen": 1,
+          "lastAudit": "2026-06-28T11:08:00.000Z"
+        },
+        "items": [
+          {
+            "id": "clinical-hours",
+            "category": "Clinical Hours",
+            "standard": "100 hours minimum",
+            "status": "Compliant",
+            "details": "95% of students are on pace to satisfy clinical minimums.",
+            "lastAudit": "2026-06-28T09:40:00.000Z",
+            "evidenceLinks": [
+              "hours-ledger",
+              "rotation-summary"
+            ]
+          },
+          {
+            "id": "supervision-ratios",
+            "category": "Supervision Ratios",
+            "standard": "1:8 instructor to student",
+            "status": "Compliant",
+            "details": "All placements verified against roster and staffing rules.",
+            "lastAudit": "2026-06-28T09:00:00.000Z",
+            "evidenceLinks": [
+              "staffing-grid"
+            ]
+          },
+          {
+            "id": "facility-standards",
+            "category": "Facility Standards",
+            "standard": "Approved clinical partner documentation",
+            "status": "Compliant",
+            "details": "All five active sites have current agreements and approvals.",
+            "lastAudit": "2026-06-27T15:30:00.000Z",
+            "evidenceLinks": [
+              "facility-agreements"
+            ]
+          },
+          {
+            "id": "safety-protocols",
+            "category": "Safety Protocols",
+            "standard": "Annual training required",
+            "status": "At Risk",
+            "details": "Two students are pending completion of safety training documentation.",
+            "lastAudit": "2026-06-28T11:08:00.000Z",
+            "evidenceLinks": [
+              "safety-training-roster"
+            ],
+            "actionRequired": "Review safety training status"
+          },
+          {
+            "id": "documentation",
+            "category": "Documentation",
+            "standard": "Digital records with backup",
+            "status": "Compliant",
+            "details": "Daily backup completed and evidence bundles are current.",
+            "lastAudit": "2026-06-27T18:00:00.000Z",
+            "evidenceLinks": [
+              "backup-log",
+              "evidence-bundle-index"
+            ]
+          },
+          {
+            "id": "assessment-standards",
+            "category": "Assessment Standards",
+            "standard": "Curriculum-aligned competency evidence",
+            "status": "Compliant",
+            "details": "Assessment completion is aligned with program requirements.",
+            "lastAudit": "2026-06-27T13:10:00.000Z",
+            "evidenceLinks": [
+              "assessment-map"
+            ]
+          }
+        ],
+        "immediateAction": {
+          "title": "Immediate Action Required",
+          "detail": "Safety training completion for 2 students",
+          "targetItemId": "safety-protocols"
+        }
+      },
+      "programRequirements": {
+        "activeProgramId": "program-cna-12",
+        "programs": [
+          {
+            "id": "program-cna-12",
+            "name": "CNA Cohort 12",
+            "completion": "100%",
+            "theoryHoursRequired": 60,
+            "clinicalHoursRequired": 100,
+            "stateExamRequired": true,
+            "requirements": [
+              {
+                "id": "req-1",
+                "item": "Classroom hours (60)",
+                "completed": true
+              },
+              {
+                "id": "req-2",
+                "item": "Clinical hours (100)",
+                "completed": true
+              },
+              {
+                "id": "req-3",
+                "item": "Skills assessment",
+                "completed": true
+              },
+              {
+                "id": "req-4",
+                "item": "State exam preparation",
+                "completed": true
+              },
+              {
+                "id": "req-5",
+                "item": "Capstone project",
+                "completed": true
+              }
+            ]
+          },
+          {
+            "id": "program-cna-13",
+            "name": "CNA Cohort 13",
+            "completion": "60%",
+            "theoryHoursRequired": 60,
+            "clinicalHoursRequired": 100,
+            "stateExamRequired": true,
+            "requirements": [
+              {
+                "id": "req-6",
+                "item": "Classroom hours (60)",
+                "completed": true
+              },
+              {
+                "id": "req-7",
+                "item": "Clinical hours (100)",
+                "completed": true
+              },
+              {
+                "id": "req-8",
+                "item": "Skills assessment",
+                "completed": false
+              },
+              {
+                "id": "req-9",
+                "item": "State exam preparation",
+                "completed": true
+              },
+              {
+                "id": "req-10",
+                "item": "Capstone project",
+                "completed": false
+              }
+            ]
+          },
+          {
+            "id": "program-ma",
+            "name": "Medical Assistant",
+            "completion": "80%",
+            "theoryHoursRequired": 100,
+            "clinicalHoursRequired": 160,
+            "stateExamRequired": true,
+            "requirements": [
+              {
+                "id": "req-11",
+                "item": "Classroom hours (100)",
+                "completed": true
+              },
+              {
+                "id": "req-12",
+                "item": "Clinical hours (160)",
+                "completed": true
+              },
+              {
+                "id": "req-13",
+                "item": "Skills assessment",
+                "completed": true
+              },
+              {
+                "id": "req-14",
+                "item": "Externship (160)",
+                "completed": true
+              },
+              {
+                "id": "req-15",
+                "item": "Certification exam",
+                "completed": false
+              }
+            ]
+          }
+        ]
+      },
+      "documents": {
+        "summary": {
+          "totalDocuments": 6,
+          "current": 5,
+          "needsReview": 1
+        },
+        "documents": [
+          {
+            "id": "doc-attendance",
+            "title": "Student Attendance Records",
+            "type": "Spreadsheet",
+            "category": "Attendance",
+            "status": "Current",
+            "lastUpdated": "2026-06-28 10:15 AM",
+            "size": "2.4 MB",
+            "owner": "Operations"
+          },
+          {
+            "id": "doc-clinical",
+            "title": "Clinical Skills Assessment Forms",
+            "type": "PDF",
+            "category": "Clinical",
+            "status": "Current",
+            "lastUpdated": "2026-06-28 09:30 AM",
+            "size": "15.8 MB",
+            "owner": "Clinical Education"
+          },
+          {
+            "id": "doc-instructors",
+            "title": "Instructor Credential Files",
+            "type": "Archive",
+            "category": "Instructor",
+            "status": "Current",
+            "lastUpdated": "2026-06-27 02:00 PM",
+            "size": "48.2 MB",
+            "owner": "HR Compliance"
+          },
+          {
+            "id": "doc-safety",
+            "title": "Safety Training Completion",
+            "type": "Spreadsheet",
+            "category": "Regulatory",
+            "status": "Needs Review",
+            "lastUpdated": "2026-06-25 11:45 AM",
+            "size": "1.2 MB",
+            "owner": "Student Services"
+          },
+          {
+            "id": "doc-curriculum",
+            "title": "Program Curriculum Documentation",
+            "type": "PDF",
+            "category": "Policy",
+            "status": "Current",
+            "lastUpdated": "2026-06-20 03:15 PM",
+            "size": "5.6 MB",
+            "owner": "Academic Affairs"
+          },
+          {
+            "id": "doc-placement",
+            "title": "Clinical Placement Agreements",
+            "type": "PDF",
+            "category": "Clinical",
+            "status": "Current",
+            "lastUpdated": "2026-06-28 08:00 AM",
+            "size": "3.1 MB",
+            "owner": "Clinical Education"
+          }
+        ]
+      },
+      "reports": {
+        "cards": [
+          {
+            "id": "comprehensive-compliance-report",
+            "title": "Comprehensive Compliance Report",
+            "detail": "A 360-degree view of institutional compliance across cohorts, modules, and instructor certifications.",
+            "badge": "Up to date",
+            "tone": "success",
+            "primaryAction": "Generate PDF",
+            "secondaryAction": "Export CSV"
+          },
+          {
+            "id": "instructor-qualifications-summary",
+            "title": "Instructor Qualifications Summary",
+            "detail": "Aggregated credential and qualification evidence for accreditation and regulatory review.",
+            "badge": "Review req.",
+            "tone": "warning",
+            "primaryAction": "Generate PDF",
+            "secondaryAction": "Export CSV"
+          },
+          {
+            "id": "clinical-hour-audit",
+            "title": "Clinical Hour Audit",
+            "detail": "Detailed clinical logs mapped to regulator-facing hour validation and signature evidence.",
+            "badge": "Preset: CDPH",
+            "tone": "primary",
+            "primaryAction": "CDPH PDF",
+            "secondaryAction": "Audit Feed"
+          },
+          {
+            "id": "state-regulatory-packet",
+            "title": "State Regulatory Packet",
+            "detail": "Submission-ready bundle for regulator reviews, including curriculum maps and pass-rate evidence.",
+            "badge": "Packet",
+            "tone": "info",
+            "primaryAction": "Generate PDF",
+            "secondaryAction": "Export ZIP"
+          }
+        ],
+        "exportHistory": [
+          {
+            "id": "export-1",
+            "report": "Comprehensive Compliance Report",
+            "status": "Up to date",
+            "generated": "2026-06-30 08:32 AM",
+            "format": "PDF / CSV",
+            "category": "Compliance"
+          },
+          {
+            "id": "export-2",
+            "report": "Instructor Qualifications Summary",
+            "status": "Review req.",
+            "generated": "2026-06-29 09:15 AM",
+            "format": "PDF / CSV",
+            "category": "Qualifications"
+          },
+          {
+            "id": "export-3",
+            "report": "Clinical Hour Audit",
+            "status": "Preset: CDPH",
+            "generated": "2026-06-30 06:45 AM",
+            "format": "CDPH PDF / Feed",
+            "category": "Clinical"
+          },
+          {
+            "id": "export-4",
+            "report": "State Regulatory Packet",
+            "status": "Packet",
+            "generated": "2026-06-28 11:20 AM",
+            "format": "Submission Bundle",
+            "category": "Regulatory"
+          }
+        ]
+      },
+      "settings": {
+        "preferences": [
+          {
+            "id": "daily-compliance-reports",
+            "label": "Daily Compliance Reports",
+            "description": "Receive automated daily compliance summaries.",
+            "enabled": true,
+            "group": "notifications"
+          },
+          {
+            "id": "critical-alerts",
+            "label": "Critical Alerts",
+            "description": "Get notified immediately of critical compliance issues.",
+            "enabled": true,
+            "group": "notifications"
+          },
+          {
+            "id": "document-updates",
+            "label": "Document Updates",
+            "description": "Notifications when files are updated or added.",
+            "enabled": true,
+            "group": "notifications"
+          },
+          {
+            "id": "student-record-changes",
+            "label": "Student Record Changes",
+            "description": "Alerts when student records are modified.",
+            "enabled": true,
+            "group": "notifications"
+          },
+          {
+            "id": "automatic-daily-exports",
+            "label": "Automatic Daily Exports",
+            "description": "Automatically export compliance data daily.",
+            "enabled": true,
+            "group": "exports"
+          },
+          {
+            "id": "cloud-backup",
+            "label": "Cloud Backup",
+            "description": "Enable automatic cloud backup of audit logs.",
+            "enabled": true,
+            "group": "exports"
+          },
+          {
+            "id": "encryption",
+            "label": "Encryption",
+            "description": "Encrypt all exported files.",
+            "enabled": true,
+            "group": "exports"
+          }
+        ],
+        "accountActions": [
+          "Change Password",
+          "View Login History",
+          "Download My Data"
+        ]
+      },
+      "regulatorAccess": {
+        "regulator": "CDPH",
+        "accessMode": "Read Only",
+        "transcriptExportsReady": 6,
+        "auditPacketsReady": 4,
+        "evidenceBundlesReady": 9,
+        "lastAccessReview": "2026-06-29T16:00:00.000Z"
+      },
+      "auditTrail": [
+        {
+          "id": "audit-1783517762881",
+          "timestamp": "2026-07-08 13:36",
+          "action": "Auditor account initialized",
+          "actor": "System",
+          "status": "Success",
+          "details": "Auditor workspace created from admin-managed account provisioning.",
+          "target": "auditor-new"
+        }
+      ]
+    },
+    {
+      "profile": {
+        "id": "67f70f1d-5ebc-4a65-9153-a8fc3ea39f77",
+        "fullName": "Auditor",
+        "title": "Compliance Auditor",
+        "email": "auditor@classpulse.com",
+        "phone": "",
+        "location": "",
+        "memberSince": "2026-07-08",
+        "status": "Active",
+        "credentials": [],
+        "assignedPrograms": []
+      },
+      "dashboard": {
+        "profile": {
+          "id": "67f70f1d-5ebc-4a65-9153-a8fc3ea39f77",
+          "fullName": "Auditor",
+          "title": "Compliance Auditor",
+          "email": "auditor@classpulse.com",
+          "phone": "",
+          "location": "",
+          "memberSince": "2026-07-08",
+          "status": "Active",
+          "credentials": [],
+          "assignedPrograms": []
+        },
+        "cohortLabel": "NATP Cohort #2024-B",
+        "kpis": [
+          {
+            "label": "COHORT COMPLIANCE",
+            "value": "94%",
+            "tone": "primary",
+            "note": "+2% this cycle"
+          },
+          {
+            "label": "MISSING EVIDENCE",
+            "value": "07",
+            "tone": "warning",
+            "note": "2 urgent"
+          },
+          {
+            "label": "INSTRUCTOR STATUS",
+            "value": "100%",
+            "tone": "success",
+            "note": "All current"
+          },
+          {
+            "label": "AUDIT READINESS",
+            "value": "91%",
+            "tone": "info",
+            "note": "3 issues open"
+          }
+        ],
+        "summaryCards": [
+          {
+            "id": "student-file-verification",
+            "title": "Student file verification",
+            "detail": "Attendance, theory hours, and clinical completion evidence remain in sync.",
+            "badge": "Stable",
+            "tone": "success"
+          },
+          {
+            "id": "certification-readiness",
+            "title": "Certification readiness",
+            "detail": "Two candidates are blocked by final evidence review before certification release.",
+            "badge": "Needs review",
+            "tone": "warning"
+          },
+          {
+            "id": "exceptions-and-gaps",
+            "title": "Exceptions and gaps",
+            "detail": "Open evidence requests and one policy variance require documented disposition.",
+            "badge": "Open",
+            "tone": "error"
+          }
+        ],
+        "evidenceReadiness": [
+          {
+            "id": "student-records",
+            "label": "Student records",
+            "value": 97,
+            "tone": "success"
+          },
+          {
+            "id": "instructor-qualifications",
+            "label": "Instructor qualifications",
+            "value": 100,
+            "tone": "primary"
+          },
+          {
+            "id": "clinical-compliance",
+            "label": "Clinical compliance",
+            "value": 89,
+            "tone": "warning"
+          },
+          {
+            "id": "program-requirements",
+            "label": "Program requirements",
+            "value": 92,
+            "tone": "info"
+          }
+        ],
+        "openExceptions": [
+          {
+            "id": "exception-1",
+            "title": "Missing immunization evidence",
+            "detail": "One student file remains blocked pending final immunization proof.",
+            "priority": "High",
+            "status": "Open"
+          },
+          {
+            "id": "exception-2",
+            "title": "Clinical session signoff pending",
+            "detail": "One instructor still needs to sign a completed clinical session.",
+            "priority": "Medium",
+            "status": "Monitoring"
+          },
+          {
+            "id": "exception-3",
+            "title": "Policy variance archive reference",
+            "detail": "Program policy revision note needs archive cross-reference before closeout.",
+            "priority": "Low",
+            "status": "Open"
+          }
+        ],
+        "auditTrailSnapshot": {
+          "lastEvidenceExport": "2026-06-30T08:08:00.000Z",
+          "latestVerificationEvent": "Clinical roster locked",
+          "certificationBatch": "2 pending release"
+        }
+      },
+      "studentRecords": {
+        "summary": {
+          "totalStudents": 6,
+          "recordsCompleteAverage": "91%",
+          "needsReview": 1
+        },
+        "activeStudentId": "student-alice",
+        "records": [
+          {
+            "id": "student-alice",
+            "name": "Alice Smith",
+            "cohort": "CNA 12",
+            "status": "On Track",
+            "recordsComplete": "94%",
+            "lastReview": "2026-06-28",
+            "theoryHours": 60,
+            "clinicalHours": 98,
+            "attendanceRate": 97,
+            "certificationEligibility": "Eligible",
+            "missingEvidence": [],
+            "notes": [
+              "Attendance and completion evidence verified."
+            ]
+          },
+          {
+            "id": "student-marcus",
+            "name": "Marcus Chen",
+            "cohort": "CNA 12",
+            "status": "On Track",
+            "recordsComplete": "89%",
+            "lastReview": "2026-06-27",
+            "theoryHours": 58,
+            "clinicalHours": 93,
+            "attendanceRate": 95,
+            "certificationEligibility": "Pending Review",
+            "missingEvidence": [
+              "Final shift signoff"
+            ],
+            "notes": [
+              "One clinical signoff still pending."
+            ]
+          },
+          {
+            "id": "student-elena",
+            "name": "Elena Ford",
+            "cohort": "HHA",
+            "status": "At Risk",
+            "recordsComplete": "78%",
+            "lastReview": "2026-06-25",
+            "theoryHours": 49,
+            "clinicalHours": 71,
+            "attendanceRate": 82,
+            "certificationEligibility": "Blocked",
+            "missingEvidence": [
+              "Safety training completion",
+              "Updated immunization record"
+            ],
+            "notes": [
+              "Blocker remains open until safety evidence is uploaded."
+            ]
+          },
+          {
+            "id": "student-priya",
+            "name": "Priya Patel",
+            "cohort": "CNA 13",
+            "status": "On Track",
+            "recordsComplete": "92%",
+            "lastReview": "2026-06-28",
+            "theoryHours": 57,
+            "clinicalHours": 96,
+            "attendanceRate": 96,
+            "certificationEligibility": "Eligible",
+            "missingEvidence": [],
+            "notes": [
+              "Ready for final completion review."
+            ]
+          },
+          {
+            "id": "student-james",
+            "name": "James Rodriguez",
+            "cohort": "CNA 13",
+            "status": "Complete",
+            "recordsComplete": "100%",
+            "lastReview": "2026-06-28",
+            "theoryHours": 60,
+            "clinicalHours": 100,
+            "attendanceRate": 99,
+            "certificationEligibility": "Eligible",
+            "missingEvidence": [],
+            "notes": [
+              "Full file complete and regulator-ready."
+            ]
+          },
+          {
+            "id": "student-lisa",
+            "name": "Lisa Wong",
+            "cohort": "MA",
+            "status": "On Track",
+            "recordsComplete": "87%",
+            "lastReview": "2026-06-27",
+            "theoryHours": 54,
+            "clinicalHours": 88,
+            "attendanceRate": 93,
+            "certificationEligibility": "Pending Review",
+            "missingEvidence": [
+              "Transcript request queued"
+            ],
+            "notes": [
+              "Awaiting transcript export bundle."
+            ]
+          }
+        ]
+      },
+      "instructorQualifications": {
+        "summary": {
+          "totalInstructors": 4,
+          "compliant": 3,
+          "reviewRequired": 1
+        },
+        "activeInstructorId": "instructor-david",
+        "instructors": [
+          {
+            "id": "instructor-sarah",
+            "name": "Dr. Sarah Chen",
+            "role": "Lead Clinical Instructor",
+            "credentials": [
+              "RN-BSN",
+              "ACLS",
+              "BLS",
+              "Clinical Instructor Cert"
+            ],
+            "certifications": {
+              "valid": 3,
+              "expired": 0
+            },
+            "status": "Compliant",
+            "lastReview": "2026-06-28",
+            "nextExpiration": "2027-03-10",
+            "notes": [
+              "All credentials verified."
+            ]
+          },
+          {
+            "id": "instructor-michael",
+            "name": "Michael Torres",
+            "role": "Clinical Instructor",
+            "credentials": [
+              "LVN",
+              "ACLS",
+              "BLS"
+            ],
+            "certifications": {
+              "valid": 3,
+              "expired": 0
+            },
+            "status": "Compliant",
+            "lastReview": "2026-06-27",
+            "nextExpiration": "2026-12-14",
+            "notes": [
+              "No open qualification issues."
+            ]
+          },
+          {
+            "id": "instructor-jennifer",
+            "name": "Jennifer Park",
+            "role": "Classroom Instructor",
+            "credentials": [
+              "RN",
+              "BSN",
+              "ACLS"
+            ],
+            "certifications": {
+              "valid": 2,
+              "expired": 1
+            },
+            "status": "Review Required",
+            "lastReview": "2026-06-26",
+            "nextExpiration": "2026-06-20",
+            "notes": [
+              "One expired certification needs remediation plan."
+            ]
+          },
+          {
+            "id": "instructor-david",
+            "name": "David Martinez",
+            "role": "Clinical Coordinator",
+            "credentials": [
+              "RN",
+              "ACLS",
+              "BLS"
+            ],
+            "certifications": {
+              "valid": 3,
+              "expired": 0
+            },
+            "status": "Compliant",
+            "lastReview": "2026-06-28",
+            "nextExpiration": "2027-01-22",
+            "notes": [
+              "Current and approved."
+            ]
+          }
+        ]
+      },
+      "clinicalCompliance": {
+        "summary": {
+          "complianceRate": "92%",
+          "issuesOpen": 1,
+          "lastAudit": "2026-06-28T11:08:00.000Z"
+        },
+        "items": [
+          {
+            "id": "clinical-hours",
+            "category": "Clinical Hours",
+            "standard": "100 hours minimum",
+            "status": "Compliant",
+            "details": "95% of students are on pace to satisfy clinical minimums.",
+            "lastAudit": "2026-06-28T09:40:00.000Z",
+            "evidenceLinks": [
+              "hours-ledger",
+              "rotation-summary"
+            ]
+          },
+          {
+            "id": "supervision-ratios",
+            "category": "Supervision Ratios",
+            "standard": "1:8 instructor to student",
+            "status": "Compliant",
+            "details": "All placements verified against roster and staffing rules.",
+            "lastAudit": "2026-06-28T09:00:00.000Z",
+            "evidenceLinks": [
+              "staffing-grid"
+            ]
+          },
+          {
+            "id": "facility-standards",
+            "category": "Facility Standards",
+            "standard": "Approved clinical partner documentation",
+            "status": "Compliant",
+            "details": "All five active sites have current agreements and approvals.",
+            "lastAudit": "2026-06-27T15:30:00.000Z",
+            "evidenceLinks": [
+              "facility-agreements"
+            ]
+          },
+          {
+            "id": "safety-protocols",
+            "category": "Safety Protocols",
+            "standard": "Annual training required",
+            "status": "At Risk",
+            "details": "Two students are pending completion of safety training documentation.",
+            "lastAudit": "2026-06-28T11:08:00.000Z",
+            "evidenceLinks": [
+              "safety-training-roster"
+            ],
+            "actionRequired": "Review safety training status"
+          },
+          {
+            "id": "documentation",
+            "category": "Documentation",
+            "standard": "Digital records with backup",
+            "status": "Compliant",
+            "details": "Daily backup completed and evidence bundles are current.",
+            "lastAudit": "2026-06-27T18:00:00.000Z",
+            "evidenceLinks": [
+              "backup-log",
+              "evidence-bundle-index"
+            ]
+          },
+          {
+            "id": "assessment-standards",
+            "category": "Assessment Standards",
+            "standard": "Curriculum-aligned competency evidence",
+            "status": "Compliant",
+            "details": "Assessment completion is aligned with program requirements.",
+            "lastAudit": "2026-06-27T13:10:00.000Z",
+            "evidenceLinks": [
+              "assessment-map"
+            ]
+          }
+        ],
+        "immediateAction": {
+          "title": "Immediate Action Required",
+          "detail": "Safety training completion for 2 students",
+          "targetItemId": "safety-protocols"
+        }
+      },
+      "programRequirements": {
+        "activeProgramId": "program-cna-12",
+        "programs": [
+          {
+            "id": "program-cna-12",
+            "name": "CNA Cohort 12",
+            "completion": "100%",
+            "theoryHoursRequired": 60,
+            "clinicalHoursRequired": 100,
+            "stateExamRequired": true,
+            "requirements": [
+              {
+                "id": "req-1",
+                "item": "Classroom hours (60)",
+                "completed": true
+              },
+              {
+                "id": "req-2",
+                "item": "Clinical hours (100)",
+                "completed": true
+              },
+              {
+                "id": "req-3",
+                "item": "Skills assessment",
+                "completed": true
+              },
+              {
+                "id": "req-4",
+                "item": "State exam preparation",
+                "completed": true
+              },
+              {
+                "id": "req-5",
+                "item": "Capstone project",
+                "completed": true
+              }
+            ]
+          },
+          {
+            "id": "program-cna-13",
+            "name": "CNA Cohort 13",
+            "completion": "60%",
+            "theoryHoursRequired": 60,
+            "clinicalHoursRequired": 100,
+            "stateExamRequired": true,
+            "requirements": [
+              {
+                "id": "req-6",
+                "item": "Classroom hours (60)",
+                "completed": true
+              },
+              {
+                "id": "req-7",
+                "item": "Clinical hours (100)",
+                "completed": true
+              },
+              {
+                "id": "req-8",
+                "item": "Skills assessment",
+                "completed": false
+              },
+              {
+                "id": "req-9",
+                "item": "State exam preparation",
+                "completed": true
+              },
+              {
+                "id": "req-10",
+                "item": "Capstone project",
+                "completed": false
+              }
+            ]
+          },
+          {
+            "id": "program-ma",
+            "name": "Medical Assistant",
+            "completion": "80%",
+            "theoryHoursRequired": 100,
+            "clinicalHoursRequired": 160,
+            "stateExamRequired": true,
+            "requirements": [
+              {
+                "id": "req-11",
+                "item": "Classroom hours (100)",
+                "completed": true
+              },
+              {
+                "id": "req-12",
+                "item": "Clinical hours (160)",
+                "completed": true
+              },
+              {
+                "id": "req-13",
+                "item": "Skills assessment",
+                "completed": true
+              },
+              {
+                "id": "req-14",
+                "item": "Externship (160)",
+                "completed": true
+              },
+              {
+                "id": "req-15",
+                "item": "Certification exam",
+                "completed": false
+              }
+            ]
+          }
+        ]
+      },
+      "documents": {
+        "summary": {
+          "totalDocuments": 6,
+          "current": 5,
+          "needsReview": 1
+        },
+        "documents": [
+          {
+            "id": "doc-attendance",
+            "title": "Student Attendance Records",
+            "type": "Spreadsheet",
+            "category": "Attendance",
+            "status": "Current",
+            "lastUpdated": "2026-06-28 10:15 AM",
+            "size": "2.4 MB",
+            "owner": "Operations"
+          },
+          {
+            "id": "doc-clinical",
+            "title": "Clinical Skills Assessment Forms",
+            "type": "PDF",
+            "category": "Clinical",
+            "status": "Current",
+            "lastUpdated": "2026-06-28 09:30 AM",
+            "size": "15.8 MB",
+            "owner": "Clinical Education"
+          },
+          {
+            "id": "doc-instructors",
+            "title": "Instructor Credential Files",
+            "type": "Archive",
+            "category": "Instructor",
+            "status": "Current",
+            "lastUpdated": "2026-06-27 02:00 PM",
+            "size": "48.2 MB",
+            "owner": "HR Compliance"
+          },
+          {
+            "id": "doc-safety",
+            "title": "Safety Training Completion",
+            "type": "Spreadsheet",
+            "category": "Regulatory",
+            "status": "Needs Review",
+            "lastUpdated": "2026-06-25 11:45 AM",
+            "size": "1.2 MB",
+            "owner": "Student Services"
+          },
+          {
+            "id": "doc-curriculum",
+            "title": "Program Curriculum Documentation",
+            "type": "PDF",
+            "category": "Policy",
+            "status": "Current",
+            "lastUpdated": "2026-06-20 03:15 PM",
+            "size": "5.6 MB",
+            "owner": "Academic Affairs"
+          },
+          {
+            "id": "doc-placement",
+            "title": "Clinical Placement Agreements",
+            "type": "PDF",
+            "category": "Clinical",
+            "status": "Current",
+            "lastUpdated": "2026-06-28 08:00 AM",
+            "size": "3.1 MB",
+            "owner": "Clinical Education"
+          }
+        ]
+      },
+      "reports": {
+        "cards": [
+          {
+            "id": "comprehensive-compliance-report",
+            "title": "Comprehensive Compliance Report",
+            "detail": "A 360-degree view of institutional compliance across cohorts, modules, and instructor certifications.",
+            "badge": "Up to date",
+            "tone": "success",
+            "primaryAction": "Generate PDF",
+            "secondaryAction": "Export CSV"
+          },
+          {
+            "id": "instructor-qualifications-summary",
+            "title": "Instructor Qualifications Summary",
+            "detail": "Aggregated credential and qualification evidence for accreditation and regulatory review.",
+            "badge": "Review req.",
+            "tone": "warning",
+            "primaryAction": "Generate PDF",
+            "secondaryAction": "Export CSV"
+          },
+          {
+            "id": "clinical-hour-audit",
+            "title": "Clinical Hour Audit",
+            "detail": "Detailed clinical logs mapped to regulator-facing hour validation and signature evidence.",
+            "badge": "Preset: CDPH",
+            "tone": "primary",
+            "primaryAction": "CDPH PDF",
+            "secondaryAction": "Audit Feed"
+          },
+          {
+            "id": "state-regulatory-packet",
+            "title": "State Regulatory Packet",
+            "detail": "Submission-ready bundle for regulator reviews, including curriculum maps and pass-rate evidence.",
+            "badge": "Packet",
+            "tone": "info",
+            "primaryAction": "Generate PDF",
+            "secondaryAction": "Export ZIP"
+          }
+        ],
+        "exportHistory": [
+          {
+            "id": "export-1",
+            "report": "Comprehensive Compliance Report",
+            "status": "Up to date",
+            "generated": "2026-06-30 08:32 AM",
+            "format": "PDF / CSV",
+            "category": "Compliance"
+          },
+          {
+            "id": "export-2",
+            "report": "Instructor Qualifications Summary",
+            "status": "Review req.",
+            "generated": "2026-06-29 09:15 AM",
+            "format": "PDF / CSV",
+            "category": "Qualifications"
+          },
+          {
+            "id": "export-3",
+            "report": "Clinical Hour Audit",
+            "status": "Preset: CDPH",
+            "generated": "2026-06-30 06:45 AM",
+            "format": "CDPH PDF / Feed",
+            "category": "Clinical"
+          },
+          {
+            "id": "export-4",
+            "report": "State Regulatory Packet",
+            "status": "Packet",
+            "generated": "2026-06-28 11:20 AM",
+            "format": "Submission Bundle",
+            "category": "Regulatory"
+          }
+        ]
+      },
+      "settings": {
+        "preferences": [
+          {
+            "id": "daily-compliance-reports",
+            "label": "Daily Compliance Reports",
+            "description": "Receive automated daily compliance summaries.",
+            "enabled": true,
+            "group": "notifications"
+          },
+          {
+            "id": "critical-alerts",
+            "label": "Critical Alerts",
+            "description": "Get notified immediately of critical compliance issues.",
+            "enabled": true,
+            "group": "notifications"
+          },
+          {
+            "id": "document-updates",
+            "label": "Document Updates",
+            "description": "Notifications when files are updated or added.",
+            "enabled": true,
+            "group": "notifications"
+          },
+          {
+            "id": "student-record-changes",
+            "label": "Student Record Changes",
+            "description": "Alerts when student records are modified.",
+            "enabled": true,
+            "group": "notifications"
+          },
+          {
+            "id": "automatic-daily-exports",
+            "label": "Automatic Daily Exports",
+            "description": "Automatically export compliance data daily.",
+            "enabled": true,
+            "group": "exports"
+          },
+          {
+            "id": "cloud-backup",
+            "label": "Cloud Backup",
+            "description": "Enable automatic cloud backup of audit logs.",
+            "enabled": true,
+            "group": "exports"
+          },
+          {
+            "id": "encryption",
+            "label": "Encryption",
+            "description": "Encrypt all exported files.",
+            "enabled": true,
+            "group": "exports"
+          }
+        ],
+        "accountActions": [
+          "Change Password",
+          "View Login History",
+          "Download My Data"
+        ]
+      },
+      "regulatorAccess": {
+        "regulator": "CDPH",
+        "accessMode": "Read Only",
+        "transcriptExportsReady": 6,
+        "auditPacketsReady": 4,
+        "evidenceBundlesReady": 9,
+        "lastAccessReview": "2026-06-29T16:00:00.000Z"
+      },
+      "auditTrail": [
+        {
+          "id": "audit-1783517894253",
+          "timestamp": "2026-07-08 13:38",
+          "action": "Auditor account initialized",
+          "actor": "System",
+          "status": "Success",
+          "details": "Auditor workspace created from admin-managed account provisioning.",
+          "target": "67f70f1d-5ebc-4a65-9153-a8fc3ea39f77"
+        }
+      ]
+    }
+  ]
+}
