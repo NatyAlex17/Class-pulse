@@ -49,12 +49,15 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
     resetConfig,
     resetting,
     saving,
+    importing,
+    importConfigFile,
   } = store;
 
   const [showModuleForm, setShowModuleForm] = React.useState(false);
   const [editingModuleId, setEditingModuleId] = React.useState<string | null>(null);
   const [moduleDraft, setModuleDraft] = React.useState(emptyModuleDraft);
   const [deleteConfirm, setDeleteConfirm] = React.useState<DeleteConfirmState | null>(null);
+  const [importFile, setImportFile] = React.useState<File | null>(null);
 
   if (!config) {
     return null;
@@ -104,6 +107,62 @@ export function ModulesView({ store }: { store: LearningResourcesStore }) {
       <div className="space-y-6">
         <ConfigBanner error={error} success={success} />
         <DeleteConfirmModal state={deleteConfirm} onCancel={() => setDeleteConfirm(null)} />
+
+        <div className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+                Curriculum Importer
+              </p>
+              <h3 className="mt-2 font-display text-2xl font-semibold text-on-surface">
+                Import modules, lessons, and learning activities from CSV
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                Upload a CSV exported from Excel or use the CDPH 276C template below. Importing replaces the current
+                learning resources configuration with the uploaded curriculum.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/import-templates/cdphe276c-learning-resources-import.csv"
+                target="_blank"
+                className="inline-flex h-11 items-center justify-center rounded-[14px] border border-border-subtle px-4 text-sm font-medium text-on-surface transition hover:border-primary/40 hover:text-primary"
+              >
+                Download CDPH 276C CSV
+              </Link>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-on-surface">CSV File</label>
+              <Input
+                type="file"
+                accept=".csv,text/csv,application/vnd.ms-excel"
+                onChange={(event) => setImportFile(event.target.files?.[0] ?? null)}
+                className="h-auto py-3 file:mr-3 file:rounded-[10px] file:border-0 file:bg-primary/10 file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary"
+              />
+              <p className="mt-2 text-xs text-on-surface-variant">
+                Supported format: `.csv`. If your source is Excel, export it as CSV first, then upload it here.
+              </p>
+            </div>
+            <Button
+              onClick={() => {
+                if (!importFile) {
+                  setError('Choose a CSV file to import.');
+                  return;
+                }
+
+                void importConfigFile(importFile).then(() => {
+                  setImportFile(null);
+                }).catch(() => undefined);
+              }}
+              disabled={importing}
+            >
+              {importing ? 'Importing...' : 'Import Curriculum'}
+            </Button>
+          </div>
+        </div>
 
         <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-soft">

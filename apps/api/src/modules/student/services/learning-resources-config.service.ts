@@ -17,6 +17,12 @@ export interface LearningResourcesConfig {
   };
 }
 
+export interface LearningResourcesImportSummary {
+  modules: number;
+  sections: number;
+  resources: number;
+}
+
 const defaultLearningResourcesConfig: LearningResourcesConfig = {
   modules: [],
   globalSettings: {
@@ -27,6 +33,20 @@ const defaultLearningResourcesConfig: LearningResourcesConfig = {
 const supportedResourceTypes = ['video', 'pdf', 'link', 'text', 'exam'] as const;
 const urlRequiredTypes = new Set(['video', 'pdf', 'link']);
 const contentFriendlyTypes = new Set(['text', 'exam']);
+const importRequiredHeaders = [
+  'module_id',
+  'module_title',
+  'module_summary',
+  'module_required_hours',
+  'module_fee',
+  'module_order',
+  'section_id',
+  'section_title',
+  'resource_id',
+  'resource_title',
+  'resource_type',
+  'resource_duration',
+] as const;
 
 const DATA_DIR = path.join(process.cwd(), 'apps/api/.data');
 const CONFIG_FILE = path.join(DATA_DIR, 'learning-resources-config.json');
@@ -85,6 +105,174 @@ export class LearningResourcesConfigService implements OnModuleInit {
     this.config = JSON.parse(JSON.stringify(defaultLearningResourcesConfig));
     this.persistConfig();
     return this.getConfig();
+  }
+
+  importFromCsvContent(content: string): {
+    config: LearningResourcesConfig;
+    summary: LearningResourcesImportSummary;
+  } {
+    const rows = this.parseDelimitedContent(content);
+
+    if (rows.length === 0) {
+      throw new BadRequestException('The import file is empty.');
+    }
+
+    const headers = rows[0].map((value) => value.trim());
+    const missingHeaders = importRequiredHeaders.filter((header) => !headers.includes(header));
+
+    if (missingHeaders.length > 0) {
+      throw new BadRequestException(`The import file is missing required columns: ${missingHeaders.join(', ')}.`);
+    }
+
+    const modules = new Map<
+      string,
+      LearningModuleDefinition & { sectionMap: Map<string, LearningSectionDefinition> }
+    >();
+
+    rows.slice(1).forEach((row, rowIndex) => {
+      const csvRowNumber = rowIndex + 2;
+      const record = this.toRecord(headers, row);
+
+      if (Object.values(record).every((value) => value.trim() === '')) {
+        return;
+      }
+
+      const moduleId = record.module_id.trim();
+      const sectionId = record.section_id.trim();
+      const resourceId = record.resource_id.trim();
+
+      if (!moduleId || !sectionId || !resourceId) {
+        throw new BadRequestException(
+          `Row ${csvRowNumber} must include module_id, section_id, and resource_id.`,
+        );
+      }
+
+      const moduleTitle = record.module_title.trim();
+      const moduleSummary = record.module_summary.trim();
+      const requiredHours = Number(record.module_required_hours);
+      const moduleFee = Number(record.module_fee);
+      const moduleOrder = Number(record.module_order);
+      const minimumHoursForCertification = this.parseOptionalNumber(record.minimum_hours_for_certification);
+      const minimumClinicalHours = this.parseOptionalNumber(record.minimum_clinical_hours);
+      const skills = this.parseSkills(record.skill_names);
+
+      if (!moduleTitle || !moduleSummary) {
+        throw new BadRequestException(`Row ${csvRowNumber} must include module_title and module_summary.`);
+      }
+
+      if (!Number.isFinite(requiredHours) || requiredHours <= 0) {
+        throw new BadRequestException(`Row ${csvRowNumber} must include module_required_hours greater than zero.`);
+      }
+
+      if (!Number.isFinite(moduleFee) || moduleFee < 0) {
+        throw new BadRequestException(`Row ${csvRowNumber} must include a valid module_fee.`);
+      }
+
+      if (!Number.isFinite(moduleOrder)) {
+        throw new BadRequestException(`Row ${csvRowNumber} must include a valid module_order.`);
+      }
+
+      let moduleEntry = modules.get(moduleId);
+      if (!moduleEntry) {
+        moduleEntry = {
+          id: moduleId,
+          title: moduleTitle,
+          summary: moduleSummary,
+          requiredHours,
+          moduleFee,
+          order: moduleOrder,
+          minimumHoursForCertification,
+          minimumClinicalHours,
+          skills,
+          sections: [],
+          sectionMap: new Map<string, LearningSectionDefinition>(),
+        };
+        modules.set(moduleId, moduleEntry);
+      } else {
+        this.assertConsistentModuleRow(moduleEntry, {
+          title: moduleTitle,
+          summary: moduleSummary,
+          requiredHours,
+          moduleFee,
+          order: moduleOrder,
+          minimumHoursForCertification,
+          minimumClinicalHours,
+        }, csvRowNumber);
+      }
+
+      const sectionTitle = (record.section_title ?? '').trim();
+      const sectionDescription = (record.section_description ?? '').trim();
+
+      if (!sectionTitle) {
+        throw new BadRequestException(`Row ${csvRowNumber} must include section_title.`);
+      }
+
+      let sectionEntry = moduleEntry.sectionMap.get(sectionId);
+      if (!sectionEntry) {
+        sectionEntry = {
+          id: sectionId,
+          title: sectionTitle,
+          description: sectionDescription,
+          resources: [],
+        };
+        moduleEntry.sectionMap.set(sectionId, sectionEntry);
+        moduleEntry.sections.push(sectionEntry);
+      } else if (sectionEntry.title !== sectionTitle || sectionEntry.description !== sectionDescription) {
+        throw new BadRequestException(
+          `Row ${csvRowNumber} has conflicting section metadata for section "${sectionId}".`,
+        );
+      }
+
+      const resourceType = (record.resource_type ?? '').trim() as LearningResourceDefinition['type'];
+      const resourceTitle = (record.resource_title ?? '').trim();
+      const resourceDuration = (record.resource_duration ?? '').trim();
+      const resourceDescription = (record.resource_description ?? '').trim();
+      const resourceContent = (record.resource_content ?? '').trim();
+      const resourceUrl = (record.resource_url ?? '').trim();
+      const questionCount = this.parseOptionalNumber(record.resource_question_count);
+      const passingScore = this.parseOptionalNumber(record.resource_passing_score);
+
+      if (!resourceTitle || !resourceDuration) {
+        throw new BadRequestException(`Row ${csvRowNumber} must include resource_title and resource_duration.`);
+      }
+
+      if (sectionEntry.resources.some((resource) => resource.id === resourceId)) {
+        throw new BadRequestException(
+          `Row ${csvRowNumber} duplicates resource_id "${resourceId}" within section "${sectionId}".`,
+        );
+      }
+
+      sectionEntry.resources.push({
+        id: resourceId,
+        title: resourceTitle,
+        type: resourceType,
+        duration: resourceDuration,
+        description: resourceDescription,
+        content: resourceContent || undefined,
+        url: resourceUrl || undefined,
+        questionCount: questionCount ?? undefined,
+        passingScore: passingScore ?? undefined,
+      });
+    });
+
+    const nextConfig = this.updateConfig({
+      modules: Array.from(modules.values())
+        .map(({ sectionMap: _sectionMap, ...module }) => module)
+        .sort((left, right) => left.order - right.order),
+      globalSettings: this.config.globalSettings,
+    });
+
+    return {
+      config: nextConfig,
+      summary: {
+        modules: nextConfig.modules.length,
+        sections: nextConfig.modules.reduce((sum, module) => sum + module.sections.length, 0),
+        resources: nextConfig.modules.reduce(
+          (sum, module) => sum + module.sections.reduce((sectionSum, section) => sectionSum + section.resources.length, 0),
+          0,
+        ),
+      },
+    };
   }
 
   private validateConfig(config: LearningResourcesConfig): LearningResourcesConfig {
@@ -326,5 +514,106 @@ export class LearningResourcesConfigService implements OnModuleInit {
         correctOption,
       };
     });
+  }
+
+  private parseOptionalNumber(value: string | undefined) {
+    const trimmedValue = value?.trim();
+
+    if (!trimmedValue) {
+      return undefined;
+    }
+
+    const parsed = Number(trimmedValue);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+
+  private parseSkills(value: string | undefined): ModuleSkillDefinition[] {
+    const trimmedValue = value?.trim();
+
+    if (!trimmedValue) {
+      return [];
+    }
+
+    return Array.from(new Set(trimmedValue.split('|').map((item) => item.trim()).filter(Boolean))).map((name) => ({
+      id: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `skill-${Date.now()}`,
+      name,
+    }));
+  }
+
+  private assertConsistentModuleRow(
+    module: LearningModuleDefinition,
+    incoming: {
+      title: string;
+      summary: string;
+      requiredHours: number;
+      moduleFee: number;
+      order: number;
+      minimumHoursForCertification?: number;
+      minimumClinicalHours?: number;
+    },
+    rowNumber: number,
+  ) {
+    if (
+      module.title !== incoming.title ||
+      module.summary !== incoming.summary ||
+      module.requiredHours !== incoming.requiredHours ||
+      module.moduleFee !== incoming.moduleFee ||
+      module.order !== incoming.order ||
+      module.minimumHoursForCertification !== incoming.minimumHoursForCertification ||
+      module.minimumClinicalHours !== incoming.minimumClinicalHours
+    ) {
+      throw new BadRequestException(`Row ${rowNumber} has conflicting module metadata for "${module.id}".`);
+    }
+  }
+
+  private toRecord(headers: string[], row: string[]) {
+    return headers.reduce<Record<string, string>>((record, header, index) => {
+      record[header] = row[index] ?? '';
+      return record;
+    }, {});
+  }
+
+  private parseDelimitedContent(content: string): string[][] {
+    const normalizedContent = content.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n');
+    const rows: string[][] = [];
+    let currentField = '';
+    let currentRow: string[] = [];
+    let inQuotes = false;
+
+    for (let index = 0; index < normalizedContent.length; index += 1) {
+      const character = normalizedContent[index];
+      const nextCharacter = normalizedContent[index + 1];
+
+      if (character === '"') {
+        if (inQuotes && nextCharacter === '"') {
+          currentField += '"';
+          index += 1;
+        } else {
+          inQuotes = !inQuotes;
+        }
+        continue;
+      }
+
+      if (character === ',' && !inQuotes) {
+        currentRow.push(currentField);
+        currentField = '';
+        continue;
+      }
+
+      if (character === '\n' && !inQuotes) {
+        currentRow.push(currentField);
+        rows.push(currentRow);
+        currentField = '';
+        currentRow = [];
+        continue;
+      }
+
+      currentField += character;
+    }
+
+    currentRow.push(currentField);
+    rows.push(currentRow);
+
+    return rows.filter((row) => row.some((field) => field.length > 0));
   }
 }

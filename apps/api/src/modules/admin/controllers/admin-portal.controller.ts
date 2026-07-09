@@ -426,6 +426,45 @@ export class AdminPortalController {
   }
 
   @UseGuards(SupabaseAuthGuard)
+  @Post('learning-resources-config/import')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (_req, file, callback) => {
+        const extension = path.extname(file.originalname).toLowerCase();
+        const supportedExtensions = new Set(['.csv', '.txt']);
+        const supportedMimeTypes = new Set([
+          'text/csv',
+          'text/plain',
+          'application/csv',
+          'application/vnd.ms-excel',
+        ]);
+
+        if (supportedExtensions.has(extension) || supportedMimeTypes.has(file.mimetype)) {
+          callback(null, true);
+        } else {
+          callback(
+            new BadRequestException('Only CSV files are supported for curriculum imports. Export Excel files as CSV first.'),
+            false,
+          );
+        }
+      },
+    }),
+  )
+  importLearningResourcesConfig(@UploadedFile() file: Express.Multer.File | undefined) {
+    if (!file) {
+      throw new BadRequestException('No file received. Attach a CSV file under the "file" field.');
+    }
+
+    const imported = this.learningResourcesConfigService.importFromCsvContent(file.buffer.toString('utf-8'));
+
+    return createApiResponse(
+      imported,
+      `Learning resources import completed successfully. Imported ${imported.summary.modules} modules, ${imported.summary.sections} lessons, and ${imported.summary.resources} learning activities.`,
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
   @Post('learning-resources-config/upload')
   @UseInterceptors(
     FileInterceptor('file', {
