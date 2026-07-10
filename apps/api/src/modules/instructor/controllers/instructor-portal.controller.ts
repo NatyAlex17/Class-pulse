@@ -1,16 +1,31 @@
-import { BadRequestException, Body, Controller, Get, Param, Patch, Post, Query, Req, UploadedFile, UseInterceptors } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  Res,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import * as fs from 'fs';
 import { diskStorage } from 'multer';
 import * as path from 'path';
 
 import { createApiResponse } from '../../../common/utils/create-api-response';
+import { sendPdfResponse } from '../../../common/utils/send-pdf-response';
 import {
   INSTRUCTOR_DOCUMENTS_UPLOADS_DIR,
   INSTRUCTOR_READINESS_DOCUMENTS_UPLOADS_DIR,
   UPLOADS_URL_PREFIX,
 } from '../../../common/utils/upload-paths';
+import type { UpdateCdphSkillEntryDto, UpdateCdphTheoryEntryDto } from '../../student/types/student-portal.types';
 import type {
   AddInstructorStudentNoteDto,
   AnswerInstructorOnboardingQuestionDto,
@@ -23,6 +38,7 @@ import type {
   SendInstructorMessageDto,
   StartClinicalTimerDto,
   StopClinicalTimerDto,
+  UpdateCdphTheoryFinalGradeDto,
   UpdateInstructorAvailabilityDto,
   UpdateInstructorOnboardingAgreementDto,
   UpdateInstructorProfileDto,
@@ -286,6 +302,82 @@ export class InstructorPortalController {
       this.instructorPortalService.reviewSkillItem(instructorId, studentId, itemId, body),
       'Instructor skill checklist item reviewed successfully.',
     );
+  }
+
+  @Get('students/:studentId/cdph/e276c')
+  getCdphTheoryWorkspace(@Param('instructorId') instructorId: string, @Param('studentId') studentId: string) {
+    return createApiResponse(
+      this.instructorPortalService.getCdphTheoryWorkspace(instructorId, studentId),
+      'CDPH E276C theory workspace retrieved successfully.',
+    );
+  }
+
+  @Patch('students/:studentId/cdph/e276c/final-grade')
+  updateCdphTheoryFinalGrade(
+    @Param('instructorId') instructorId: string,
+    @Param('studentId') studentId: string,
+    @Body() body: UpdateCdphTheoryFinalGradeDto,
+  ) {
+    return createApiResponse(
+      this.instructorPortalService.updateCdphTheoryFinalGrade(instructorId, studentId, body.finalGrade),
+      'CDPH E276C final grade updated successfully.',
+    );
+  }
+
+  @Patch('students/:studentId/cdph/e276c/:sectionId')
+  updateCdphTheoryEntry(
+    @Param('instructorId') instructorId: string,
+    @Param('studentId') studentId: string,
+    @Param('sectionId') sectionId: string,
+    @Body() body: UpdateCdphTheoryEntryDto & { moduleId: string },
+  ) {
+    const { moduleId, ...payload } = body;
+    return createApiResponse(
+      this.instructorPortalService.updateCdphTheoryEntry(instructorId, studentId, sectionId, moduleId, payload),
+      'CDPH E276C theory entry updated successfully.',
+    );
+  }
+
+  @Get('students/:studentId/cdph/e276c/pdf')
+  generateCdphE276CPdf(
+    @Param('instructorId') instructorId: string,
+    @Param('studentId') studentId: string,
+    @Res() res: Response,
+  ) {
+    const buffer = this.instructorPortalService.generateCdphE276CPdf(instructorId, studentId);
+    sendPdfResponse(res, buffer, `cdph-e276c-${studentId}.pdf`);
+  }
+
+  @Get('students/:studentId/cdph/e276a')
+  getCdphSkillChecklistWorkspace(@Param('instructorId') instructorId: string, @Param('studentId') studentId: string) {
+    return createApiResponse(
+      this.instructorPortalService.getCdphSkillChecklistWorkspace(instructorId, studentId),
+      'CDPH E276A skills checklist retrieved successfully.',
+    );
+  }
+
+  @Patch('students/:studentId/cdph/e276a/:skillId')
+  updateCdphSkillEntry(
+    @Param('instructorId') instructorId: string,
+    @Param('studentId') studentId: string,
+    @Param('skillId') skillId: string,
+    @Body() body: UpdateCdphSkillEntryDto & { moduleId: string },
+  ) {
+    const { moduleId, ...payload } = body;
+    return createApiResponse(
+      this.instructorPortalService.updateCdphSkillEntry(instructorId, studentId, skillId, moduleId, payload),
+      'CDPH E276A skill entry updated successfully.',
+    );
+  }
+
+  @Get('students/:studentId/cdph/e276a/pdf')
+  generateCdphE276APdf(
+    @Param('instructorId') instructorId: string,
+    @Param('studentId') studentId: string,
+    @Res() res: Response,
+  ) {
+    const buffer = this.instructorPortalService.generateCdphE276APdf(instructorId, studentId);
+    sendPdfResponse(res, buffer, `cdph-e276a-${studentId}.pdf`);
   }
 
   @Get('clinical-logs')

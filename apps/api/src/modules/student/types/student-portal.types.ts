@@ -387,12 +387,49 @@ export interface CdphForm {
   lastName: string;
   firstName: string;
   dob: string;
+  ssn: string;
+  addressLine1: string;
   phone: string;
   email: string;
   city: string;
+  state: string;
   zip: string;
   conviction: boolean;
   convictionDetails: string;
+}
+
+/** One row of the CDPH E276C Individual Student Theory Record, keyed to a curriculum section (lettered theory topic). */
+export interface CdphTheoryRecordEntry {
+  sectionId: string;
+  moduleId: string;
+  hours: number;
+  date: string;
+  instructorInitials: string;
+  testScore?: number;
+}
+
+export interface UpdateCdphTheoryEntryDto {
+  hours?: number;
+  date?: string;
+  testScore?: number;
+}
+
+export type CdphSkillStatus = 'S' | 'U';
+
+/** One row of the CDPH E276A Skills Checklist, keyed to an official regulatory skill item. */
+export interface CdphSkillChecklistEntry {
+  skillId: string;
+  moduleId: string;
+  status: CdphSkillStatus;
+  comments: string;
+  datePerformed: string;
+  instructorInitials: string;
+}
+
+export interface UpdateCdphSkillEntryDto {
+  status?: CdphSkillStatus;
+  comments?: string;
+  datePerformed?: string;
 }
 
 export interface EntranceExamState {
@@ -542,6 +579,9 @@ export interface StudentPortalState {
   supportTickets: SupportTicket[];
   cdphForm: CdphForm;
   cdphSigned: boolean;
+  cdphTheoryRecord: CdphTheoryRecordEntry[];
+  cdphTheoryFinalGrade: string;
+  cdphSkillChecklist: CdphSkillChecklistEntry[];
   liveScanGenerated: boolean;
   liveScanUploaded: boolean;
   textbookIssued: boolean;
@@ -880,9 +920,12 @@ export interface UpdateCdphFormDto {
   lastName?: string;
   firstName?: string;
   dob?: string;
+  ssn?: string;
+  addressLine1?: string;
   phone?: string;
   email?: string;
   city?: string;
+  state?: string;
   zip?: string;
   conviction?: boolean;
   convictionDetails?: string;

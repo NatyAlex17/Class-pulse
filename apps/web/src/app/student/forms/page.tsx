@@ -31,6 +31,7 @@ export default function StudentFormsPage() {
     toggleLiveScanUpload,
     updateCdphField,
     signCdphForm,
+    downloadCdph283bPdf,
   } = useStudentDemo();
 
   const [showLiveScanModal, setShowLiveScanModal] = React.useState(false);
@@ -38,15 +39,32 @@ export default function StudentFormsPage() {
   const [showCdphPreview, setShowCdphPreview] = React.useState(false);
   const [liveScanStage, setLiveScanStage] = React.useState<'intro' | 'generated' | 'uploaded'>('intro');
   const [cdphValidationErrors, setCdphValidationErrors] = React.useState<string[]>([]);
+  const [isDownloadingCdphPdf, setIsDownloadingCdphPdf] = React.useState(false);
+  const [cdphDownloadError, setCdphDownloadError] = React.useState<string | null>(null);
+
+  const handleDownloadCdphPdf = async () => {
+    setIsDownloadingCdphPdf(true);
+    setCdphDownloadError(null);
+    try {
+      await downloadCdph283bPdf();
+    } catch (error) {
+      setCdphDownloadError(error instanceof Error ? error.message : 'Failed to download the PDF.');
+    } finally {
+      setIsDownloadingCdphPdf(false);
+    }
+  };
 
   const validateCdphForm = () => {
     const errors: string[] = [];
     if (!cdphForm.firstName) errors.push('First name is required');
     if (!cdphForm.lastName) errors.push('Last name is required');
     if (!cdphForm.dob) errors.push('Date of birth is required');
+    if (!cdphForm.ssn) errors.push('Social Security Number is required');
+    if (!cdphForm.addressLine1) errors.push('Street address is required');
     if (!cdphForm.phone) errors.push('Phone number is required');
     if (!cdphForm.email) errors.push('Email is required');
     if (!cdphForm.city) errors.push('City is required');
+    if (!cdphForm.state) errors.push('State is required');
     if (!cdphForm.zip) errors.push('ZIP code is required');
     return errors;
   };
@@ -222,14 +240,32 @@ export default function StudentFormsPage() {
                   className="h-11 rounded-[14px]"
                 />
                 <Input
-                  value={cdphForm.city}
-                  onChange={(event) => updateCdphField('city', event.target.value)}
-                  placeholder="City"
+                  value={cdphForm.ssn}
+                  onChange={(event) => updateCdphField('ssn', event.target.value)}
+                  placeholder="Social Security Number"
+                  className="h-11 rounded-[14px]"
+                />
+                <Input
+                  value={cdphForm.addressLine1}
+                  onChange={(event) => updateCdphField('addressLine1', event.target.value)}
+                  placeholder="Street address"
                   className="h-11 rounded-[14px]"
                 />
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  value={cdphForm.city}
+                  onChange={(event) => updateCdphField('city', event.target.value)}
+                  placeholder="City"
+                  className="h-11 rounded-[14px]"
+                />
+                <Input
+                  value={cdphForm.state}
+                  onChange={(event) => updateCdphField('state', event.target.value)}
+                  placeholder="State"
+                  className="h-11 rounded-[14px]"
+                />
                 <Input
                   value={cdphForm.zip}
                   onChange={(event) => updateCdphField('zip', event.target.value)}
@@ -306,6 +342,20 @@ export default function StudentFormsPage() {
                   <span className="font-semibold text-success">Pending Review</span>
                 </div>
               </div>
+
+              {cdphDownloadError && (
+                <p className="mt-4 text-sm text-error">{cdphDownloadError}</p>
+              )}
+
+              <Button
+                onClick={handleDownloadCdphPdf}
+                disabled={isDownloadingCdphPdf}
+                variant="secondary"
+                className="mt-4 rounded-[14px] w-full gap-2"
+              >
+                <IconDownload className="h-4 w-4" />
+                {isDownloadingCdphPdf ? 'Generating PDF…' : 'Download CDPH 283B PDF'}
+              </Button>
             </div>
           )}
         </section>
@@ -444,8 +494,10 @@ This form is valid for 6 months from generation date.
                     <span className="font-semibold text-on-surface">{cdphForm.phone}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-on-surface-variant">City</span>
-                    <span className="font-semibold text-on-surface">{cdphForm.city}, {cdphForm.zip}</span>
+                    <span className="text-on-surface-variant">Address</span>
+                    <span className="font-semibold text-on-surface">
+                      {cdphForm.addressLine1}, {cdphForm.city}, {cdphForm.state} {cdphForm.zip}
+                    </span>
                   </div>
                 </div>
               </div>

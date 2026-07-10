@@ -12,6 +12,8 @@ import type {
   AttendanceCheckInDto,
   AttendanceRecord,
   CdphForm,
+  CdphSkillChecklistEntry,
+  CdphTheoryRecordEntry,
   ClinicalLogEntry,
   ClinicalLogStatus,
   CreateEnrollmentPaymentIntentDto,
@@ -47,6 +49,8 @@ import type {
   SubmitSupportTicketDto,
   TextAnswerDto,
   UpdateCdphFormDto,
+  UpdateCdphSkillEntryDto,
+  UpdateCdphTheoryEntryDto,
   UpdateEnrollmentWizardAgreementsDto,
   UpdateEnrollmentWizardDto,
   UpdateOnboardingAcknowledgementsDto,
@@ -56,6 +60,8 @@ import type {
   UpdateWizardStepDto,
   UploadStudentDocumentDto,
 } from '../types/student-portal.types';
+import { CdphPdfService } from '../../cdph-pdf/services/cdph-pdf.service';
+import { CDPH_E276A_SKILLS } from '../../cdph-pdf/data/cdph-e276a-skills.data';
 import { CohortsConfigService } from './cohorts-config.service';
 import { DocumentRequirementsConfigService } from './document-requirements-config.service';
 import { ExamConfigService } from './exam-config.service';
@@ -117,6 +123,7 @@ export class StudentPortalService {
     private readonly documentRequirementsConfigService: DocumentRequirementsConfigService,
     private readonly geminiService: GeminiService,
     private readonly stripePaymentsService: StripePaymentsService,
+    private readonly cdphPdfService: CdphPdfService,
   ) {}
 
   ensurePortalForLocalUser(localUser: LocalUserRecord) {
@@ -232,6 +239,13 @@ export class StudentPortalService {
     } | null = null;
 
     if (pricing.amount > 0) {
+      portal.financials = {
+        ...portal.financials,
+        totalTuition: pricing.amount,
+        balance: Math.max(0, pricing.amount - portal.financials.amountPaid),
+      };
+      this.repository.save(portal);
+
       paymentVerified = await this.stripePaymentsService.verifyEnrollmentPayment(
         studentId,
         cohort.id,
@@ -259,10 +273,11 @@ export class StudentPortalService {
     };
 
     if (pricing.amount > 0) {
+      const refreshedFinancials = this.repository.findByStudentId(studentId).financials;
       portal.financials = {
-        ...portal.financials,
+        ...refreshedFinancials,
         totalTuition: pricing.amount,
-        balance: Math.max(0, pricing.amount - portal.financials.amountPaid),
+        balance: Math.max(0, pricing.amount - refreshedFinancials.amountPaid),
       };
     }
 
@@ -1772,6 +1787,188 @@ export class StudentPortalService {
     return this.repository.save(portal).cdphSigned;
   }
 
+  generateCdph283BPdf(studentId: string): Buffer {
+    const portal = this.repository.findByStudentId(studentId);
+    if (!portal.cdphSigned) {
+      throw new BadRequestException('CDPH 283B must be signed before it can be generated as a PDF.');
+    }
+
+    const signedEvent = portal.auditTrail.find((event) => event.action === 'student.form.cdph.signed');
+
+    return this.cdphPdfService.generate283B({
+      requestType: 'enrollment',
+      lastName: portal.cdphForm.lastName,
+      firstName: portal.cdphForm.firstName,
+      dob: portal.cdphForm.dob,
+      ssn: portal.cdphForm.ssn,
+      addressLine1: portal.cdphForm.addressLine1,
+      city: portal.cdphForm.city,
+      state: portal.cdphForm.state,
+      zip: portal.cdphForm.zip,
+      phone: portal.cdphForm.phone,
+      email: portal.cdphForm.email,
+      conviction: portal.cdphForm.conviction,
+      convictionDetails: portal.cdphForm.convictionDetails,
+      trainingProgramName: portal.profile.cohort || '',
+      signedAt: signedEvent?.occurredAt ?? null,
+    });
+  }
+
+  getCdphTheoryRecord(studentId: string) {
+    const portal = this.repository.findByStudentId(studentId);
+    return { entries: portal.cdphTheoryRecord, finalGrade: portal.cdphTheoryFinalGrade };
+  }
+
+  updateCdphTheoryEntry(
+    studentId: string,
+    sectionId: string,
+    moduleId: string,
+    payload: UpdateCdphTheoryEntryDto,
+    instructorInitials: string,
+  ) {
+    const portal = this.repository.findByStudentId(studentId);
+    const existingIndex = portal.cdphTheoryRecord.findIndex((entry) => entry.sectionId === sectionId);
+    const existing = existingIndex >= 0 ? portal.cdphTheoryRecord[existingIndex] : undefined;
+
+    const updatedEntry: CdphTheoryRecordEntry = {
+      sectionId,
+      moduleId,
+      hours: payload.hours ?? existing?.hours ?? 0,
+      date: payload.date ?? existing?.date ?? new Date().toISOString().slice(0, 10),
+      instructorInitials,
+      testScore: payload.testScore ?? existing?.testScore,
+    };
+
+    if (existingIndex >= 0) {
+      portal.cdphTheoryRecord = portal.cdphTheoryRecord.map((entry, index) =>
+        index === existingIndex ? updatedEntry : entry,
+      );
+    } else {
+      portal.cdphTheoryRecord = [...portal.cdphTheoryRecord, updatedEntry];
+    }
+
+    portal.lastAction = 'CDPH E276C theory record updated.';
+    this.recordAudit(portal, 'student.cdph.e276c.entry.updated', sectionId, { moduleId });
+    return this.repository.save(portal).cdphTheoryRecord;
+  }
+
+  updateCdphTheoryFinalGrade(studentId: string, finalGrade: string) {
+    const portal = this.repository.findByStudentId(studentId);
+    portal.cdphTheoryFinalGrade = finalGrade;
+    portal.lastAction = 'CDPH E276C final grade recorded.';
+    this.recordAudit(portal, 'student.cdph.e276c.final-grade.updated', 'cdph-e276c');
+    return this.repository.save(portal).cdphTheoryFinalGrade;
+  }
+
+  generateCdphE276CPdf(studentId: string, instructorFullName: string): Buffer {
+    const portal = this.repository.findByStudentId(studentId);
+    const modules = this.learningResourcesConfigService.getConfig().modules;
+    const entryBySectionId = new Map(portal.cdphTheoryRecord.map((entry) => [entry.sectionId, entry]));
+
+    const moduleRows = modules
+      .slice()
+      .sort((a, b) => a.order - b.order)
+      .map((module) => ({
+        moduleTitle: module.title,
+        topics: module.sections.map((section) => {
+          const entry = entryBySectionId.get(section.id);
+          return {
+            topicId: section.id,
+            label: section.title,
+            hours: entry?.hours ?? null,
+            date: entry?.date ?? null,
+            instructorInitials: entry?.instructorInitials ?? null,
+            testScore: entry?.testScore ?? null,
+          };
+        }),
+      }));
+
+    const studentName = `${portal.cdphForm.firstName} ${portal.cdphForm.lastName}`.trim() || portal.profile.fullName;
+
+    return this.cdphPdfService.generateE276C({
+      studentName,
+      ssn: portal.cdphForm.ssn,
+      startDate: '',
+      completionDate: '',
+      instructorName: instructorFullName,
+      finalGrade: portal.cdphTheoryFinalGrade,
+      modules: moduleRows,
+    });
+  }
+
+  getCdphSkillChecklist(studentId: string) {
+    return this.repository.findByStudentId(studentId).cdphSkillChecklist;
+  }
+
+  updateCdphSkillEntry(
+    studentId: string,
+    skillId: string,
+    moduleId: string,
+    payload: UpdateCdphSkillEntryDto,
+    instructorInitials: string,
+  ) {
+    const portal = this.repository.findByStudentId(studentId);
+    const existingIndex = portal.cdphSkillChecklist.findIndex((entry) => entry.skillId === skillId);
+    const existing = existingIndex >= 0 ? portal.cdphSkillChecklist[existingIndex] : undefined;
+
+    const updatedEntry: CdphSkillChecklistEntry = {
+      skillId,
+      moduleId,
+      status: payload.status ?? existing?.status ?? 'U',
+      comments: payload.comments ?? existing?.comments ?? '',
+      datePerformed: payload.datePerformed ?? existing?.datePerformed ?? new Date().toISOString().slice(0, 10),
+      instructorInitials,
+    };
+
+    if (existingIndex >= 0) {
+      portal.cdphSkillChecklist = portal.cdphSkillChecklist.map((entry, index) =>
+        index === existingIndex ? updatedEntry : entry,
+      );
+    } else {
+      portal.cdphSkillChecklist = [...portal.cdphSkillChecklist, updatedEntry];
+    }
+
+    portal.lastAction = 'CDPH E276A skills checklist updated.';
+    this.recordAudit(portal, 'student.cdph.e276a.entry.updated', skillId, { moduleId });
+    return this.repository.save(portal).cdphSkillChecklist;
+  }
+
+  generateCdphE276APdf(studentId: string, instructorFullName: string): Buffer {
+    const portal = this.repository.findByStudentId(studentId);
+    const modules = this.learningResourcesConfigService.getConfig().modules;
+    const moduleTitleById = new Map(modules.map((module) => [module.id, module.title]));
+    const entryBySkillId = new Map(portal.cdphSkillChecklist.map((entry) => [entry.skillId, entry]));
+
+    const moduleRows = CDPH_E276A_SKILLS.map((skillModule) => ({
+      moduleTitle: moduleTitleById.get(skillModule.moduleId) ?? skillModule.moduleId,
+      clinicalHours: skillModule.clinicalHours,
+      items: skillModule.items.map((item) => {
+        const entry = entryBySkillId.get(item.id);
+        return {
+          skillId: item.id,
+          label: item.label,
+          status: entry?.status ?? null,
+          comments: entry?.comments ?? null,
+          datePerformed: entry?.datePerformed ?? null,
+          instructorInitials: entry?.instructorInitials ?? null,
+        };
+      }),
+    }));
+
+    const studentName = `${portal.cdphForm.firstName} ${portal.cdphForm.lastName}`.trim() || portal.profile.fullName;
+
+    return this.cdphPdfService.generateE276A({
+      studentName,
+      ssn: portal.cdphForm.ssn,
+      instructorName: instructorFullName,
+      trainingProgramName: portal.profile.cohort || '',
+      clinicalSiteName: '',
+      startDate: '',
+      completionDate: '',
+      modules: moduleRows,
+    });
+  }
+
   getSettings(studentId: string) {
     return this.repository.findByStudentId(studentId).settings;
   }
@@ -2151,7 +2348,18 @@ export class StudentPortalService {
   }
 
   private validateCdphForm(form: CdphForm) {
-    const requiredFields = [form.firstName, form.lastName, form.dob, form.phone, form.email, form.city, form.zip];
+    const requiredFields = [
+      form.firstName,
+      form.lastName,
+      form.dob,
+      form.ssn,
+      form.addressLine1,
+      form.phone,
+      form.email,
+      form.city,
+      form.state,
+      form.zip,
+    ];
     if (requiredFields.some((value) => value.trim().length === 0)) {
       throw new BadRequestException('CDPH form is incomplete. All required fields must be filled.');
     }

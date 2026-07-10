@@ -501,6 +501,10 @@ export interface ReviewSkillChecklistItemDto {
   feedback?: string;
 }
 
+export interface UpdateCdphTheoryFinalGradeDto {
+  finalGrade: string;
+}
+
 export interface ReviewClinicalLogDto {
   status: ClinicalLogReviewStatus;
   note?: string;

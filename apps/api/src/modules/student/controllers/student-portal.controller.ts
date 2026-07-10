@@ -7,12 +7,13 @@ import {
   Patch,
   Post,
   Req,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import * as fs from 'fs';
 import { diskStorage } from 'multer';
 import * as path from 'path';
@@ -20,6 +21,7 @@ import * as path from 'path';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { SupabaseAuthGuard } from '../../../common/auth/supabase-auth.guard';
 import { createApiResponse } from '../../../common/utils/create-api-response';
+import { sendPdfResponse } from '../../../common/utils/send-pdf-response';
 import { READINESS_DOCUMENTS_UPLOADS_DIR, UPLOADS_URL_PREFIX } from '../../../common/utils/upload-paths';
 import type {
   AdvanceLearningDto,
@@ -683,6 +685,12 @@ export class StudentPortalController {
       this.studentPortalService.signCdphForm(studentId),
       'CDPH form signed successfully.',
     );
+  }
+
+  @Get('forms/cdph-283b/pdf')
+  generateCdph283BPdf(@Param('studentId') studentId: string, @Res() res: Response) {
+    const buffer = this.studentPortalService.generateCdph283BPdf(studentId);
+    sendPdfResponse(res, buffer, `cdph-283b-${studentId}.pdf`);
   }
 
   @Get('settings')

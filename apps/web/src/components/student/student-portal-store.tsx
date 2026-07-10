@@ -248,9 +248,12 @@ type CdphForm = {
   lastName: string;
   firstName: string;
   dob: string;
+  ssn: string;
+  addressLine1: string;
   phone: string;
   email: string;
   city: string;
+  state: string;
   zip: string;
   conviction: boolean;
   convictionDetails: string;
@@ -531,6 +534,7 @@ type StudentDemoContextValue = StudentDemoState & {
   toggleLiveScanUpload: () => void;
   updateCdphField: <TKey extends keyof CdphForm>(key: TKey, value: CdphForm[TKey]) => void;
   signCdphForm: () => void;
+  downloadCdph283bPdf: () => Promise<void>;
   logClinicalHours: () => void;
   submitAssignment: (assignmentId: string) => void;
   submitSupportTicket: (ticket: { subject: string; category: string; message: string }) => void;
@@ -734,9 +738,12 @@ function createFallbackState(): StudentDemoState {
       lastName: '',
       firstName: '',
       dob: '',
+      ssn: '',
+      addressLine1: '',
       phone: '',
       email: '',
       city: '',
+      state: '',
       zip: '',
       conviction: false,
       convictionDetails: '',
@@ -1544,6 +1551,34 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
     mutate('/forms/cdph-283b/sign', 'POST');
   }, [mutate]);
 
+  const downloadCdph283bPdf = React.useCallback(async () => {
+    if (!studentId || !accessToken || !isStudentUser) {
+      throw new Error('Student portal is not authenticated.');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/students/${studentId}/forms/cdph-283b/pdf`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to generate the CDPH 283B PDF.');
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'cdph-283b.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [accessToken, isStudentUser, studentId]);
+
   const logClinicalHours = React.useCallback(() => {
     mutate('/clinical-hours/logs', 'POST', {
       date: new Date().toISOString().slice(0, 10),
@@ -1724,6 +1759,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       toggleLiveScanUpload,
       updateCdphField,
       signCdphForm,
+      downloadCdph283bPdf,
       logClinicalHours,
       submitAssignment,
       submitSupportTicket,
@@ -1740,6 +1776,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       completedOnboardingCount,
       completeOnboardingStep,
       currentModule,
+      downloadCdph283bPdf,
       examUnlocked,
       generateLiveScan,
       issueTextbook,

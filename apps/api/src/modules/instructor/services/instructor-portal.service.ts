@@ -4,7 +4,13 @@ import type { LocalUserRecord } from '../../auth/types/auth-user.types';
 import { DocumentRequirementsConfigService } from '../../student/services/document-requirements-config.service';
 import { LearningResourcesConfigService } from '../../student/services/learning-resources-config.service';
 import { StudentPortalService } from '../../student/services/student-portal.service';
-import type { CurriculumModule, StudentPortalState } from '../../student/types/student-portal.types';
+import { CDPH_E276A_SKILLS } from '../../cdph-pdf/data/cdph-e276a-skills.data';
+import type {
+  CurriculumModule,
+  StudentPortalState,
+  UpdateCdphSkillEntryDto,
+  UpdateCdphTheoryEntryDto,
+} from '../../student/types/student-portal.types';
 import type {
   AddInstructorStudentNoteDto,
   AnswerInstructorOnboardingQuestionDto,
@@ -312,6 +318,139 @@ export class InstructorPortalService {
     this.recordAudit(portal, 'instructor.skills.item.reviewed', itemId, { studentId, status: payload.status });
     const saved = this.repository.save(portal);
     return this.buildSkillsWorkspaces(saved).find((workspace) => workspace.studentId === studentId);
+  }
+
+  getCdphTheoryWorkspace(instructorId: string, studentId: string) {
+    const portal = this.repository.findByInstructorId(instructorId);
+    const student = this.getStudentOrThrow(portal, studentId);
+
+    const { entries, finalGrade } = this.studentPortalService.getCdphTheoryRecord(studentId);
+    const entryBySectionId = new Map(entries.map((entry) => [entry.sectionId, entry]));
+    const modules = this.learningResourcesConfigService.getConfig().modules;
+
+    return {
+      studentId,
+      studentName: student.name,
+      finalGrade,
+      modules: modules
+        .slice()
+        .sort((a, b) => a.order - b.order)
+        .map((module) => ({
+          moduleId: module.id,
+          moduleTitle: module.title,
+          topics: module.sections.map((section) => {
+            const entry = entryBySectionId.get(section.id);
+            return {
+              sectionId: section.id,
+              label: section.title,
+              hours: entry?.hours ?? null,
+              date: entry?.date ?? null,
+              instructorInitials: entry?.instructorInitials ?? null,
+              testScore: entry?.testScore ?? null,
+            };
+          }),
+        })),
+    };
+  }
+
+  updateCdphTheoryEntry(
+    instructorId: string,
+    studentId: string,
+    sectionId: string,
+    moduleId: string,
+    payload: UpdateCdphTheoryEntryDto,
+  ) {
+    const portal = this.repository.findByInstructorId(instructorId);
+    this.getStudentOrThrow(portal, studentId);
+
+    const instructorInitials = this.buildInitials(portal.profile.fullName);
+    this.studentPortalService.updateCdphTheoryEntry(studentId, sectionId, moduleId, payload, instructorInitials);
+    this.recordAudit(portal, 'instructor.cdph.e276c.entry.updated', sectionId, { studentId, moduleId });
+    this.repository.save(portal);
+
+    return this.getCdphTheoryWorkspace(instructorId, studentId);
+  }
+
+  updateCdphTheoryFinalGrade(instructorId: string, studentId: string, finalGrade: string) {
+    const portal = this.repository.findByInstructorId(instructorId);
+    this.getStudentOrThrow(portal, studentId);
+
+    this.studentPortalService.updateCdphTheoryFinalGrade(studentId, finalGrade);
+    this.recordAudit(portal, 'instructor.cdph.e276c.final-grade.updated', studentId);
+    this.repository.save(portal);
+
+    return this.getCdphTheoryWorkspace(instructorId, studentId);
+  }
+
+  generateCdphE276CPdf(instructorId: string, studentId: string): Buffer {
+    const portal = this.repository.findByInstructorId(instructorId);
+    this.getStudentOrThrow(portal, studentId);
+
+    return this.studentPortalService.generateCdphE276CPdf(studentId, portal.profile.fullName);
+  }
+
+  getCdphSkillChecklistWorkspace(instructorId: string, studentId: string) {
+    const portal = this.repository.findByInstructorId(instructorId);
+    const student = this.getStudentOrThrow(portal, studentId);
+
+    const entries = this.studentPortalService.getCdphSkillChecklist(studentId);
+    const entryBySkillId = new Map(entries.map((entry) => [entry.skillId, entry]));
+    const modules = this.learningResourcesConfigService.getConfig().modules;
+    const moduleTitleById = new Map(modules.map((module) => [module.id, module.title]));
+
+    return {
+      studentId,
+      studentName: student.name,
+      modules: CDPH_E276A_SKILLS.map((skillModule) => ({
+        moduleId: skillModule.moduleId,
+        moduleTitle: moduleTitleById.get(skillModule.moduleId) ?? skillModule.moduleId,
+        clinicalHours: skillModule.clinicalHours,
+        items: skillModule.items.map((item) => {
+          const entry = entryBySkillId.get(item.id);
+          return {
+            skillId: item.id,
+            label: item.label,
+            status: entry?.status ?? null,
+            comments: entry?.comments ?? null,
+            datePerformed: entry?.datePerformed ?? null,
+            instructorInitials: entry?.instructorInitials ?? null,
+          };
+        }),
+      })),
+    };
+  }
+
+  updateCdphSkillEntry(
+    instructorId: string,
+    studentId: string,
+    skillId: string,
+    moduleId: string,
+    payload: UpdateCdphSkillEntryDto,
+  ) {
+    const portal = this.repository.findByInstructorId(instructorId);
+    this.getStudentOrThrow(portal, studentId);
+
+    const instructorInitials = this.buildInitials(portal.profile.fullName);
+    this.studentPortalService.updateCdphSkillEntry(studentId, skillId, moduleId, payload, instructorInitials);
+    this.recordAudit(portal, 'instructor.cdph.e276a.entry.updated', skillId, { studentId, moduleId });
+    this.repository.save(portal);
+
+    return this.getCdphSkillChecklistWorkspace(instructorId, studentId);
+  }
+
+  generateCdphE276APdf(instructorId: string, studentId: string): Buffer {
+    const portal = this.repository.findByInstructorId(instructorId);
+    this.getStudentOrThrow(portal, studentId);
+
+    return this.studentPortalService.generateCdphE276APdf(studentId, portal.profile.fullName);
+  }
+
+  private buildInitials(fullName: string): string {
+    return fullName
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((part) => part[0]?.toUpperCase())
+      .join('');
   }
 
   /**

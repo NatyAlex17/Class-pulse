@@ -10,12 +10,13 @@ import {
   Post,
   Query,
   Req,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import * as fs from 'fs';
 import { diskStorage } from 'multer';
 import * as path from 'path';
@@ -25,7 +26,10 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { SupabaseAuthGuard } from '../../../common/auth/supabase-auth.guard';
 import { createApiResponse } from '../../../common/utils/create-api-response';
+import { sendPdfResponse } from '../../../common/utils/send-pdf-response';
 import { LEARNING_RESOURCES_UPLOADS_DIR, UPLOADS_URL_PREFIX } from '../../../common/utils/upload-paths';
+import { CdphPdfService } from '../../cdph-pdf/services/cdph-pdf.service';
+import { CdphE276ConfigService, type CdphE276ProgramProfile } from '../services/cdph-e276-config.service';
 import { ExamConfigService, type EntranceExamConfig } from '../../student/services/exam-config.service';
 import { EnrollmentWizardConfigService, type EnrollmentWizardConfig } from '../../student/services/enrollment-wizard-config.service';
 import {
@@ -72,6 +76,8 @@ export class AdminPortalController {
     private readonly instructorPortalService: InstructorPortalService,
     private readonly instructorIntakeSubmissionService: InstructorIntakeSubmissionService,
     private readonly instructorOnboardingQuestionsConfigService: InstructorOnboardingQuestionsConfigService,
+    private readonly cdphE276ConfigService: CdphE276ConfigService,
+    private readonly cdphPdfService: CdphPdfService,
   ) {}
 
   @Get('portal')
@@ -510,6 +516,45 @@ export class AdminPortalController {
       },
       'File uploaded successfully.',
     );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('cdph/e276')
+  getCdphE276Profile() {
+    return createApiResponse(
+      this.cdphE276ConfigService.getProfile(),
+      'CDPH E276 program profile retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Patch('cdph/e276')
+  updateCdphE276Profile(@Body() body: Partial<CdphE276ProgramProfile>) {
+    return createApiResponse(
+      this.cdphE276ConfigService.updateProfile(body),
+      'CDPH E276 program profile updated successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('cdph/e276/pdf')
+  generateCdphE276Pdf(@Res() res: Response) {
+    const profile = this.cdphE276ConfigService.getProfile();
+    const modules = this.learningResourcesConfigService.getConfig().modules;
+
+    const buffer = this.cdphPdfService.generateE276({
+      ...profile,
+      modules: modules
+        .slice()
+        .sort((a, b) => a.order - b.order)
+        .map((module) => ({
+          title: module.title,
+          theoryHours: module.requiredHours,
+          clinicalHours: module.minimumClinicalHours ?? 0,
+        })),
+    });
+
+    sendPdfResponse(res, buffer, 'cdph-e276.pdf');
   }
 
   @UseGuards(SupabaseAuthGuard)
