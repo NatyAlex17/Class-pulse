@@ -17,6 +17,8 @@ import type {
   AdminAuditEvent,
   AdminCohortRecord,
   AdminEscalationItem,
+  AdminIncompleteOnboardingReport,
+  AdminIncompleteOnboardingUser,
   AdminOperationsBreakdownSlice,
   AdminOperationsHighlight,
   AdminOperationsModuleRow,
@@ -332,6 +334,70 @@ export class AdminPortalService {
 
   getSettingsSummary(adminId: string) {
     return this.repository.findByAdminId(adminId).settings;
+  }
+
+  async getIncompleteOnboarding(): Promise<AdminIncompleteOnboardingReport> {
+    const submittedStudentIds = new Set(
+      this.intakeSubmissionService.getAllSubmissions().map((submission) => submission.studentId),
+    );
+    const submittedInstructorIds = new Set(
+      this.instructorIntakeSubmissionService.getAllSubmissions().map((submission) => submission.instructorId),
+    );
+
+    let registeredAtByUserId = new Map<string, string>();
+    try {
+      const users = await this.localUsersService.listByRoles(['student', 'instructor']);
+      registeredAtByUserId = new Map(users.map((user) => [user.id, user.createdAt]));
+    } catch {
+      // Registration dates are best-effort; the portal data alone is enough to build the list.
+    }
+
+    const students = this.studentPortalService
+      .findAllStudentPortals()
+      .filter(
+        (portal) =>
+          !portal.onboarding.submitted &&
+          !submittedStudentIds.has(portal.profile.id) &&
+          (portal.workflowStage === 'entrance_exam' || portal.workflowStage === 'enrollment_wizard'),
+      )
+      .map(
+        (portal): AdminIncompleteOnboardingUser => ({
+          id: portal.profile.id,
+          role: 'student',
+          fullName: portal.profile.fullName,
+          email: portal.profile.email,
+          workflowStage: portal.workflowStage,
+          registeredAt: registeredAtByUserId.get(portal.profile.id),
+        }),
+      );
+
+    const instructors = this.instructorPortalService
+      .findAllInstructorPortals()
+      .filter(
+        (portal) =>
+          !portal.onboarding.submitted &&
+          !submittedInstructorIds.has(portal.profile.id) &&
+          portal.workflowStage === 'onboarding',
+      )
+      .map(
+        (portal): AdminIncompleteOnboardingUser => ({
+          id: portal.profile.id,
+          role: 'instructor',
+          fullName: portal.profile.fullName,
+          email: portal.profile.email,
+          workflowStage: portal.workflowStage,
+          registeredAt: registeredAtByUserId.get(portal.profile.id),
+        }),
+      );
+
+    const byRegisteredAtDesc = (a: AdminIncompleteOnboardingUser, b: AdminIncompleteOnboardingUser) =>
+      new Date(b.registeredAt ?? 0).getTime() - new Date(a.registeredAt ?? 0).getTime();
+
+    return {
+      students: students.sort(byRegisteredAtDesc),
+      instructors: instructors.sort(byRegisteredAtDesc),
+      generatedAt: new Date().toISOString(),
+    };
   }
 
   async listAuditors(): Promise<AdminAuditorAccount[]> {

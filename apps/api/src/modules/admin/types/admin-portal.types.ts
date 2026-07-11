@@ -338,3 +338,19 @@ export interface AdminAuditorAccount {
   fullName: string;
   title: string;
 }
+
+export interface AdminIncompleteOnboardingUser {
+  id: string;
+  role: 'student' | 'instructor';
+  fullName: string;
+  email: string;
+  workflowStage: string;
+  /** From the users table; unavailable when the database lookup fails. */
+  registeredAt?: string;
+}
+
+export interface AdminIncompleteOnboardingReport {
+  students: AdminIncompleteOnboardingUser[];
+  instructors: AdminIncompleteOnboardingUser[];
+  generatedAt: string;
+}

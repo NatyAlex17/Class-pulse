@@ -712,7 +712,7 @@ export function StudentIntakeModal({ open, onClose }: StudentIntakeModalProps) {
                               disabled={entranceExam.taken || isUploading}
                               onClick={() => handleRequestDocumentUpload(document.id)}
                             >
-                              {isUploading ? 'Uploading...' : uploaded ? 'Replace' : 'Upload'}
+                              {isUploading ? 'Uploading...' : uploaded ? 'U' : 'Upload'}
                             </Button>
                           </div>
                         </div>

@@ -207,7 +207,7 @@ export default function InstructorDocumentsPage() {
             disabled={replacingDocumentId === row.id}
             onClick={() => handleRequestReplace(row.id)}
           >
-            {replacingDocumentId === row.id ? 'Replacing...' : 'Replace'}
+            {replacingDocumentId === row.id ? 'Updating...' : 'Update'}
           </Button>
         </div>
       ),

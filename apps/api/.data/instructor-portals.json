@@ -1299,7 +1299,15 @@
         ],
         "submitted": true
       },
-      "studentNotes": {},
+      "studentNotes": {
+        "00b37ecb-b5a7-41e8-84a9-7b8408012a39": [
+          {
+            "date": "2026-07-10",
+            "note": "sdfds",
+            "instructor": "Rrptfrm3ut"
+          }
+        ]
+      },
       "activeStudentId": "",
       "dashboard": {
         "profile": {
@@ -1425,6 +1433,20 @@
             }
           ],
           "notes": "hh"
+        },
+        {
+          "id": "slot-1783710595374",
+          "weekStart": "2026-07-05",
+          "day": 0,
+          "time": "09:00",
+          "students": [
+            {
+              "id": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+              "name": "Dagim Assefa098",
+              "cohort": "CNA Paid"
+            }
+          ],
+          "notes": "this is urgent"
         }
       ],
       "skillsWorkspace": {
@@ -1512,6 +1534,123 @@
         ]
       },
       "auditTrail": [
+        {
+          "id": "audit-1783754076307-672",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276a.entry.updated",
+          "target": "m2-1",
+          "occurredAt": "2026-07-11T07:14:36.307Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m2"
+          }
+        },
+        {
+          "id": "audit-1783754064071-193",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276c.entry.updated",
+          "target": "cdphe-m2-a",
+          "occurredAt": "2026-07-11T07:14:24.071Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m2"
+          }
+        },
+        {
+          "id": "audit-1783754055893-344",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276c.entry.updated",
+          "target": "cdphe-m1-c",
+          "occurredAt": "2026-07-11T07:14:15.893Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m1"
+          }
+        },
+        {
+          "id": "audit-1783754049731-469",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276c.entry.updated",
+          "target": "cdphe-m1-a",
+          "occurredAt": "2026-07-11T07:14:09.731Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m1"
+          }
+        },
+        {
+          "id": "audit-1783754045840-927",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276c.entry.updated",
+          "target": "cdphe-m1-a",
+          "occurredAt": "2026-07-11T07:14:05.840Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m1"
+          }
+        },
+        {
+          "id": "audit-1783710936058-25",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.availability.updated",
+          "target": "availability",
+          "occurredAt": "2026-07-10T19:15:36.058Z",
+          "details": {
+            "monday": "08:00 - 04:00",
+            "tuesday": "08:00 - 04:00",
+            "wednesday": "09:00 - 12:00",
+            "thursday": "10:00 - 06:00",
+            "friday": "08:00 - 02:00",
+            "weekend": "Reserved for make-up sessions and approvals only.",
+            "allowAutoPlacement": true,
+            "travelBuffer": true
+          }
+        },
+        {
+          "id": "audit-1783710860775-565",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.clinical-timer.stopped",
+          "target": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "occurredAt": "2026-07-10T19:14:20.775Z",
+          "details": {
+            "moduleId": "intro-care",
+            "hours": 0.01
+          }
+        },
+        {
+          "id": "audit-1783710827572-975",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.clinical-timer.started",
+          "target": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "occurredAt": "2026-07-10T19:13:47.572Z",
+          "details": {
+            "moduleId": "intro-care"
+          }
+        },
+        {
+          "id": "audit-1783710595413-911",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.schedule.student.assigned",
+          "target": "slot-1783710595374",
+          "occurredAt": "2026-07-10T19:09:55.413Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39"
+          }
+        },
+        {
+          "id": "audit-1783710595374-623",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.schedule.slot.created",
+          "target": "slot-1783710595374",
+          "occurredAt": "2026-07-10T19:09:55.374Z"
+        },
+        {
+          "id": "audit-1783710421024-637",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.student.note.added",
+          "target": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "occurredAt": "2026-07-10T19:07:01.024Z"
+        },
         {
           "id": "audit-1783483548957-407",
           "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",

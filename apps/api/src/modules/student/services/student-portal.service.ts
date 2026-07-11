@@ -19,6 +19,7 @@ import type {
   CreateEnrollmentPaymentIntentDto,
   CurriculumModule,
   DocumentChecklistItem,
+  LearningTimeState,
   LogClinicalHoursDto,
   OnboardingState,
   RecordPaymentDto,
@@ -746,7 +747,9 @@ export class StudentPortalService {
     const portal = this.repository.findByStudentId(studentId);
     const currentModule = this.getCurrentModule(portal);
     const requiredSessionMinutes = this.getRequiredSessionMinutes(currentModule);
-    const sessionMinutes = Math.min(this.getModuleSessionMinutes(currentModule), requiredSessionMinutes);
+    const requiredSessionSeconds = this.getRequiredSessionSeconds(currentModule);
+    const sessionSeconds = Math.min(this.getModuleSessionSeconds(currentModule), requiredSessionSeconds);
+    const sessionMinutes = Math.min(Math.floor(sessionSeconds / 60), requiredSessionMinutes);
 
     return {
       activeModuleId: portal.activeModuleId,
@@ -754,13 +757,16 @@ export class StudentPortalService {
       modules: portal.modules,
       learningMinutes: portal.learningMinutes,
       sessionMinutes,
+      sessionSeconds,
       requiredSessionMinutes,
+      requiredSessionSeconds,
       learningSessionActive: portal.learningSessionActive,
       activeLessonId: portal.activeLessonId,
       lessonElapsedMinutes: this.getLessonElapsedMinutes(portal),
+      lessonElapsedSeconds: this.getLessonElapsedSeconds(portal),
       activeLearningAttention: portal.activeLearningAttention,
       activeExamSession: portal.activeExamSession,
-      examUnlocked: sessionMinutes >= requiredSessionMinutes,
+      examUnlocked: sessionSeconds >= requiredSessionSeconds,
       textbookIssued: portal.textbookIssued,
       textbookOpened: portal.textbookOpened,
       exitSurveyComplete: portal.exitSurveyComplete,
@@ -770,7 +776,6 @@ export class StudentPortalService {
   }
 
   advanceLearning(studentId: string, payload: AdvanceLearningDto) {
-    const portal = this.repository.findByStudentId(studentId);
     const minutes = payload.minutes ?? 1;
 
     if (!Number.isFinite(minutes) || minutes <= 0) {
@@ -778,6 +783,25 @@ export class StudentPortalService {
     }
 
     if (minutes > 60) {
+      throw new BadRequestException('Learning time is recorded automatically in small increments.');
+    }
+
+    this.recordLearningSeconds(studentId, Math.round(minutes * 60));
+    return this.repository.findByStudentId(studentId).modules;
+  }
+
+  /**
+   * Credits second-accurate learning time against the active module and lesson.
+   * Called by the learning-time socket gateway with server-measured elapsed seconds.
+   */
+  recordLearningSeconds(studentId: string, seconds: number): LearningTimeState {
+    const portal = this.repository.findByStudentId(studentId);
+
+    if (!Number.isFinite(seconds) || seconds <= 0) {
+      throw new BadRequestException('Learning seconds must be greater than zero.');
+    }
+
+    if (seconds > 3600) {
       throw new BadRequestException('Learning time is recorded automatically in small increments.');
     }
 
@@ -796,28 +820,36 @@ export class StudentPortalService {
       throw new BadRequestException('Locked modules cannot record learning time.');
     }
 
-    const requiredSessionMinutes = this.getRequiredSessionMinutes(activeModule);
-    const currentSessionMinutes = this.getModuleSessionMinutes(activeModule);
-    const nextSessionMinutes = Math.min(currentSessionMinutes + minutes, requiredSessionMinutes);
-    const creditedMinutes = Math.max(0, nextSessionMinutes - currentSessionMinutes);
+    const requiredSessionSeconds = this.getRequiredSessionSeconds(activeModule);
+    const currentSessionSeconds = this.getModuleSessionSeconds(activeModule);
+    const nextSessionSeconds = Math.min(currentSessionSeconds + Math.round(seconds), requiredSessionSeconds);
+    const creditedSeconds = Math.max(0, nextSessionSeconds - currentSessionSeconds);
 
-    portal.learningMinutes += creditedMinutes;
-    const lessonElapsedMinutes = this.getLessonElapsedMinutes(portal);
+    const previousLearningSeconds =
+      portal.learningSeconds ?? Math.max(0, Math.round(portal.learningMinutes)) * 60;
+    portal.learningSeconds = previousLearningSeconds + creditedSeconds;
+    portal.learningMinutes = Math.floor(portal.learningSeconds / 60);
 
-    if (creditedMinutes > 0 && portal.activeLessonId) {
+    const lessonElapsedSeconds = this.getLessonElapsedSeconds(portal);
+
+    if (creditedSeconds > 0 && portal.activeLessonId) {
       const activeLessonExists = activeModule.steps.some((step) => step.id === portal.activeLessonId);
 
       if (activeLessonExists) {
-        lessonElapsedMinutes[portal.activeLessonId] =
-          Math.max(0, lessonElapsedMinutes[portal.activeLessonId] ?? 0) + creditedMinutes;
-        portal.lessonElapsedMinutes = lessonElapsedMinutes;
+        lessonElapsedSeconds[portal.activeLessonId] =
+          Math.max(0, lessonElapsedSeconds[portal.activeLessonId] ?? 0) + creditedSeconds;
       }
     }
+
+    portal.lessonElapsedSeconds = lessonElapsedSeconds;
+    portal.lessonElapsedMinutes = Object.fromEntries(
+      Object.entries(lessonElapsedSeconds).map(([lessonId, value]) => [lessonId, Math.floor(value / 60)]),
+    );
 
     portal.activeExamSession = undefined;
     portal.modules[activeIndex] = this.recalculateModule({
       ...activeModule,
-      sessionMinutes: nextSessionMinutes,
+      sessionSeconds: nextSessionSeconds,
       steps: [...activeModule.steps],
     });
 
@@ -827,15 +859,41 @@ export class StudentPortalService {
       );
     }
 
-    portal.lastAction =
-      nextSessionMinutes >= requiredSessionMinutes
-        ? `${activeModule.title} session time completed — module assessment unlocked.`
-        : 'Learning session time recorded.';
+    const sessionCompleted = nextSessionSeconds >= requiredSessionSeconds;
+    portal.lastAction = sessionCompleted
+      ? `${activeModule.title} session time completed — module assessment unlocked.`
+      : 'Learning session time recorded.';
 
-    this.recordAudit(portal, 'student.learning.advanced', portal.activeModuleId, {
-      minutes: creditedMinutes,
-    });
-    return this.repository.save(portal).modules;
+    // Audit whole-minute boundaries only, so per-second ticks don't flood the trail.
+    if (Math.floor(nextSessionSeconds / 60) > Math.floor(currentSessionSeconds / 60)) {
+      this.recordAudit(portal, 'student.learning.advanced', portal.activeModuleId, {
+        minutes: Math.floor(nextSessionSeconds / 60) - Math.floor(currentSessionSeconds / 60),
+      });
+    }
+
+    const saved = this.repository.save(portal);
+    return this.getLearningTimeState(saved);
+  }
+
+  /** Current authoritative timing state, as pushed over the learning-time socket. */
+  getLearningTimeState(portalOrStudentId: StudentPortalState | string): LearningTimeState {
+    const portal =
+      typeof portalOrStudentId === 'string'
+        ? this.repository.findByStudentId(portalOrStudentId)
+        : portalOrStudentId;
+    const currentModule = this.getCurrentModule(portal);
+    const requiredSessionSeconds = this.getRequiredSessionSeconds(currentModule);
+    const sessionSeconds = Math.min(this.getModuleSessionSeconds(currentModule), requiredSessionSeconds);
+
+    return {
+      moduleId: currentModule.id,
+      sessionSeconds,
+      requiredSessionSeconds,
+      lessonSeconds: this.getLessonElapsedSeconds(portal),
+      learningSeconds: portal.learningSeconds ?? Math.max(0, Math.round(portal.learningMinutes)) * 60,
+      learningSessionActive: portal.learningSessionActive,
+      examUnlocked: sessionSeconds >= requiredSessionSeconds,
+    };
   }
 
   setLearningSession(studentId: string, payload: SetLearningSessionDto) {
@@ -1136,12 +1194,13 @@ export class StudentPortalService {
       throw new BadRequestException(`Lesson "${lessonId}" was not found in the active module.`);
     }
 
-    const lessonElapsedMinutes = this.getLessonElapsedMinutes(portal);
+    const lessonElapsedSeconds = this.getLessonElapsedSeconds(portal);
     portal.activeLessonId = lessonId;
-    portal.lessonElapsedMinutes = {
-      ...lessonElapsedMinutes,
-      [lessonId]: Math.max(0, lessonElapsedMinutes[lessonId] ?? 0),
+    portal.lessonElapsedSeconds = {
+      ...lessonElapsedSeconds,
+      [lessonId]: Math.max(0, lessonElapsedSeconds[lessonId] ?? 0),
     };
+    portal.lessonElapsedMinutes = this.getLessonElapsedMinutes(portal);
     portal.activeLearningAttention = this.ensureLearningAttentionSession(portal, activeModule.id, lessonId);
     portal.lastAction = `Lesson timer resumed for ${lesson.title}.`;
     this.recordAudit(portal, 'student.learning.lesson-session.started', lessonId, {
@@ -2217,7 +2276,24 @@ export class StudentPortalService {
   }
 
   private getLessonElapsedMinutes(portal: StudentPortalState) {
-    return { ...(portal.lessonElapsedMinutes ?? {}) };
+    const seconds = this.getLessonElapsedSeconds(portal);
+    return Object.fromEntries(
+      Object.entries(seconds).map(([lessonId, value]) => [lessonId, Math.floor(value / 60)]),
+    );
+  }
+
+  private getLessonElapsedSeconds(portal: StudentPortalState) {
+    if (portal.lessonElapsedSeconds) {
+      return { ...portal.lessonElapsedSeconds };
+    }
+
+    // Migrate portals persisted before per-second tracking from their minute totals.
+    return Object.fromEntries(
+      Object.entries(portal.lessonElapsedMinutes ?? {}).map(([lessonId, minutes]) => [
+        lessonId,
+        Math.max(0, Math.round(minutes)) * 60,
+      ]),
+    );
   }
 
   private ensureLearningAttentionSession(
@@ -2308,13 +2384,14 @@ export class StudentPortalService {
     const completedSteps = module.steps.filter((step) => step.complete).length;
     const progressPercent =
       module.steps.length > 0 ? Math.round((completedSteps / module.steps.length) * 100) : 0;
-    const requiredSessionMinutes = this.getRequiredSessionMinutes(module);
-    const sessionMinutes = Math.min(this.getModuleSessionMinutes(module), requiredSessionMinutes);
-    const sessionComplete = sessionMinutes >= requiredSessionMinutes;
+    const requiredSessionSeconds = this.getRequiredSessionSeconds(module);
+    const sessionSeconds = Math.min(this.getModuleSessionSeconds(module), requiredSessionSeconds);
+    const sessionMinutes = Math.floor(sessionSeconds / 60);
+    const sessionComplete = sessionSeconds >= requiredSessionSeconds;
     // Hours completed reflect real recorded session time, not manual step toggles.
     const completedHours = Math.min(
       module.requiredHours,
-      Math.round((sessionMinutes / 60) * 10) / 10,
+      Math.round((sessionSeconds / 3600) * 10) / 10,
     );
 
     return {
@@ -2322,10 +2399,11 @@ export class StudentPortalService {
       progressPercent,
       completedHours,
       sessionMinutes,
+      sessionSeconds,
       status:
         module.status === 'Complete' || (progressPercent >= 100 && sessionComplete)
           ? 'Complete'
-          : (progressPercent > 0 || sessionMinutes > 0) && module.status !== 'Locked'
+          : (progressPercent > 0 || sessionSeconds > 0) && module.status !== 'Locked'
             ? 'In Progress'
             : module.status,
     } satisfies CurriculumModule;
@@ -2335,10 +2413,22 @@ export class StudentPortalService {
     return Math.max(0, Math.round(module.requiredHours * 60));
   }
 
+  private getRequiredSessionSeconds(module: CurriculumModule) {
+    return this.getRequiredSessionMinutes(module) * 60;
+  }
+
+  private getModuleSessionSeconds(module: CurriculumModule) {
+    if (typeof module.sessionSeconds === 'number' && Number.isFinite(module.sessionSeconds)) {
+      return Math.max(0, Math.round(module.sessionSeconds));
+    }
+
+    // Portals persisted before per-second tracking fall back to their recorded
+    // minutes (or completed hours) so students keep the time they already earned.
+    return Math.max(0, Math.round(module.sessionMinutes ?? module.completedHours * 60)) * 60;
+  }
+
   private getModuleSessionMinutes(module: CurriculumModule) {
-    // Portals persisted before per-module session tracking fall back to their
-    // recorded completed hours so students keep the time they already earned.
-    return Math.max(0, Math.round(module.sessionMinutes ?? module.completedHours * 60));
+    return Math.floor(this.getModuleSessionSeconds(module) / 60);
   }
 
   private formatMinutes(totalMinutes: number) {

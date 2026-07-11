@@ -585,6 +585,15 @@ export class AdminPortalController {
   }
 
   @UseGuards(SupabaseAuthGuard)
+  @Get('onboarding/incomplete')
+  async getIncompleteOnboarding() {
+    return createApiResponse(
+      await this.adminPortalService.getIncompleteOnboarding(),
+      'Registered users with incomplete onboarding retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
   @Get('intake/pending-submissions')
   getPendingSubmissions() {
     return createApiResponse(

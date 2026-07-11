@@ -136,6 +136,8 @@ export interface CurriculumModule {
   completedHours: number;
   /** Real learning time recorded against this module, in minutes. */
   sessionMinutes?: number;
+  /** Second-accurate learning time for this module — source of truth; minutes are derived. */
+  sessionSeconds?: number;
   examScore?: string;
   certificateUnlocked: boolean;
   /** Skills a student is assessed on for this module, once completed. */
@@ -588,11 +590,15 @@ export interface StudentPortalState {
   textbookOpened: boolean;
   exitSurveyComplete: boolean;
   learningMinutes: number;
+  /** Second-accurate total learning time — source of truth; minutes are derived. */
+  learningSeconds?: number;
   learningSessionActive: boolean;
   /** Currently active lesson receiving elapsed learning time. */
   activeLessonId?: string;
   /** Per-lesson persisted elapsed learning time, in minutes. */
   lessonElapsedMinutes: Record<string, number>;
+  /** Per-lesson second-accurate elapsed time — source of truth; minutes are derived. */
+  lessonElapsedSeconds?: Record<string, number>;
   activeLearningAttention?: ActiveLearningAttention;
   activeExamSession?: ActiveExamSession;
   reflectionResponse: string;
@@ -631,10 +637,13 @@ export interface StudentLearningSnapshot {
   modules: CurriculumModule[];
   learningMinutes: number;
   sessionMinutes: number;
+  sessionSeconds: number;
   requiredSessionMinutes: number;
+  requiredSessionSeconds: number;
   learningSessionActive: boolean;
   activeLessonId?: string;
   lessonElapsedMinutes: Record<string, number>;
+  lessonElapsedSeconds: Record<string, number>;
   activeLearningAttention?: ActiveLearningAttention;
   activeExamSession?: ActiveExamSession;
   examUnlocked: boolean;
@@ -643,6 +652,17 @@ export interface StudentLearningSnapshot {
   exitSurveyComplete: boolean;
   moduleCertificatesReady: number;
   programCertificateReady: boolean;
+}
+
+/** Live payload pushed over the learning-time socket after every server-side credit. */
+export interface LearningTimeState {
+  moduleId: string;
+  sessionSeconds: number;
+  requiredSessionSeconds: number;
+  lessonSeconds: Record<string, number>;
+  learningSeconds: number;
+  learningSessionActive: boolean;
+  examUnlocked: boolean;
 }
 
 export interface StudentAttendanceSummary {

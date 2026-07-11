@@ -2,7 +2,9 @@ import {
   BadRequestException,
   Body,
   Controller,
+  forwardRef,
   Get,
+  Inject,
   Param,
   Patch,
   Post,
@@ -54,6 +56,7 @@ import type {
   UpdateWizardStepDto,
   UploadStudentDocumentDto,
 } from '../types/student-portal.types';
+import { InstructorPortalService } from '../../instructor/services/instructor-portal.service';
 import { StudentPortalService } from '../services/student-portal.service';
 import { IntakeSubmissionService } from '../services/intake-submission.service';
 
@@ -64,6 +67,8 @@ export class StudentPortalController {
   constructor(
     private readonly studentPortalService: StudentPortalService,
     private readonly intakeSubmissionService: IntakeSubmissionService,
+    @Inject(forwardRef(() => InstructorPortalService))
+    private readonly instructorPortalService: InstructorPortalService,
   ) {}
 
   @Get('portal')
@@ -544,6 +549,14 @@ export class StudentPortalController {
     return createApiResponse(
       this.studentPortalService.getClinicalHours(studentId),
       'Student clinical hours retrieved successfully.',
+    );
+  }
+
+  @Get('clinical-schedule')
+  getClinicalSchedule(@Param('studentId') studentId: string) {
+    return createApiResponse(
+      this.instructorPortalService.getStudentClinicalSchedule(studentId),
+      'Student clinical schedule retrieved successfully.',
     );
   }
 

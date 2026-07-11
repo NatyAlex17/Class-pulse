@@ -270,6 +270,40 @@ export class InstructorPortalService {
     return this.repository.save(portal).schedule;
   }
 
+  /** Every clinical slot a student is scheduled into, across all instructors. */
+  getStudentClinicalSchedule(studentId: string) {
+    const slots: Array<{
+      id: string;
+      weekStart: string;
+      day: number;
+      time: string;
+      notes: string;
+      instructorId: string;
+      instructorName: string;
+    }> = [];
+
+    for (const portal of this.repository.findAll()) {
+      for (const slot of portal.schedule) {
+        if (slot.students.some((student) => student.id === studentId)) {
+          slots.push({
+            id: slot.id,
+            weekStart: slot.weekStart,
+            day: slot.day,
+            time: slot.time,
+            notes: slot.notes,
+            instructorId: portal.profile.id,
+            instructorName: portal.profile.fullName,
+          });
+        }
+      }
+    }
+
+    return slots.sort(
+      (a, b) =>
+        a.weekStart.localeCompare(b.weekStart) || a.day - b.day || a.time.localeCompare(b.time),
+    );
+  }
+
   getSkillsWorkspace(instructorId: string) {
     const portal = this.repository.findByInstructorId(instructorId);
     const workspaces = this.buildSkillsWorkspaces(portal);

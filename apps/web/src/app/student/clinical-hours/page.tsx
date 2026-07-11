@@ -12,12 +12,17 @@ import {
   IconClock,
   IconCalendarEvent,
 } from '@tabler/icons-react';
+import { useAuth } from '@/components/auth/auth-provider';
 import { useStudentDemo } from '@/components/student/student-portal-store';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
 import { Input } from '@/components/ui/input';
 import { StudentShell } from '@/components/student/student-shell';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+
+const SCHEDULE_DAY_LABELS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 type LogRow = {
   date: string;
@@ -28,6 +33,28 @@ type LogRow = {
   note?: string;
 };
 
+type ClinicalScheduleSlot = {
+  id: string;
+  weekStart: string;
+  day: number;
+  time: string;
+  notes: string;
+  instructorId: string;
+  instructorName: string;
+};
+
+function slotDate(slot: ClinicalScheduleSlot) {
+  const date = new Date(`${slot.weekStart}T00:00:00`);
+  date.setDate(date.getDate() + slot.day);
+  return date;
+}
+
+function isUpcomingSlot(slot: ClinicalScheduleSlot) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return slotDate(slot).getTime() >= today.getTime();
+}
+
 function formatClinicalHours(hours: number): string {
   const totalMinutes = Math.round(hours * 60);
   if (totalMinutes < 60) {
@@ -37,6 +64,27 @@ function formatClinicalHours(hours: number): string {
   const minutes = totalMinutes % 60;
   return minutes === 0 ? `${wholeHours} hr${wholeHours === 1 ? '' : 's'}` : `${wholeHours}h ${minutes}m`;
 }
+
+const scheduleColumns: DataTableColumn<ClinicalScheduleSlot>[] = [
+  {
+    id: 'date',
+    header: 'DATE',
+    cell: (row) =>
+      slotDate(row).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }),
+  },
+  { id: 'time', header: 'TIME', accessorKey: 'time' },
+  { id: 'instructor', header: 'INSTRUCTOR', accessorKey: 'instructorName' },
+  { id: 'notes', header: 'NOTES', cell: (row) => row.notes || '—' },
+  {
+    id: 'status',
+    header: 'STATUS',
+    cell: (row) => (
+      <Badge variant={isUpcomingSlot(row) ? 'success' : 'neutral'}>
+        {isUpcomingSlot(row) ? 'Upcoming' : 'Past'}
+      </Badge>
+    ),
+  },
+];
 
 const logColumns: DataTableColumn<LogRow>[] = [
   { id: 'date', header: 'DATE', accessorKey: 'date' },
@@ -73,6 +121,57 @@ export default function StudentClinicalHoursPage() {
     logClinicalHours,
     lastAction,
   } = useStudentDemo();
+  const { session, syncedUser } = useAuth();
+  const studentId = syncedUser?.localUserId;
+  const accessToken = session?.access_token;
+  const [scheduleSlots, setScheduleSlots] = React.useState<ClinicalScheduleSlot[]>([]);
+  const [scheduleError, setScheduleError] = React.useState<string | null>(null);
+  const [scheduleLoading, setScheduleLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (!studentId || !accessToken) {
+      setScheduleLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        setScheduleLoading(true);
+        setScheduleError(null);
+        const response = await fetch(`${API_BASE_URL}/students/${studentId}/clinical-schedule`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          cache: 'no-store',
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch your clinical schedule (${response.status}).`);
+        }
+
+        const payload = await response.json();
+
+        if (!cancelled) {
+          setScheduleSlots(payload.data ?? []);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setScheduleError(err instanceof Error ? err.message : 'Failed to load your clinical schedule.');
+        }
+      } finally {
+        if (!cancelled) {
+          setScheduleLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [studentId, accessToken]);
+
+  const upcomingSlots = scheduleSlots.filter(isUpcomingSlot);
+  const nextSlot = upcomingSlots[0];
 
   const logRows: LogRow[] = clinicalLogs.map((log) => ({
     date: log.date,
@@ -102,7 +201,7 @@ export default function StudentClinicalHoursPage() {
         topActions={<Button className="rounded-[12px]" onClick={() => setShowLogModal(true)}>Log Practice Session</Button>}
       >
       <div className="mb-8 flex gap-8 overflow-x-auto border-b border-border-subtle pb-3">
-        {['Overview', 'Clinical Logs', 'Skills Checklist', 'Audit Timeline'].map((tab) => (
+        {['Overview', 'My Schedule', 'Clinical Logs', 'Skills Checklist', 'Audit Timeline'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -260,6 +359,64 @@ export default function StudentClinicalHoursPage() {
             </div>
           </div>
         </div>
+        </div>
+      )}
+
+      {activeTab === 'My Schedule' && (
+        <div className="space-y-6">
+          {scheduleError ? (
+            <div className="rounded-[16px] border border-error/20 bg-error/5 p-4 text-sm text-error">
+              {scheduleError}
+            </div>
+          ) : null}
+
+          {nextSlot ? (
+            <div className="flex items-center gap-4 rounded-[18px] border border-primary/20 bg-primary/5 p-6">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                <IconCalendarEvent className="size-6 text-primary" />
+              </div>
+              <div>
+                <p className="font-mono text-[12px] uppercase tracking-wide text-on-surface-variant">
+                  Next Clinical Session
+                </p>
+                <p className="mt-1 text-lg font-bold text-on-surface">
+                  {slotDate(nextSlot).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                  })}{' '}
+                  at {nextSlot.time}
+                </p>
+                <p className="text-sm text-on-surface-variant">
+                  With {nextSlot.instructorName}
+                  {nextSlot.notes ? ` — ${nextSlot.notes}` : ''}
+                </p>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="overflow-hidden rounded-[18px] border border-border-subtle bg-surface">
+            <div className="flex items-center justify-between border-b border-border-subtle px-6 py-4">
+              <h4 className="font-mono text-[12px] text-on-surface-variant">MY CLINICAL SCHEDULE</h4>
+              <Badge variant="primary">{upcomingSlots.length} upcoming</Badge>
+            </div>
+            <div className="p-6">
+              {scheduleLoading ? (
+                <div className="py-8 text-center text-on-surface-variant">Loading your schedule...</div>
+              ) : (
+                <DataTable
+                  columns={scheduleColumns}
+                  data={scheduleSlots}
+                  getRowId={(row) => `${row.id}-${row.instructorId}`}
+                  classNames={{
+                    desktopWrapper: 'rounded-none border-0 shadow-none bg-transparent',
+                    toolbar: 'hidden',
+                  }}
+                  emptyState="No clinical sessions scheduled yet. Your instructor will assign you to a slot."
+                />
+              )}
+            </div>
+          </div>
         </div>
       )}
 

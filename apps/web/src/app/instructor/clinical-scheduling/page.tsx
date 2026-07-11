@@ -39,7 +39,7 @@ type TaughtStudent = {
 };
 
 const times = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'];
-const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 function startOfWeek(date: Date) {
   const normalized = new Date(date);
@@ -65,7 +65,7 @@ function toIsoDate(date: Date) {
 }
 
 function formatWeekRange(weekStart: Date) {
-  const weekEnd = addDays(weekStart, 4);
+  const weekEnd = addDays(weekStart, 6);
   const startMonth = weekStart.toLocaleDateString('en-US', { month: 'long' });
   const endMonth = weekEnd.toLocaleDateString('en-US', { month: 'long' });
 
@@ -87,6 +87,27 @@ function isCurrentWeek(weekStart: Date) {
   return toIsoDate(startOfWeek(new Date())) === toIsoDate(weekStart);
 }
 
+/** Nest error bodies put the human-readable text in `message` (string or array). */
+function extractApiError(payload: unknown, fallback: string) {
+  if (payload && typeof payload === 'object') {
+    const body = payload as { message?: string | string[]; error?: { message?: string } };
+
+    if (Array.isArray(body.message)) {
+      return body.message.join(' ');
+    }
+
+    if (typeof body.message === 'string' && body.message.trim()) {
+      return body.message;
+    }
+
+    if (typeof body.error?.message === 'string' && body.error.message.trim()) {
+      return body.error.message;
+    }
+  }
+
+  return fallback;
+}
+
 export default function InstructorClinicalSchedulingPage() {
   const { session, syncedUser } = useAuth();
   const instructorId = syncedUser?.localUserId;
@@ -99,9 +120,7 @@ export default function InstructorClinicalSchedulingPage() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  const [selectedSlot, setSelectedSlot] = React.useState<{ id: string | null; day: number; time: string } | null>(
-    null,
-  );
+  const [selectedSlot, setSelectedSlot] = React.useState<{ day: number; time: string } | null>(null);
   const [showAddModal, setShowAddModal] = React.useState(false);
   const [selectedStudentId, setSelectedStudentId] = React.useState('');
   const [slotNotes, setSlotNotes] = React.useState('');
@@ -157,12 +176,16 @@ export default function InstructorClinicalSchedulingPage() {
 
   function handleAddToSlot(day: number, time: string) {
     const existingSlot = getSlotContent(day, time);
-    setSelectedSlot({ id: existingSlot?.id ?? null, day, time });
+    setSelectedSlot({ day, time });
     setSlotNotes(existingSlot?.notes ?? '');
     setSelectedStudentId('');
     setModalError(null);
     setShowAddModal(true);
   }
+
+  // Resolved live from the latest schedule so the modal always reflects the
+  // current assignments, even right after an add or remove.
+  const modalSlot = selectedSlot ? getSlotContent(selectedSlot.day, selectedSlot.time) : undefined;
 
   async function handleSaveStudent() {
     if (!selectedStudentId || !selectedSlot || !instructorId || !accessToken) {
@@ -177,7 +200,7 @@ export default function InstructorClinicalSchedulingPage() {
         'Content-Type': 'application/json',
       };
 
-      let slotId = selectedSlot.id;
+      let slotId = getSlotContent(selectedSlot.day, selectedSlot.time)?.id ?? null;
 
       if (!slotId) {
         const createResponse = await fetch(`${API_BASE_URL}/instructors/${instructorId}/clinical-scheduling/slots`, {
@@ -193,7 +216,7 @@ export default function InstructorClinicalSchedulingPage() {
 
         if (!createResponse.ok) {
           const payload = await createResponse.json().catch(() => null);
-          throw new Error(payload?.error?.message ?? `Failed to create slot (${createResponse.status}).`);
+          throw new Error(extractApiError(payload, `Failed to create slot (${createResponse.status}).`));
         }
 
         const createData = await createResponse.json();
@@ -211,14 +234,11 @@ export default function InstructorClinicalSchedulingPage() {
 
       if (!assignResponse.ok) {
         const payload = await assignResponse.json().catch(() => null);
-        throw new Error(payload?.error?.message ?? `Failed to assign student (${assignResponse.status}).`);
+        throw new Error(extractApiError(payload, `Failed to assign student (${assignResponse.status}).`));
       }
 
       await fetchAll();
-      setShowAddModal(false);
-      setSelectedSlot(null);
       setSelectedStudentId('');
-      setSlotNotes('');
     } catch (err) {
       setModalError(err instanceof Error ? err.message : 'Failed to update schedule.');
     } finally {
@@ -226,30 +246,46 @@ export default function InstructorClinicalSchedulingPage() {
     }
   }
 
-  async function handleRemoveStudent(slotId: string, studentId: string) {
+  async function removeStudentRequest(slotId: string, studentId: string) {
     if (!instructorId || !accessToken) return;
 
+    const response = await fetch(
+      `${API_BASE_URL}/instructors/${instructorId}/clinical-scheduling/slots/${slotId}/students/${studentId}/remove`,
+      {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      },
+    );
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null);
+      throw new Error(extractApiError(payload, `Failed to remove student (${response.status}).`));
+    }
+
+    await fetchAll();
+  }
+
+  async function handleRemoveStudent(slotId: string, studentId: string) {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/instructors/${instructorId}/clinical-scheduling/slots/${slotId}/students/${studentId}/remove`,
-        {
-          method: 'PATCH',
-          headers: { Authorization: `Bearer ${accessToken}` },
-        },
-      );
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null);
-        throw new Error(payload?.error?.message ?? `Failed to remove student (${response.status}).`);
-      }
-
-      await fetchAll();
+      await removeStudentRequest(slotId, studentId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove student.');
     }
   }
 
-  const studentOptions = taughtStudents.map((student) => ({ label: student.name, value: student.id }));
+  async function handleRemoveStudentInModal(slotId: string, studentId: string) {
+    try {
+      setModalError(null);
+      await removeStudentRequest(slotId, studentId);
+    } catch (err) {
+      setModalError(err instanceof Error ? err.message : 'Failed to remove student.');
+    }
+  }
+
+  const assignedStudentIds = new Set(modalSlot?.students.map((student) => student.id) ?? []);
+  const studentOptions = taughtStudents
+    .filter((student) => !assignedStudentIds.has(student.id))
+    .map((student) => ({ label: student.name, value: student.id }));
 
   return (
     <InstructorShell
@@ -267,14 +303,14 @@ export default function InstructorClinicalSchedulingPage() {
           <div className="rounded-[16px] border border-error/20 bg-error/5 p-4 text-sm text-error">{error}</div>
         ) : null}
 
-        <section className="overflow-x-auto rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
+        <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
           <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
               <h3 className="font-display text-[22px] font-semibold">
                 Week Schedule ({formatWeekRange(selectedWeekStart)})
               </h3>
               <p className="mt-1 text-sm text-on-surface-variant">
-                Pick any date and the board updates to that Monday through Friday range.
+                Pick any date and the board updates to that Monday through Sunday range.
               </p>
             </div>
 
@@ -336,8 +372,8 @@ export default function InstructorClinicalSchedulingPage() {
           {loading ? (
             <div className="py-8 text-center text-on-surface-variant">Loading schedule...</div>
           ) : (
-            <div className="min-w-[980px]">
-              <div className="grid gap-1" style={{ gridTemplateColumns: '80px repeat(5, 1fr)' }}>
+            <div>
+              <div className="grid gap-1" style={{ gridTemplateColumns: '64px repeat(7, minmax(0, 1fr))' }}>
                 <div className="rounded-t-[12px] bg-surface-muted p-3 text-center text-xs font-bold uppercase">
                   Time
                 </div>
@@ -355,7 +391,7 @@ export default function InstructorClinicalSchedulingPage() {
               </div>
 
               {times.map((time) => (
-                <div key={time} className="grid gap-1" style={{ gridTemplateColumns: '80px repeat(5, 1fr)' }}>
+                <div key={time} className="grid gap-1" style={{ gridTemplateColumns: '64px repeat(7, minmax(0, 1fr))' }}>
                   <div className="bg-surface-muted p-3 text-center text-xs font-mono font-bold text-on-surface-variant">
                     {time}
                   </div>
@@ -448,7 +484,8 @@ export default function InstructorClinicalSchedulingPage() {
           <div className="w-full max-w-md rounded-[24px] bg-surface p-8 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-2xl font-bold text-on-surface">
-                Add to {days[selectedSlot.day]} at {selectedSlot.time}
+                {modalSlot && modalSlot.students.length > 0 ? 'Edit' : 'Add to'} {days[selectedSlot.day]} at{' '}
+                {selectedSlot.time}
               </h2>
               <button
                 onClick={() => setShowAddModal(false)}
@@ -470,12 +507,41 @@ export default function InstructorClinicalSchedulingPage() {
                 <Input value={formatWeekRange(selectedWeekStart)} readOnly className="rounded-[12px]" />
               </div>
 
+              {modalSlot && modalSlot.students.length > 0 ? (
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-on-surface">Currently Scheduled</label>
+                  <div className="space-y-2">
+                    {modalSlot.students.map((student) => (
+                      <div
+                        key={student.id}
+                        className="flex items-center justify-between rounded-[12px] border border-primary/20 bg-primary/5 px-3 py-2"
+                      >
+                        <div>
+                          <p className="text-sm font-semibold text-on-surface">{student.name}</p>
+                          <p className="text-[11px] text-on-surface-variant">{student.cohort}</p>
+                        </div>
+                        <button
+                          onClick={() => void handleRemoveStudentInModal(modalSlot.id, student.id)}
+                          className="text-on-surface-variant transition hover:text-error"
+                          title={`Remove ${student.name} from this slot`}
+                        >
+                          <IconX className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
               <div>
-                <label className="mb-2 block text-sm font-semibold text-on-surface">Select Student</label>
+                <label className="mb-2 block text-sm font-semibold text-on-surface">
+                  {modalSlot && modalSlot.students.length > 0 ? 'Add Another Student' : 'Select Student'}
+                </label>
                 {studentOptions.length === 0 ? (
                   <p className="text-sm text-on-surface-variant">
-                    You don&apos;t have any students yet. Students appear here once they&apos;re enrolled in a
-                    module you teach.
+                    {taughtStudents.length > 0
+                      ? 'All of your students are already scheduled in this slot.'
+                      : "You don't have any students yet. Students appear here once they're enrolled in a module you teach."}
                   </p>
                 ) : (
                   <Select
@@ -500,8 +566,15 @@ export default function InstructorClinicalSchedulingPage() {
             </div>
 
             <div className="flex gap-3">
-              <Button variant="secondary" onClick={() => setShowAddModal(false)} className="flex-1 rounded-[12px]">
-                Cancel
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setShowAddModal(false);
+                  setSelectedSlot(null);
+                }}
+                className="flex-1 rounded-[12px]"
+              >
+                Close
               </Button>
               <Button
                 onClick={() => void handleSaveStudent()}
