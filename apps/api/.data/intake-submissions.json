@@ -393,6 +393,203 @@
       "submittedAt": "2026-07-10T18:27:58.916Z",
       "approvedAt": "2026-07-10T18:29:34.444Z",
       "reviewedBy": "cf1754f4-4bae-4963-aab4-e77236d6aefb"
+    },
+    {
+      "id": "submission-1783755689797",
+      "studentId": "9ef938e2-6695-418b-9fc3-640fac72e6ab",
+      "status": "approved",
+      "entranceExamScore": 6,
+      "entranceExamPassed": true,
+      "passingScore": 5,
+      "questions": [
+        {
+          "questionId": "q1",
+          "prompt": "What must students do in the self-paced program?",
+          "type": "choice",
+          "preferredAnswer": "B. Read instructions and finish work",
+          "options": [
+            {
+              "label": "A. Only watch videos",
+              "value": "A. Only watch videos"
+            },
+            {
+              "label": "B. Read instructions and finish work",
+              "value": "B. Read instructions and finish work"
+            },
+            {
+              "label": "C. Skip assignments",
+              "value": "C. Skip assignments"
+            },
+            {
+              "label": "D. Wait for instructors to do everything",
+              "value": "D. Wait for instructors to do everything"
+            }
+          ],
+          "studentAnswer": "A. Only watch videos",
+          "reviewStatus": "correct"
+        },
+        {
+          "questionId": "q2",
+          "prompt": "Why is English important in this program?",
+          "type": "choice",
+          "preferredAnswer": "B. To understand lessons and exams",
+          "options": [
+            {
+              "label": "A. Only for chatting",
+              "value": "A. Only for chatting"
+            },
+            {
+              "label": "B. To understand lessons and exams",
+              "value": "B. To understand lessons and exams"
+            },
+            {
+              "label": "C. To avoid clinical hours",
+              "value": "C. To avoid clinical hours"
+            },
+            {
+              "label": "D. Only for orientation day",
+              "value": "D. Only for orientation day"
+            }
+          ],
+          "studentAnswer": "B. To understand lessons and exams",
+          "reviewStatus": "correct"
+        },
+        {
+          "questionId": "q3",
+          "prompt": "When can students ask instructors questions?",
+          "type": "choice",
+          "preferredAnswer": "C. During scheduled support hours",
+          "options": [
+            {
+              "label": "A. Never",
+              "value": "A. Never"
+            },
+            {
+              "label": "B. Only after graduation",
+              "value": "B. Only after graduation"
+            },
+            {
+              "label": "C. During scheduled support hours",
+              "value": "C. During scheduled support hours"
+            },
+            {
+              "label": "D. Only on weekends",
+              "value": "D. Only on weekends"
+            }
+          ],
+          "studentAnswer": "C. During scheduled support hours",
+          "reviewStatus": "correct"
+        },
+        {
+          "questionId": "q4",
+          "prompt": "What can happen if a student does not understand instructions?",
+          "type": "choice",
+          "preferredAnswer": "B. They may fail assignments or exams",
+          "options": [
+            {
+              "label": "A. Nothing changes",
+              "value": "A. Nothing changes"
+            },
+            {
+              "label": "B. They may fail assignments or exams",
+              "value": "B. They may fail assignments or exams"
+            },
+            {
+              "label": "C. They automatically pass",
+              "value": "C. They automatically pass"
+            },
+            {
+              "label": "D. The program pauses for everyone",
+              "value": "D. The program pauses for everyone"
+            }
+          ],
+          "studentAnswer": "D. The program pauses for everyone",
+          "reviewStatus": "correct"
+        },
+        {
+          "questionId": "q5",
+          "prompt": "What is the main point of the readiness passage?",
+          "type": "choice",
+          "preferredAnswer": "B. English comprehension is required to succeed",
+          "options": [
+            {
+              "label": "A. Clinical practice is optional",
+              "value": "A. Clinical practice is optional"
+            },
+            {
+              "label": "B. English comprehension is required to succeed",
+              "value": "B. English comprehension is required to succeed"
+            },
+            {
+              "label": "C. Instructors complete the work",
+              "value": "C. Instructors complete the work"
+            },
+            {
+              "label": "D. Technology is never used",
+              "value": "D. Technology is never used"
+            }
+          ],
+          "studentAnswer": "A. Clinical practice is optional",
+          "reviewStatus": "correct"
+        },
+        {
+          "questionId": "q6",
+          "prompt": "Write one complete sentence explaining why following instructions matters in healthcare training.",
+          "type": "text",
+          "preferredAnswer": "Following instructions is crucial in healthcare to ensure patient safety and quality care.",
+          "options": [],
+          "studentAnswer": "d",
+          "reviewStatus": "correct"
+        }
+      ],
+      "documents": [
+        {
+          "documentId": "photoId",
+          "name": "Photo ID",
+          "description": "A valid government-issued photo ID.",
+          "required": true,
+          "fileName": "amharictest.pdf",
+          "fileUrl": "http://localhost:4300/uploads/readiness-documents/1783755652925-amharictest.pdf",
+          "reviewStatus": "approved"
+        },
+        {
+          "documentId": "diploma",
+          "name": "High School Diploma / Transcript",
+          "description": "Proof of high school completion or equivalent.",
+          "required": true,
+          "fileName": "photo_2026-06-15_15-55-55.jpg",
+          "fileUrl": "http://localhost:4300/uploads/readiness-documents/1783755657307-photo-2026-06-15-15-55-55.jpg",
+          "reviewStatus": "approved"
+        },
+        {
+          "documentId": "tbTest",
+          "name": "Physical + TB Clearance",
+          "description": "Recent physical exam and TB clearance test results.",
+          "required": true,
+          "fileName": "amharictest.pdf",
+          "fileUrl": "http://localhost:4300/uploads/readiness-documents/1783755662645-amharictest.pdf",
+          "reviewStatus": "approved"
+        }
+      ],
+      "enrollmentData": {
+        "step": 1,
+        "hhaAddon": false,
+        "scrubTop": "",
+        "scrubBottom": "",
+        "shipping": "pickup",
+        "wantsToTestAtDaisy": null,
+        "agreements": {
+          "ip": false,
+          "refund": false,
+          "conduct": false,
+          "lateFee": false
+        },
+        "signature": "",
+        "submitted": false
+      },
+      "submittedAt": "2026-07-11T07:41:29.797Z",
+      "approvedAt": "2026-07-11T07:42:25.040Z",
+      "reviewedBy": "cf1754f4-4bae-4963-aab4-e77236d6aefb"
     }
   ],
   "approvalStatuses": [
@@ -402,6 +599,10 @@
     ],
     [
       "8ba03e05-0912-4881-8313-91ed5ea2239c",
+      "approved"
+    ],
+    [
+      "9ef938e2-6695-418b-9fc3-640fac72e6ab",
       "approved"
     ]
   ]

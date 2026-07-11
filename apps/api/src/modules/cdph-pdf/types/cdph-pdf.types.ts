@@ -73,20 +73,55 @@ export interface CdphE276APdfData {
   modules: CdphE276AModuleRow[];
 }
 
+export type CdphSex = 'Male' | 'Female' | '';
+
 export interface Cdph283BPdfData {
+  // Section I
   requestType: 'enrollment' | 'reconsideration';
+
+  // Section II
   lastName: string;
   firstName: string;
-  dob: string;
-  ssn: string;
+  middleInitial: string;
+  sex: CdphSex;
   addressLine1: string;
   city: string;
   state: string;
   zip: string;
+  confidentialAddressLine1: string;
+  confidentialCity: string;
+  confidentialState: string;
+  confidentialZip: string;
+  dob: string;
+  ssn: string;
+  itin: string;
+  driversLicenseNumber: string;
+  driversLicenseState: string;
   phone: string;
   email: string;
+  textMessageConsent: boolean;
+
+  // Section III
   conviction: boolean;
-  convictionDetails: string;
+  convictionDescription: string;
+  convictionCourt: string;
+  convictionDate: string;
+  adverseAction: boolean;
+  adverseActionLicenseType: string;
+  adverseActionLicenseNumber: string;
+  adverseActionType: string;
+
+  // Section IV
   trainingProgramName: string;
+  trainingProgramPhone: string;
+  trainingProgramAddressLine1: string;
+  trainingProgramCity: string;
+  trainingProgramState: string;
+  trainingProgramZip: string;
+  trainingProgramId: string;
+  trainingBeginDate: string;
+  trainingEndDate: string;
+
+  // Section V
   signedAt: string | null;
 }

@@ -1,12 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { IconCheck, IconDownload, IconStethoscope } from '@tabler/icons-react';
+import { IconStethoscope } from '@tabler/icons-react';
 import { useAuth } from '@/components/auth/auth-provider';
+import { InstructorCdphE276APaperWorkspace } from '@/components/instructor/instructor-cdph-e276a-paper-workspace';
 import { InstructorShell } from '@/components/instructor/instructor-shell';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
@@ -37,6 +35,14 @@ type CdphSkillModule = {
 type CdphSkillWorkspace = {
   studentId: string;
   studentName: string;
+  header: {
+    ssn: string;
+    instructorName: string;
+    trainingProgramName: string;
+    clinicalSiteName: string;
+    startDate: string;
+    completionDate: string;
+  };
   modules: CdphSkillModule[];
 };
 
@@ -52,6 +58,14 @@ export default function InstructorCdphE276APage() {
   const [loadingWorkspace, setLoadingWorkspace] = React.useState(false);
   const [downloading, setDownloading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [headerDraft, setHeaderDraft] = React.useState<CdphSkillWorkspace['header']>({
+    ssn: '',
+    instructorName: '',
+    trainingProgramName: '',
+    clinicalSiteName: '',
+    startDate: '',
+    completionDate: '',
+  });
 
   const fetchStudents = React.useCallback(async () => {
     if (!instructorId || !accessToken) {
@@ -108,6 +122,16 @@ export default function InstructorCdphE276APage() {
 
         const payload = await response.json();
         setWorkspace(payload.data);
+        setHeaderDraft(
+          payload.data?.header ?? {
+            ssn: '',
+            instructorName: '',
+            trainingProgramName: '',
+            clinicalSiteName: '',
+            startDate: '',
+            completionDate: '',
+          },
+        );
       } catch (fetchError) {
         setWorkspace(null);
         setError(fetchError instanceof Error ? fetchError.message : 'Failed to fetch the skills checklist.');
@@ -152,9 +176,41 @@ export default function InstructorCdphE276APage() {
       const data = await response.json();
       if (data.data) {
         setWorkspace(data.data);
+        setHeaderDraft((current) => data.data.header ?? current);
       }
     } catch (updateError) {
       setError(updateError instanceof Error ? updateError.message : 'Failed to update the skill.');
+    }
+  };
+
+  const saveHeader = async (payload: Partial<CdphSkillWorkspace['header']>) => {
+    if (!instructorId || !accessToken || !selectedStudentId) return;
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/instructors/${instructorId}/students/${selectedStudentId}/cdph/e276a/header`,
+        {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        },
+      );
+
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => null);
+        throw new Error(errorPayload?.error?.message ?? `Failed to update the header (${response.status}).`);
+      }
+
+      const data = await response.json();
+      if (data.data) {
+        setWorkspace(data.data);
+        setHeaderDraft(data.data.header ?? headerDraft);
+      }
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'Failed to update the E276A header.');
     }
   };
 
@@ -190,13 +246,9 @@ export default function InstructorCdphE276APage() {
 
   return (
     <InstructorShell
-      title="CDPH E276A — Skills Checklist"
-      subtitle="Mark clinical skills satisfactory/unsatisfactory as each student demonstrates them."
+      title="CDPH E276A - Skills Checklist"
+      subtitle="Mark clinical skills on a paper-style checklist that matches the official export."
     >
-      {error ? (
-        <div className="mb-6 rounded-[16px] border border-error/20 bg-error/5 p-4 text-sm text-error">{error}</div>
-      ) : null}
-
       {loadingStudents ? (
         <div className="py-8 text-center text-on-surface-variant">Loading students...</div>
       ) : students.length === 0 ? (
@@ -204,7 +256,7 @@ export default function InstructorCdphE276APage() {
           No assigned students yet.
         </div>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+        <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
           <section className="rounded-[20px] border border-border-subtle bg-surface p-4 shadow-soft">
             <p className="mb-3 px-2 font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
               Students ({students.length})
@@ -236,36 +288,16 @@ export default function InstructorCdphE276APage() {
           {loadingWorkspace ? (
             <div className="py-8 text-center text-on-surface-variant">Loading skills checklist...</div>
           ) : workspace ? (
-            <div className="space-y-4">
-              <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <h3 className="font-display text-[24px] font-bold tracking-[-0.03em] text-on-surface">
-                    {workspace.studentName} <span className="font-normal text-on-surface-variant">/ Skills Checklist</span>
-                  </h3>
-                  <Button onClick={() => void downloadPdf()} disabled={downloading} variant="secondary" className="h-10 gap-2 rounded-[12px]">
-                    <IconDownload className="h-4 w-4" />
-                    {downloading ? 'Generating…' : 'Download PDF'}
-                  </Button>
-                </div>
-              </section>
-
-              {workspace.modules.map((module) => (
-                <section key={module.moduleId} className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
-                  <h4 className="mb-4 font-display text-[16px] font-semibold text-on-surface">
-                    {module.moduleTitle} <span className="text-sm font-normal text-on-surface-variant">({module.clinicalHours} clinical hour{module.clinicalHours === 1 ? '' : 's'})</span>
-                  </h4>
-                  <div className="space-y-3">
-                    {module.items.map((item) => (
-                      <SkillRow
-                        key={item.skillId}
-                        item={item}
-                        onSave={(payload) => updateSkill(module.moduleId, item.skillId, payload)}
-                      />
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </div>
+            <InstructorCdphE276APaperWorkspace
+              workspace={workspace}
+              headerDraft={headerDraft}
+              setHeaderDraft={setHeaderDraft}
+              saveHeader={saveHeader}
+              downloadPdf={downloadPdf}
+              downloading={downloading}
+              onSaveSkill={updateSkill}
+              error={error}
+            />
           ) : (
             <div className="flex items-center justify-center rounded-[20px] border border-dashed border-border-subtle bg-surface p-10 text-center text-sm text-on-surface-variant">
               Select a student to grade their skills checklist.
@@ -274,69 +306,5 @@ export default function InstructorCdphE276APage() {
         </div>
       )}
     </InstructorShell>
-  );
-}
-
-function SkillRow({
-  item,
-  onSave,
-}: {
-  item: CdphSkillItem;
-  onSave: (payload: { status?: CdphSkillStatus; comments?: string; datePerformed?: string }) => void;
-}) {
-  const [commentsDraft, setCommentsDraft] = React.useState(item.comments ?? '');
-  const [dateDraft, setDateDraft] = React.useState(item.datePerformed ?? '');
-
-  React.useEffect(() => {
-    setCommentsDraft(item.comments ?? '');
-    setDateDraft(item.datePerformed ?? '');
-  }, [item.comments, item.datePerformed]);
-
-  return (
-    <div className="rounded-[18px] border border-border-subtle bg-surface-muted p-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <p className="text-sm font-medium text-on-surface">{item.label}</p>
-        {item.instructorInitials ? (
-          <span className="font-mono text-xs text-on-surface-variant">Initialed: {item.instructorInitials}</span>
-        ) : null}
-      </div>
-
-      <div className="mt-3 flex flex-wrap gap-2">
-        {(['S', 'U'] as CdphSkillStatus[]).map((status) => (
-          <button
-            key={status}
-            onClick={() => onSave({ status, comments: commentsDraft, datePerformed: dateDraft || undefined })}
-            className={cn(
-              'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition',
-              item.status === status
-                ? status === 'S'
-                  ? 'border-success bg-success text-white'
-                  : 'border-error bg-error text-white'
-                : 'border-border-subtle bg-surface text-on-surface-variant hover:border-primary/40',
-            )}
-          >
-            {item.status === status ? <IconCheck className="size-3.5" /> : null}
-            {status === 'S' ? 'Satisfactory' : 'Unsatisfactory'}
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-3 grid grid-cols-2 gap-3">
-        <Input
-          value={dateDraft}
-          onChange={(event) => setDateDraft(event.target.value)}
-          onBlur={() => onSave({ status: item.status ?? undefined, comments: commentsDraft, datePerformed: dateDraft || undefined })}
-          placeholder="Date performed"
-          className="h-10 rounded-[10px]"
-        />
-      </div>
-      <Textarea
-        className="mt-3 min-h-14"
-        value={commentsDraft}
-        onChange={(event) => setCommentsDraft(event.target.value)}
-        onBlur={() => onSave({ status: item.status ?? undefined, comments: commentsDraft, datePerformed: dateDraft || undefined })}
-        placeholder="Comments (optional)..."
-      />
-    </div>
   );
 }

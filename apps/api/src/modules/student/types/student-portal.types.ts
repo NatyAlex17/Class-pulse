@@ -385,19 +385,56 @@ export interface SubmittedIntakeDocument {
   reviewStatus: IntakeDocumentReviewStatus;
 }
 
+export type CdphSex = 'Male' | 'Female' | '';
+
 export interface CdphForm {
+  // Section I — Type of Request
+  requestType: 'enrollment' | 'reconsideration';
+
+  // Section II — Applicant Information
   lastName: string;
   firstName: string;
-  dob: string;
-  ssn: string;
+  middleInitial: string;
+  sex: CdphSex;
+  /** Public Address — subject to Public Records Act request release. */
   addressLine1: string;
-  phone: string;
-  email: string;
   city: string;
   state: string;
   zip: string;
+  /** Confidential Address — CDPH use only; if left blank, mail is sent to the public address above. */
+  confidentialAddressLine1: string;
+  confidentialCity: string;
+  confidentialState: string;
+  confidentialZip: string;
+  dob: string;
+  ssn: string;
+  itin: string;
+  driversLicenseNumber: string;
+  driversLicenseState: string;
+  phone: string;
+  email: string;
+  textMessageConsent: boolean;
+
+  // Section III — Background Disclosure
   conviction: boolean;
-  convictionDetails: string;
+  convictionDescription: string;
+  convictionCourt: string;
+  convictionDate: string;
+  adverseAction: boolean;
+  adverseActionLicenseType: string;
+  adverseActionLicenseNumber: string;
+  adverseActionType: string;
+
+  // Section IV — Training Program (if applicable)
+  trainingProgramName: string;
+  trainingProgramPhone: string;
+  trainingProgramAddressLine1: string;
+  trainingProgramCity: string;
+  trainingProgramState: string;
+  trainingProgramZip: string;
+  trainingProgramId: string;
+  trainingBeginDate: string;
+  trainingEndDate: string;
 }
 
 /** One row of the CDPH E276C Individual Student Theory Record, keyed to a curriculum section (lettered theory topic). */
@@ -416,6 +453,20 @@ export interface UpdateCdphTheoryEntryDto {
   testScore?: number;
 }
 
+export interface CdphTheoryRecordHeader {
+  ssn: string;
+  startDate: string;
+  completionDate: string;
+  instructorName: string;
+}
+
+export interface UpdateCdphTheoryRecordHeaderDto {
+  ssn?: string;
+  startDate?: string;
+  completionDate?: string;
+  instructorName?: string;
+}
+
 export type CdphSkillStatus = 'S' | 'U';
 
 /** One row of the CDPH E276A Skills Checklist, keyed to an official regulatory skill item. */
@@ -432,6 +483,24 @@ export interface UpdateCdphSkillEntryDto {
   status?: CdphSkillStatus;
   comments?: string;
   datePerformed?: string;
+}
+
+export interface CdphSkillChecklistHeader {
+  ssn: string;
+  instructorName: string;
+  trainingProgramName: string;
+  clinicalSiteName: string;
+  startDate: string;
+  completionDate: string;
+}
+
+export interface UpdateCdphSkillChecklistHeaderDto {
+  ssn?: string;
+  instructorName?: string;
+  trainingProgramName?: string;
+  clinicalSiteName?: string;
+  startDate?: string;
+  completionDate?: string;
 }
 
 export interface EntranceExamState {
@@ -581,8 +650,10 @@ export interface StudentPortalState {
   supportTickets: SupportTicket[];
   cdphForm: CdphForm;
   cdphSigned: boolean;
+  cdphTheoryHeader: CdphTheoryRecordHeader;
   cdphTheoryRecord: CdphTheoryRecordEntry[];
   cdphTheoryFinalGrade: string;
+  cdphSkillHeader: CdphSkillChecklistHeader;
   cdphSkillChecklist: CdphSkillChecklistEntry[];
   liveScanGenerated: boolean;
   liveScanUploaded: boolean;
@@ -936,20 +1007,7 @@ export interface ReplySupportTicketDto {
   status?: 'In Review' | 'Resolved';
 }
 
-export interface UpdateCdphFormDto {
-  lastName?: string;
-  firstName?: string;
-  dob?: string;
-  ssn?: string;
-  addressLine1?: string;
-  phone?: string;
-  email?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  conviction?: boolean;
-  convictionDetails?: string;
-}
+export type UpdateCdphFormDto = Partial<CdphForm>;
 
 export type IntakeApprovalStatus = 'pending' | 'approved' | 'rejected';
 

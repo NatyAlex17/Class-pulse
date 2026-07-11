@@ -1,11 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { IconDownload, IconStethoscope } from '@tabler/icons-react';
+import { IconStethoscope } from '@tabler/icons-react';
 import { useAuth } from '@/components/auth/auth-provider';
+import { InstructorCdphE276CPaperWorkspace } from '@/components/instructor/instructor-cdph-e276c-paper-workspace';
 import { InstructorShell } from '@/components/instructor/instructor-shell';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
@@ -33,6 +32,12 @@ type CdphTheoryModule = {
 type CdphTheoryWorkspace = {
   studentId: string;
   studentName: string;
+  header: {
+    ssn: string;
+    startDate: string;
+    completionDate: string;
+    instructorName: string;
+  };
   finalGrade: string;
   modules: CdphTheoryModule[];
 };
@@ -50,6 +55,12 @@ export default function InstructorCdphE276CPage() {
   const [downloading, setDownloading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [finalGradeDraft, setFinalGradeDraft] = React.useState('');
+  const [headerDraft, setHeaderDraft] = React.useState<CdphTheoryWorkspace['header']>({
+    ssn: '',
+    startDate: '',
+    completionDate: '',
+    instructorName: '',
+  });
 
   const fetchStudents = React.useCallback(async () => {
     if (!instructorId || !accessToken) {
@@ -107,6 +118,14 @@ export default function InstructorCdphE276CPage() {
         const payload = await response.json();
         setWorkspace(payload.data);
         setFinalGradeDraft(payload.data?.finalGrade ?? '');
+        setHeaderDraft(
+          payload.data?.header ?? {
+            ssn: '',
+            startDate: '',
+            completionDate: '',
+            instructorName: '',
+          },
+        );
       } catch (fetchError) {
         setWorkspace(null);
         setError(fetchError instanceof Error ? fetchError.message : 'Failed to fetch the theory record.');
@@ -151,6 +170,33 @@ export default function InstructorCdphE276CPage() {
       await fetchWorkspace(selectedStudentId);
     } catch (updateError) {
       setError(updateError instanceof Error ? updateError.message : 'Failed to update the theory entry.');
+    }
+  };
+
+  const saveHeader = async (payload: Partial<CdphTheoryWorkspace['header']>) => {
+    if (!instructorId || !accessToken || !selectedStudentId) return;
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/instructors/${instructorId}/students/${selectedStudentId}/cdph/e276c/header`,
+        {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        },
+      );
+
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => null);
+        throw new Error(errorPayload?.error?.message ?? `Failed to update the header (${response.status}).`);
+      }
+
+      await fetchWorkspace(selectedStudentId);
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'Failed to update the E276C header.');
     }
   };
 
@@ -212,13 +258,9 @@ export default function InstructorCdphE276CPage() {
 
   return (
     <InstructorShell
-      title="CDPH E276C — Theory Record"
-      subtitle="Log theory hours, dates, and exam scores per curriculum topic as each student progresses."
+      title="CDPH E276C - Theory Record"
+      subtitle="Record theory hours, dates, and scores in a paper-style worksheet that matches the official export."
     >
-      {error ? (
-        <div className="mb-6 rounded-[16px] border border-error/20 bg-error/5 p-4 text-sm text-error">{error}</div>
-      ) : null}
-
       {loadingStudents ? (
         <div className="py-8 text-center text-on-surface-variant">Loading students...</div>
       ) : students.length === 0 ? (
@@ -226,7 +268,7 @@ export default function InstructorCdphE276CPage() {
           No assigned students yet.
         </div>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+        <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
           <section className="rounded-[20px] border border-border-subtle bg-surface p-4 shadow-soft">
             <p className="mb-3 px-2 font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
               Students ({students.length})
@@ -258,46 +300,19 @@ export default function InstructorCdphE276CPage() {
           {loadingWorkspace ? (
             <div className="py-8 text-center text-on-surface-variant">Loading theory record...</div>
           ) : workspace ? (
-            <div className="space-y-4">
-              <section className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                  <h3 className="font-display text-[24px] font-bold tracking-[-0.03em] text-on-surface">
-                    {workspace.studentName} <span className="font-normal text-on-surface-variant">/ Theory Record</span>
-                  </h3>
-                  <div className="flex items-end gap-3">
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold text-on-surface-variant">Final Grade</label>
-                      <Input
-                        value={finalGradeDraft}
-                        onChange={(event) => setFinalGradeDraft(event.target.value)}
-                        onBlur={() => void saveFinalGrade()}
-                        placeholder="e.g. Pass"
-                        className="h-10 w-32 rounded-[12px]"
-                      />
-                    </div>
-                    <Button onClick={() => void downloadPdf()} disabled={downloading} variant="secondary" className="h-10 gap-2 rounded-[12px]">
-                      <IconDownload className="h-4 w-4" />
-                      {downloading ? 'Generating…' : 'Download PDF'}
-                    </Button>
-                  </div>
-                </div>
-              </section>
-
-              {workspace.modules.map((module) => (
-                <section key={module.moduleId} className="rounded-[20px] border border-border-subtle bg-surface p-6 shadow-soft">
-                  <h4 className="mb-4 font-display text-[16px] font-semibold text-on-surface">{module.moduleTitle}</h4>
-                  <div className="space-y-3">
-                    {module.topics.map((topic) => (
-                      <TopicRow
-                        key={topic.sectionId}
-                        topic={topic}
-                        onSave={(payload) => updateTopic(module.moduleId, topic.sectionId, payload)}
-                      />
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </div>
+            <InstructorCdphE276CPaperWorkspace
+              workspace={workspace}
+              finalGradeDraft={finalGradeDraft}
+              setFinalGradeDraft={setFinalGradeDraft}
+              headerDraft={headerDraft}
+              setHeaderDraft={setHeaderDraft}
+              saveHeader={saveHeader}
+              saveFinalGrade={saveFinalGrade}
+              downloadPdf={downloadPdf}
+              downloading={downloading}
+              onSaveTopic={updateTopic}
+              error={error}
+            />
           ) : (
             <div className="flex items-center justify-center rounded-[20px] border border-dashed border-border-subtle bg-surface p-10 text-center text-sm text-on-surface-variant">
               Select a student to log their theory record.
@@ -306,67 +321,5 @@ export default function InstructorCdphE276CPage() {
         </div>
       )}
     </InstructorShell>
-  );
-}
-
-function TopicRow({
-  topic,
-  onSave,
-}: {
-  topic: CdphTheoryTopic;
-  onSave: (payload: { hours?: number; date?: string; testScore?: number }) => void;
-}) {
-  const [hoursDraft, setHoursDraft] = React.useState(topic.hours != null ? String(topic.hours) : '');
-  const [dateDraft, setDateDraft] = React.useState(topic.date ?? '');
-  const [testScoreDraft, setTestScoreDraft] = React.useState(topic.testScore != null ? String(topic.testScore) : '');
-
-  React.useEffect(() => {
-    setHoursDraft(topic.hours != null ? String(topic.hours) : '');
-    setDateDraft(topic.date ?? '');
-    setTestScoreDraft(topic.testScore != null ? String(topic.testScore) : '');
-  }, [topic.hours, topic.date, topic.testScore]);
-
-  const commit = () => {
-    onSave({
-      hours: hoursDraft ? Number(hoursDraft) : undefined,
-      date: dateDraft || undefined,
-      testScore: testScoreDraft ? Number(testScoreDraft) : undefined,
-    });
-  };
-
-  return (
-    <div className="rounded-[18px] border border-border-subtle bg-surface-muted p-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <p className="text-sm font-medium text-on-surface">{topic.label}</p>
-        {topic.instructorInitials ? (
-          <span className="font-mono text-xs text-on-surface-variant">Initialed: {topic.instructorInitials}</span>
-        ) : null}
-      </div>
-      <div className="mt-3 grid grid-cols-3 gap-3">
-        <Input
-          type="number"
-          value={hoursDraft}
-          onChange={(event) => setHoursDraft(event.target.value)}
-          onBlur={commit}
-          placeholder="Hours"
-          className="h-10 rounded-[10px]"
-        />
-        <Input
-          value={dateDraft}
-          onChange={(event) => setDateDraft(event.target.value)}
-          onBlur={commit}
-          placeholder="Date"
-          className="h-10 rounded-[10px]"
-        />
-        <Input
-          type="number"
-          value={testScoreDraft}
-          onChange={(event) => setTestScoreDraft(event.target.value)}
-          onBlur={commit}
-          placeholder="Test score"
-          className="h-10 rounded-[10px]"
-        />
-      </div>
-    </div>
   );
 }

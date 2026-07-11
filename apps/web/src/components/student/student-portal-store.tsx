@@ -245,18 +245,44 @@ type ClinicalLog = {
 };
 
 type CdphForm = {
+  requestType: 'enrollment' | 'reconsideration';
   lastName: string;
   firstName: string;
+  middleInitial: string;
+  sex: 'Male' | 'Female' | '';
   dob: string;
   ssn: string;
+  itin: string;
   addressLine1: string;
+  confidentialAddressLine1: string;
   phone: string;
   email: string;
   city: string;
   state: string;
   zip: string;
+  confidentialCity: string;
+  confidentialState: string;
+  confidentialZip: string;
+  driversLicenseNumber: string;
+  driversLicenseState: string;
+  textMessageConsent: boolean;
   conviction: boolean;
-  convictionDetails: string;
+  convictionDescription: string;
+  convictionCourt: string;
+  convictionDate: string;
+  adverseAction: boolean;
+  adverseActionLicenseType: string;
+  adverseActionLicenseNumber: string;
+  adverseActionType: string;
+  trainingProgramName: string;
+  trainingProgramPhone: string;
+  trainingProgramAddressLine1: string;
+  trainingProgramCity: string;
+  trainingProgramState: string;
+  trainingProgramZip: string;
+  trainingProgramId: string;
+  trainingBeginDate: string;
+  trainingEndDate: string;
 };
 
 type StudentWorkflowStage =
@@ -735,18 +761,44 @@ function createFallbackState(): StudentDemoState {
     liveScanGenerated: false,
     liveScanUploaded: false,
     cdphForm: {
+      requestType: 'enrollment',
       lastName: '',
       firstName: '',
+      middleInitial: '',
+      sex: '',
       dob: '',
       ssn: '',
+      itin: '',
       addressLine1: '',
+      confidentialAddressLine1: '',
       phone: '',
       email: '',
       city: '',
       state: '',
       zip: '',
+      confidentialCity: '',
+      confidentialState: '',
+      confidentialZip: '',
+      driversLicenseNumber: '',
+      driversLicenseState: '',
+      textMessageConsent: false,
       conviction: false,
-      convictionDetails: '',
+      convictionDescription: '',
+      convictionCourt: '',
+      convictionDate: '',
+      adverseAction: false,
+      adverseActionLicenseType: '',
+      adverseActionLicenseNumber: '',
+      adverseActionType: '',
+      trainingProgramName: '',
+      trainingProgramPhone: '',
+      trainingProgramAddressLine1: '',
+      trainingProgramCity: '',
+      trainingProgramState: '',
+      trainingProgramZip: '',
+      trainingProgramId: '',
+      trainingBeginDate: '',
+      trainingEndDate: '',
     },
     cdphSigned: false,
     exitSurveyComplete: false,
@@ -975,6 +1027,10 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
 
   const mutate = React.useCallback(
     (path: string, method: 'POST' | 'PATCH', body?: unknown) => {
+      if (!studentId || !accessToken || !isStudentUser) {
+        return;
+      }
+
       const refresh = path.startsWith('/learning') ? refreshLearning : refreshPortal;
 
       void callStudentApi(path, {
@@ -984,7 +1040,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
         .then(() => refresh())
         .catch(() => refresh());
     },
-    [callStudentApi, refreshLearning, refreshPortal]
+    [accessToken, callStudentApi, isStudentUser, refreshLearning, refreshPortal, studentId]
   );
 
   const setWorkflowStage = React.useCallback(

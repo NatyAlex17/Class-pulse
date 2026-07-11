@@ -9,7 +9,9 @@ import type {
   CurriculumModule,
   StudentPortalState,
   UpdateCdphSkillEntryDto,
+  UpdateCdphSkillChecklistHeaderDto,
   UpdateCdphTheoryEntryDto,
+  UpdateCdphTheoryRecordHeaderDto,
 } from '../../student/types/student-portal.types';
 import type {
   AddInstructorStudentNoteDto,
@@ -358,13 +360,19 @@ export class InstructorPortalService {
     const portal = this.repository.findByInstructorId(instructorId);
     const student = this.getStudentOrThrow(portal, studentId);
 
-    const { entries, finalGrade } = this.studentPortalService.getCdphTheoryRecord(studentId);
+    const { header, entries, finalGrade } = this.studentPortalService.getCdphTheoryRecord(studentId);
     const entryBySectionId = new Map(entries.map((entry) => [entry.sectionId, entry]));
     const modules = this.learningResourcesConfigService.getConfig().modules;
 
     return {
       studentId,
       studentName: student.name,
+      header: {
+        ssn: header.ssn,
+        startDate: header.startDate,
+        completionDate: header.completionDate,
+        instructorName: header.instructorName || portal.profile.fullName,
+      },
       finalGrade,
       modules: modules
         .slice()
@@ -405,6 +413,17 @@ export class InstructorPortalService {
     return this.getCdphTheoryWorkspace(instructorId, studentId);
   }
 
+  updateCdphTheoryRecordHeader(instructorId: string, studentId: string, payload: UpdateCdphTheoryRecordHeaderDto) {
+    const portal = this.repository.findByInstructorId(instructorId);
+    this.getStudentOrThrow(portal, studentId);
+
+    this.studentPortalService.updateCdphTheoryRecordHeader(studentId, payload);
+    this.recordAudit(portal, 'instructor.cdph.e276c.header.updated', studentId);
+    this.repository.save(portal);
+
+    return this.getCdphTheoryWorkspace(instructorId, studentId);
+  }
+
   updateCdphTheoryFinalGrade(instructorId: string, studentId: string, finalGrade: string) {
     const portal = this.repository.findByInstructorId(instructorId);
     this.getStudentOrThrow(portal, studentId);
@@ -427,7 +446,7 @@ export class InstructorPortalService {
     const portal = this.repository.findByInstructorId(instructorId);
     const student = this.getStudentOrThrow(portal, studentId);
 
-    const entries = this.studentPortalService.getCdphSkillChecklist(studentId);
+    const { header, entries } = this.studentPortalService.getCdphSkillChecklist(studentId);
     const entryBySkillId = new Map(entries.map((entry) => [entry.skillId, entry]));
     const modules = this.learningResourcesConfigService.getConfig().modules;
     const moduleTitleById = new Map(modules.map((module) => [module.id, module.title]));
@@ -435,6 +454,14 @@ export class InstructorPortalService {
     return {
       studentId,
       studentName: student.name,
+      header: {
+        ssn: header.ssn,
+        instructorName: header.instructorName || portal.profile.fullName,
+        trainingProgramName: header.trainingProgramName || student.cohort || '',
+        clinicalSiteName: header.clinicalSiteName,
+        startDate: header.startDate,
+        completionDate: header.completionDate,
+      },
       modules: CDPH_E276A_SKILLS.map((skillModule) => ({
         moduleId: skillModule.moduleId,
         moduleTitle: moduleTitleById.get(skillModule.moduleId) ?? skillModule.moduleId,
@@ -467,6 +494,21 @@ export class InstructorPortalService {
     const instructorInitials = this.buildInitials(portal.profile.fullName);
     this.studentPortalService.updateCdphSkillEntry(studentId, skillId, moduleId, payload, instructorInitials);
     this.recordAudit(portal, 'instructor.cdph.e276a.entry.updated', skillId, { studentId, moduleId });
+    this.repository.save(portal);
+
+    return this.getCdphSkillChecklistWorkspace(instructorId, studentId);
+  }
+
+  updateCdphSkillChecklistHeader(
+    instructorId: string,
+    studentId: string,
+    payload: UpdateCdphSkillChecklistHeaderDto,
+  ) {
+    const portal = this.repository.findByInstructorId(instructorId);
+    this.getStudentOrThrow(portal, studentId);
+
+    this.studentPortalService.updateCdphSkillChecklistHeader(studentId, payload);
+    this.recordAudit(portal, 'instructor.cdph.e276a.header.updated', studentId);
     this.repository.save(portal);
 
     return this.getCdphSkillChecklistWorkspace(instructorId, studentId);

@@ -51,6 +51,8 @@ import type {
   TextAnswerDto,
   UpdateCdphFormDto,
   UpdateCdphSkillEntryDto,
+  UpdateCdphSkillChecklistHeaderDto,
+  UpdateCdphTheoryRecordHeaderDto,
   UpdateCdphTheoryEntryDto,
   UpdateEnrollmentWizardAgreementsDto,
   UpdateEnrollmentWizardDto,
@@ -1855,27 +1857,42 @@ export class StudentPortalService {
     const signedEvent = portal.auditTrail.find((event) => event.action === 'student.form.cdph.signed');
 
     return this.cdphPdfService.generate283B({
-      requestType: 'enrollment',
-      lastName: portal.cdphForm.lastName,
-      firstName: portal.cdphForm.firstName,
-      dob: portal.cdphForm.dob,
-      ssn: portal.cdphForm.ssn,
-      addressLine1: portal.cdphForm.addressLine1,
-      city: portal.cdphForm.city,
-      state: portal.cdphForm.state,
-      zip: portal.cdphForm.zip,
-      phone: portal.cdphForm.phone,
-      email: portal.cdphForm.email,
-      conviction: portal.cdphForm.conviction,
-      convictionDetails: portal.cdphForm.convictionDetails,
-      trainingProgramName: portal.profile.cohort || '',
+      ...portal.cdphForm,
+      trainingProgramName: portal.cdphForm.trainingProgramName || portal.profile.cohort || '',
       signedAt: signedEvent?.occurredAt ?? null,
     });
   }
 
   getCdphTheoryRecord(studentId: string) {
     const portal = this.repository.findByStudentId(studentId);
-    return { entries: portal.cdphTheoryRecord, finalGrade: portal.cdphTheoryFinalGrade };
+    portal.cdphTheoryHeader ??= {
+      ssn: portal.cdphForm.ssn ?? '',
+      startDate: '',
+      completionDate: '',
+      instructorName: '',
+    };
+    return {
+      header: portal.cdphTheoryHeader,
+      entries: portal.cdphTheoryRecord,
+      finalGrade: portal.cdphTheoryFinalGrade,
+    };
+  }
+
+  updateCdphTheoryRecordHeader(studentId: string, payload: UpdateCdphTheoryRecordHeaderDto) {
+    const portal = this.repository.findByStudentId(studentId);
+    portal.cdphTheoryHeader ??= {
+      ssn: portal.cdphForm.ssn ?? '',
+      startDate: '',
+      completionDate: '',
+      instructorName: '',
+    };
+    portal.cdphTheoryHeader = {
+      ...portal.cdphTheoryHeader,
+      ...this.trimStringFields({ ...payload }),
+    };
+    portal.lastAction = 'CDPH E276C header updated.';
+    this.recordAudit(portal, 'student.cdph.e276c.header.updated', 'cdph-e276c', { ...payload });
+    return this.repository.save(portal).cdphTheoryHeader;
   }
 
   updateCdphTheoryEntry(
@@ -1946,17 +1963,45 @@ export class StudentPortalService {
 
     return this.cdphPdfService.generateE276C({
       studentName,
-      ssn: portal.cdphForm.ssn,
-      startDate: '',
-      completionDate: '',
-      instructorName: instructorFullName,
+      ssn: portal.cdphTheoryHeader.ssn || portal.cdphForm.ssn,
+      startDate: portal.cdphTheoryHeader.startDate,
+      completionDate: portal.cdphTheoryHeader.completionDate,
+      instructorName: portal.cdphTheoryHeader.instructorName || instructorFullName,
       finalGrade: portal.cdphTheoryFinalGrade,
       modules: moduleRows,
     });
   }
 
   getCdphSkillChecklist(studentId: string) {
-    return this.repository.findByStudentId(studentId).cdphSkillChecklist;
+    const portal = this.repository.findByStudentId(studentId);
+    portal.cdphSkillHeader ??= {
+      ssn: portal.cdphForm.ssn ?? '',
+      instructorName: '',
+      trainingProgramName: portal.profile.cohort || '',
+      clinicalSiteName: '',
+      startDate: '',
+      completionDate: '',
+    };
+    return { header: portal.cdphSkillHeader, entries: portal.cdphSkillChecklist };
+  }
+
+  updateCdphSkillChecklistHeader(studentId: string, payload: UpdateCdphSkillChecklistHeaderDto) {
+    const portal = this.repository.findByStudentId(studentId);
+    portal.cdphSkillHeader ??= {
+      ssn: portal.cdphForm.ssn ?? '',
+      instructorName: '',
+      trainingProgramName: portal.profile.cohort || '',
+      clinicalSiteName: '',
+      startDate: '',
+      completionDate: '',
+    };
+    portal.cdphSkillHeader = {
+      ...portal.cdphSkillHeader,
+      ...this.trimStringFields({ ...payload }),
+    };
+    portal.lastAction = 'CDPH E276A header updated.';
+    this.recordAudit(portal, 'student.cdph.e276a.header.updated', 'cdph-e276a', { ...payload });
+    return this.repository.save(portal).cdphSkillHeader;
   }
 
   updateCdphSkillEntry(
@@ -2018,12 +2063,12 @@ export class StudentPortalService {
 
     return this.cdphPdfService.generateE276A({
       studentName,
-      ssn: portal.cdphForm.ssn,
-      instructorName: instructorFullName,
-      trainingProgramName: portal.profile.cohort || '',
-      clinicalSiteName: '',
-      startDate: '',
-      completionDate: '',
+      ssn: portal.cdphSkillHeader?.ssn || portal.cdphForm.ssn,
+      instructorName: portal.cdphSkillHeader?.instructorName || instructorFullName,
+      trainingProgramName: portal.cdphSkillHeader?.trainingProgramName || portal.profile.cohort || '',
+      clinicalSiteName: portal.cdphSkillHeader?.clinicalSiteName || '',
+      startDate: portal.cdphSkillHeader?.startDate || '',
+      completionDate: portal.cdphSkillHeader?.completionDate || '',
       modules: moduleRows,
     });
   }
@@ -2442,7 +2487,6 @@ export class StudentPortalService {
       form.firstName,
       form.lastName,
       form.dob,
-      form.ssn,
       form.addressLine1,
       form.phone,
       form.email,
@@ -2454,12 +2498,23 @@ export class StudentPortalService {
       throw new BadRequestException('CDPH form is incomplete. All required fields must be filled.');
     }
 
+    if (form.ssn.trim().length === 0 && form.itin.trim().length === 0) {
+      throw new BadRequestException('A Social Security Number or Individual Taxpayer Identification Number is required.');
+    }
+
     if (!form.email.includes('@')) {
       throw new BadRequestException('CDPH form requires a valid email address.');
     }
 
-    if (form.conviction && form.convictionDetails.trim().length === 0) {
+    if (form.conviction && form.convictionDescription.trim().length === 0) {
       throw new BadRequestException('Conviction details are required when conviction is marked yes.');
+    }
+
+    if (
+      form.adverseAction &&
+      (form.adverseActionLicenseType.trim().length === 0 || form.adverseActionType.trim().length === 0)
+    ) {
+      throw new BadRequestException('Adverse action details are required when adverse action is marked yes.');
     }
   }
 

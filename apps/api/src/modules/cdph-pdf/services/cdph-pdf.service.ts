@@ -7,9 +7,9 @@ import {
   drawCdphFieldRow,
   drawCdphFooter,
   drawCdphSectionHeading,
-  drawCdphSignatureBlock,
   drawCdphTitleBlock,
 } from '../templates/cdph-form-layout';
+import { renderCdph283B } from '../templates/cdph-283b.template';
 import type { Cdph283BPdfData, CdphE276PdfData, CdphE276CPdfData, CdphE276APdfData } from '../types/cdph-pdf.types';
 
 const CDPH_E276_FORM_CODE = 'CDPH E276 (04/22)';
@@ -23,97 +23,10 @@ const CDPH_E276C_LEGAL_FOOTER =
 const CDPH_E276A_FORM_CODE = 'CDPH E276A (12/19)';
 const CDPH_E276A_LEGAL_FOOTER = 'This form is available at the eLearning Review Unit website.';
 
-const CDPH_283B_FORM_CODE = 'CDPH 283 B (01/22)';
-const CDPH_283B_LEGAL_FOOTER =
-  'This form is available on our website at: www.cdph.ca.gov. Providing your telephone number and email address is for the ' +
-  "California Department of Public Health's internal use only for contacting applicants. This information will not be released " +
-  'to the public nor will it be displayed online.';
-
 @Injectable()
 export class CdphPdfService {
   generate283B(data: Cdph283BPdfData): Buffer {
-    const doc = createCdphDocument();
-
-    let y = drawCdphTitleBlock(
-      doc,
-      'CERTIFIED NURSE ASSISTANT (CNA) INITIAL APPLICATION',
-      'California Department of Public Health — Licensing and Certification Division',
-    );
-
-    y = drawCdphSectionHeading(doc, y, 'SECTION I — TYPE OF REQUEST');
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.text(
-      data.requestType === 'reconsideration'
-        ? 'Requesting RECONSIDERATION for a previously revoked/denied certificate.'
-        : 'Enrolling in a CNA training program.',
-      CDPH_MARGIN + 2,
-      y,
-    );
-    y += 8;
-
-    y = drawCdphSectionHeading(doc, y, 'SECTION II — APPLICANT INFORMATION');
-    y = drawCdphFieldRow(doc, y, [
-      { label: 'Last Name', value: data.lastName },
-      { label: 'First Name', value: data.firstName },
-      { label: 'Date of Birth', value: data.dob },
-    ]);
-    y = drawCdphFieldRow(doc, y, [
-      { label: 'Social Security Number', value: data.ssn },
-      { label: 'Phone Number', value: data.phone },
-      { label: 'Email Address', value: data.email },
-    ]);
-    y = drawCdphFieldRow(doc, y, [
-      { label: 'Address', value: data.addressLine1 },
-      { label: 'City', value: data.city },
-      { label: 'State', value: data.state },
-      { label: 'Zip Code', value: data.zip },
-    ]);
-
-    y = drawCdphSectionHeading(doc, y, 'SECTION III — BACKGROUND DISCLOSURE');
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.text(
-      `Have you been convicted, at any time, of any crime, other than a minor traffic violation? ${
-        data.conviction ? 'Yes' : 'No'
-      }`,
-      CDPH_MARGIN + 2,
-      y,
-    );
-    y += 6;
-    if (data.conviction) {
-      const wrapped = doc.splitTextToSize(`Details: ${data.convictionDetails}`, doc.internal.pageSize.getWidth() - CDPH_MARGIN * 2 - 4);
-      doc.text(wrapped, CDPH_MARGIN + 2, y);
-      y += wrapped.length * 4.5 + 2;
-    }
-    y += 4;
-
-    y = drawCdphSectionHeading(doc, y, 'SECTION IV — TRAINING PROGRAM (IF APPLICABLE)');
-    y = drawCdphFieldRow(doc, y, [
-      { label: 'Name of School or Facility', value: data.trainingProgramName },
-    ]);
-
-    y = drawCdphSectionHeading(doc, y, 'SECTION V — CERTIFICATION');
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    const certText = doc.splitTextToSize(
-      'I certify under penalty of perjury under the applicable state and federal laws that the information contained in ' +
-        'this application and supporting documents is true and correct.',
-      doc.internal.pageSize.getWidth() - CDPH_MARGIN * 2 - 4,
-    );
-    doc.text(certText, CDPH_MARGIN + 2, y);
-    y += certText.length * 4 + 4;
-
-    drawCdphSignatureBlock(
-      doc,
-      y,
-      data.signedAt ? `Signature of Applicant (Signed electronically)` : 'Signature of Applicant',
-      data.signedAt ?? 'Date',
-    );
-
-    drawCdphFooter(doc, CDPH_283B_LEGAL_FOOTER, CDPH_283B_FORM_CODE);
-
-    return Buffer.from(doc.output('arraybuffer'));
+    return renderCdph283B(data);
   }
 
   generateE276(data: CdphE276PdfData): Buffer {

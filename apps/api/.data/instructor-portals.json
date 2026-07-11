@@ -1535,6 +1535,79 @@
       },
       "auditTrail": [
         {
+          "id": "audit-1783761528915-275",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276a.entry.updated",
+          "target": "m2-1",
+          "occurredAt": "2026-07-11T09:18:48.915Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m2"
+          }
+        },
+        {
+          "id": "audit-1783761527763-517",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276a.entry.updated",
+          "target": "m2-1",
+          "occurredAt": "2026-07-11T09:18:47.763Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m2"
+          }
+        },
+        {
+          "id": "audit-1783761007501-849",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276c.final-grade.updated",
+          "target": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "occurredAt": "2026-07-11T09:10:07.501Z"
+        },
+        {
+          "id": "audit-1783761003452-686",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276c.entry.updated",
+          "target": "cdphe-m1-a",
+          "occurredAt": "2026-07-11T09:10:03.452Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m1"
+          }
+        },
+        {
+          "id": "audit-1783754933495-862",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276a.entry.updated",
+          "target": "m2-1",
+          "occurredAt": "2026-07-11T07:28:53.495Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m2"
+          }
+        },
+        {
+          "id": "audit-1783754414993-469",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276a.entry.updated",
+          "target": "m2-1",
+          "occurredAt": "2026-07-11T07:20:14.993Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m2"
+          }
+        },
+        {
+          "id": "audit-1783754190341-609",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276a.entry.updated",
+          "target": "m2-1",
+          "occurredAt": "2026-07-11T07:16:30.341Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m2"
+          }
+        },
+        {
           "id": "audit-1783754076307-672",
           "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
           "action": "instructor.cdph.e276a.entry.updated",

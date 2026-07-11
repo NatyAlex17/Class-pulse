@@ -25,7 +25,12 @@ import {
   INSTRUCTOR_READINESS_DOCUMENTS_UPLOADS_DIR,
   UPLOADS_URL_PREFIX,
 } from '../../../common/utils/upload-paths';
-import type { UpdateCdphSkillEntryDto, UpdateCdphTheoryEntryDto } from '../../student/types/student-portal.types';
+import type {
+  UpdateCdphSkillEntryDto,
+  UpdateCdphSkillChecklistHeaderDto,
+  UpdateCdphTheoryEntryDto,
+  UpdateCdphTheoryRecordHeaderDto,
+} from '../../student/types/student-portal.types';
 import type {
   AddInstructorStudentNoteDto,
   AnswerInstructorOnboardingQuestionDto,
@@ -324,6 +329,18 @@ export class InstructorPortalController {
     );
   }
 
+  @Patch('students/:studentId/cdph/e276c/header')
+  updateCdphTheoryHeader(
+    @Param('instructorId') instructorId: string,
+    @Param('studentId') studentId: string,
+    @Body() body: UpdateCdphTheoryRecordHeaderDto,
+  ) {
+    return createApiResponse(
+      this.instructorPortalService.updateCdphTheoryRecordHeader(instructorId, studentId, body),
+      'CDPH E276C header updated successfully.',
+    );
+  }
+
   @Patch('students/:studentId/cdph/e276c/:sectionId')
   updateCdphTheoryEntry(
     @Param('instructorId') instructorId: string,
@@ -353,6 +370,18 @@ export class InstructorPortalController {
     return createApiResponse(
       this.instructorPortalService.getCdphSkillChecklistWorkspace(instructorId, studentId),
       'CDPH E276A skills checklist retrieved successfully.',
+    );
+  }
+
+  @Patch('students/:studentId/cdph/e276a/header')
+  updateCdphSkillHeader(
+    @Param('instructorId') instructorId: string,
+    @Param('studentId') studentId: string,
+    @Body() body: UpdateCdphSkillChecklistHeaderDto,
+  ) {
+    return createApiResponse(
+      this.instructorPortalService.updateCdphSkillChecklistHeader(instructorId, studentId, body),
+      'CDPH E276A header updated successfully.',
     );
   }
 
