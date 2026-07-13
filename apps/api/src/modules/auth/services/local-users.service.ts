@@ -89,6 +89,28 @@ export class LocalUsersService {
     return result.rows[0] ? this.mapRow(result.rows[0]) : null;
   }
 
+  async findByEmail(email: string) {
+    const schema = this.databaseService.getSchema();
+    const result = await this.databaseService.query<LocalUserRow>(
+      `
+        SELECT
+          "id",
+          "supabase_user_id",
+          "email",
+          "role",
+          "status",
+          "created_at",
+          "updated_at"
+        FROM "${schema}"."users"
+        WHERE lower("email") = lower($1)
+        LIMIT 1
+      `,
+      [email],
+    );
+
+    return result.rows[0] ? this.mapRow(result.rows[0]) : null;
+  }
+
   async listByRoles(roles: string[], options: { excludeSupabaseUserId?: string; search?: string } = {}) {
     if (roles.length === 0) {
       return [];

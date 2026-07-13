@@ -240,19 +240,49 @@ type ClinicalLog = {
   module: string;
   hours: number;
   instructor: string;
-  status: 'Verified' | 'Pending';
+  status: 'Verified' | 'Pending' | 'Flagged';
+  note?: string;
 };
 
 type CdphForm = {
+  requestType: 'enrollment' | 'reconsideration';
   lastName: string;
   firstName: string;
+  middleInitial: string;
+  sex: 'Male' | 'Female' | '';
   dob: string;
+  ssn: string;
+  itin: string;
+  addressLine1: string;
+  confidentialAddressLine1: string;
   phone: string;
   email: string;
   city: string;
+  state: string;
   zip: string;
+  confidentialCity: string;
+  confidentialState: string;
+  confidentialZip: string;
+  driversLicenseNumber: string;
+  driversLicenseState: string;
+  textMessageConsent: boolean;
   conviction: boolean;
-  convictionDetails: string;
+  convictionDescription: string;
+  convictionCourt: string;
+  convictionDate: string;
+  adverseAction: boolean;
+  adverseActionLicenseType: string;
+  adverseActionLicenseNumber: string;
+  adverseActionType: string;
+  trainingProgramName: string;
+  trainingProgramPhone: string;
+  trainingProgramAddressLine1: string;
+  trainingProgramCity: string;
+  trainingProgramState: string;
+  trainingProgramZip: string;
+  trainingProgramId: string;
+  trainingBeginDate: string;
+  trainingEndDate: string;
 };
 
 type StudentWorkflowStage =
@@ -530,6 +560,7 @@ type StudentDemoContextValue = StudentDemoState & {
   toggleLiveScanUpload: () => void;
   updateCdphField: <TKey extends keyof CdphForm>(key: TKey, value: CdphForm[TKey]) => void;
   signCdphForm: () => void;
+  downloadCdph283bPdf: () => Promise<void>;
   logClinicalHours: () => void;
   submitAssignment: (assignmentId: string) => void;
   submitSupportTicket: (ticket: { subject: string; category: string; message: string }) => void;
@@ -569,7 +600,8 @@ type StudentPortalApi = {
     moduleTitle: string;
     hours: number;
     instructor: string;
-    status: 'Verified' | 'Pending';
+    status: 'Verified' | 'Pending' | 'Flagged';
+    note?: string;
   }>;
   financials: {
     totalTuition: number;
@@ -642,6 +674,62 @@ const CLINICAL_HOURS_REQUIRED = 40;
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 const StudentDemoContext = React.createContext<StudentDemoContextValue | null>(null);
+
+const DEFAULT_CDPH_FORM: CdphForm = {
+  requestType: 'enrollment',
+  lastName: '',
+  firstName: '',
+  middleInitial: '',
+  sex: '',
+  dob: '',
+  ssn: '',
+  itin: '',
+  addressLine1: '',
+  confidentialAddressLine1: '',
+  phone: '',
+  email: '',
+  city: '',
+  state: '',
+  zip: '',
+  confidentialCity: '',
+  confidentialState: '',
+  confidentialZip: '',
+  driversLicenseNumber: '',
+  driversLicenseState: '',
+  textMessageConsent: false,
+  conviction: false,
+  convictionDescription: '',
+  convictionCourt: '',
+  convictionDate: '',
+  adverseAction: false,
+  adverseActionLicenseType: '',
+  adverseActionLicenseNumber: '',
+  adverseActionType: '',
+  trainingProgramName: '',
+  trainingProgramPhone: '',
+  trainingProgramAddressLine1: '',
+  trainingProgramCity: '',
+  trainingProgramState: '',
+  trainingProgramZip: '',
+  trainingProgramId: '',
+  trainingBeginDate: '',
+  trainingEndDate: '',
+};
+
+// Portal records saved before the CDPH form gained new fields can be missing
+// keys (and may use the legacy `convictionDetails` name); fill from defaults so
+// inputs always stay controlled.
+function normalizeCdphForm(raw: Partial<CdphForm> | undefined): CdphForm {
+  const legacy = raw as (Partial<CdphForm> & { convictionDetails?: string }) | undefined;
+  return {
+    ...DEFAULT_CDPH_FORM,
+    ...Object.fromEntries(
+      Object.entries(raw ?? {}).filter(([, value]) => value !== undefined && value !== null)
+    ),
+    convictionDescription:
+      raw?.convictionDescription ?? legacy?.convictionDetails ?? DEFAULT_CDPH_FORM.convictionDescription,
+  };
+}
 
 function createFallbackState(): StudentDemoState {
   return {
@@ -728,17 +816,7 @@ function createFallbackState(): StudentDemoState {
     textbookOpened: false,
     liveScanGenerated: false,
     liveScanUploaded: false,
-    cdphForm: {
-      lastName: '',
-      firstName: '',
-      dob: '',
-      phone: '',
-      email: '',
-      city: '',
-      zip: '',
-      conviction: false,
-      convictionDetails: '',
-    },
+    cdphForm: { ...DEFAULT_CDPH_FORM },
     cdphSigned: false,
     exitSurveyComplete: false,
     lastAction: 'Student portal is waiting for authenticated sync.',
@@ -806,12 +884,13 @@ function mapPortalToState(portal: StudentPortalApi): StudentDemoState {
       hours: log.hours,
       instructor: log.instructor,
       status: log.status,
+      note: log.note,
     })),
     textbookIssued: portal.textbookIssued,
     textbookOpened: portal.textbookOpened,
     liveScanGenerated: portal.liveScanGenerated,
     liveScanUploaded: portal.liveScanUploaded,
-    cdphForm: portal.cdphForm,
+    cdphForm: normalizeCdphForm(portal.cdphForm),
     cdphSigned: portal.cdphSigned,
     exitSurveyComplete: portal.exitSurveyComplete,
     lastAction: portal.lastAction,
@@ -965,6 +1044,10 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
 
   const mutate = React.useCallback(
     (path: string, method: 'POST' | 'PATCH', body?: unknown) => {
+      if (!studentId || !accessToken || !isStudentUser) {
+        return;
+      }
+
       const refresh = path.startsWith('/learning') ? refreshLearning : refreshPortal;
 
       void callStudentApi(path, {
@@ -974,7 +1057,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
         .then(() => refresh())
         .catch(() => refresh());
     },
-    [callStudentApi, refreshLearning, refreshPortal]
+    [accessToken, callStudentApi, isStudentUser, refreshLearning, refreshPortal, studentId]
   );
 
   const setWorkflowStage = React.useCallback(
@@ -1541,6 +1624,34 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
     mutate('/forms/cdph-283b/sign', 'POST');
   }, [mutate]);
 
+  const downloadCdph283bPdf = React.useCallback(async () => {
+    if (!studentId || !accessToken || !isStudentUser) {
+      throw new Error('Student portal is not authenticated.');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/students/${studentId}/forms/cdph-283b/pdf`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to generate the CDPH 283B PDF.');
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'cdph-283b.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [accessToken, isStudentUser, studentId]);
+
   const logClinicalHours = React.useCallback(() => {
     mutate('/clinical-hours/logs', 'POST', {
       date: new Date().toISOString().slice(0, 10),
@@ -1721,6 +1832,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       toggleLiveScanUpload,
       updateCdphField,
       signCdphForm,
+      downloadCdph283bPdf,
       logClinicalHours,
       submitAssignment,
       submitSupportTicket,
@@ -1737,6 +1849,7 @@ export function StudentDemoProvider({ children }: { children: React.ReactNode })
       completedOnboardingCount,
       completeOnboardingStep,
       currentModule,
+      downloadCdph283bPdf,
       examUnlocked,
       generateLiveScan,
       issueTextbook,

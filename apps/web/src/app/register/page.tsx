@@ -8,6 +8,7 @@ import {
   IconArrowLeft,
   IconArrowRight,
   IconBriefcase2,
+  IconCircleCheckFilled,
   IconEye,
   IconEyeOff,
   IconLoader2,
@@ -215,19 +216,29 @@ export default function RegisterPage() {
                   <button
                     key={role.value}
                     type="button"
+                    aria-pressed={isSelected}
                     onClick={() => setSelectedRole(role.value)}
-                    className={`rounded-[16px] border p-4 text-left transition ${
+                    className={`relative rounded-[16px] border-2 p-4 text-left transition ${
                       isSelected
-                        ? 'border-primary/30 bg-primary/5'
-                        : 'border-border-subtle bg-surface hover:border-primary/20'
+                        ? 'border-primary bg-primary/10 ring-4 ring-primary/20'
+                        : 'border-border-subtle bg-surface hover:border-primary/30'
                     }`}
                   >
+                    {isSelected ? (
+                      <IconCircleCheckFilled className="absolute -right-2 -top-2 size-6 rounded-full bg-surface text-primary" />
+                    ) : null}
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-primary/10 text-primary">
+                      <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-[12px] transition ${
+                          isSelected ? 'bg-primary text-on-primary' : 'bg-primary/10 text-primary'
+                        }`}
+                      >
                         <Icon className="size-4" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-on-surface">{role.label}</p>
+                        <p className={`text-sm font-semibold ${isSelected ? 'text-primary' : 'text-on-surface'}`}>
+                          {role.label}
+                        </p>
                         <p className="text-xs text-on-surface-variant">{role.description}</p>
                       </div>
                     </div>

@@ -1,9 +1,9 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
 
-const DATA_DIR = path.join(process.cwd(), 'apps/api/.data');
-const CONFIG_FILE = path.join(DATA_DIR, 'orientation-survey-config.json');
+import { ConfigStoreService } from '../../../common/services/config-store.service';
+
+const CONFIG_KEY = 'orientation-survey-config';
+const LEGACY_CONFIG_FILE = 'orientation-survey-config.json';
 
 export interface SurveyQuestion {
   id: string;
@@ -69,26 +69,21 @@ export class OrientationSurveyConfigService implements OnModuleInit {
     JSON.stringify(defaultOrientationSurveyConfig),
   );
 
-  onModuleInit() {
-    this.loadConfig();
+  constructor(private readonly configStore: ConfigStoreService) {}
+
+  async onModuleInit() {
+    await this.loadConfig();
   }
 
-  private ensureDataDir() {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-  }
-
-  private loadConfig() {
+  private async loadConfig() {
     try {
-      this.ensureDataDir();
-      if (fs.existsSync(CONFIG_FILE)) {
-        const fileContent = fs.readFileSync(CONFIG_FILE, 'utf-8');
-        this.config = JSON.parse(fileContent);
-      } else {
-        this.config = JSON.parse(JSON.stringify(defaultOrientationSurveyConfig));
-        this.persistConfig();
+      const stored = await this.configStore.load<OrientationSurveyConfig>(CONFIG_KEY, LEGACY_CONFIG_FILE);
+      if (stored) {
+        this.config = stored;
+        return;
       }
+      this.config = JSON.parse(JSON.stringify(defaultOrientationSurveyConfig));
+      this.persistConfig();
     } catch (error) {
       console.error('Error loading orientation survey config:', error);
       this.config = JSON.parse(JSON.stringify(defaultOrientationSurveyConfig));
@@ -96,12 +91,7 @@ export class OrientationSurveyConfigService implements OnModuleInit {
   }
 
   private persistConfig() {
-    try {
-      this.ensureDataDir();
-      fs.writeFileSync(CONFIG_FILE, JSON.stringify(this.config, null, 2), 'utf-8');
-    } catch (error) {
-      console.error('Error persisting orientation survey config:', error);
-    }
+    void this.configStore.set(CONFIG_KEY, this.config);
   }
 
   getConfig(): OrientationSurveyConfig {

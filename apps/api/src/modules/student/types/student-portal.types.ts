@@ -9,7 +9,7 @@ export type ModuleStatus = 'Complete' | 'In Progress' | 'Locked';
 export type MessageStatus = 'Unread' | 'New' | 'Read';
 export type DocumentStatus = 'Verified' | 'Pending Review' | 'Missing';
 export type PaymentStatus = 'Completed' | 'Upcoming';
-export type ClinicalLogStatus = 'Verified' | 'Pending';
+export type ClinicalLogStatus = 'Verified' | 'Pending' | 'Flagged';
 export type AttendanceType = 'Theory' | 'Clinical';
 export type AttendanceStatus = 'Present' | 'Planned Absence' | 'Unplanned Absence';
 
@@ -136,8 +136,12 @@ export interface CurriculumModule {
   completedHours: number;
   /** Real learning time recorded against this module, in minutes. */
   sessionMinutes?: number;
+  /** Second-accurate learning time for this module — source of truth; minutes are derived. */
+  sessionSeconds?: number;
   examScore?: string;
   certificateUnlocked: boolean;
+  /** Skills a student is assessed on for this module, once completed. */
+  skills?: ModuleSkillDefinition[];
   steps: LearningStep[];
 }
 
@@ -174,6 +178,11 @@ export interface LearningSectionDefinition {
   resources: LearningResourceDefinition[];
 }
 
+export interface ModuleSkillDefinition {
+  id: string;
+  name: string;
+}
+
 export interface LearningModuleDefinition {
   id: string;
   title: string;
@@ -182,6 +191,10 @@ export interface LearningModuleDefinition {
   moduleFee: number;
   order: number;
   minimumHoursForCertification?: number;
+  /** Minimum clinical/placement hours a student must log against this module. */
+  minimumClinicalHours?: number;
+  /** Skills a student is assessed on for this module (e.g. instructor skill checklists). */
+  skills?: ModuleSkillDefinition[];
   sections: LearningSectionDefinition[];
 }
 
@@ -372,16 +385,122 @@ export interface SubmittedIntakeDocument {
   reviewStatus: IntakeDocumentReviewStatus;
 }
 
+export type CdphSex = 'Male' | 'Female' | '';
+
 export interface CdphForm {
+  // Section I — Type of Request
+  requestType: 'enrollment' | 'reconsideration';
+
+  // Section II — Applicant Information
   lastName: string;
   firstName: string;
+  middleInitial: string;
+  sex: CdphSex;
+  /** Public Address — subject to Public Records Act request release. */
+  addressLine1: string;
+  city: string;
+  state: string;
+  zip: string;
+  /** Confidential Address — CDPH use only; if left blank, mail is sent to the public address above. */
+  confidentialAddressLine1: string;
+  confidentialCity: string;
+  confidentialState: string;
+  confidentialZip: string;
   dob: string;
+  ssn: string;
+  itin: string;
+  driversLicenseNumber: string;
+  driversLicenseState: string;
   phone: string;
   email: string;
-  city: string;
-  zip: string;
+  textMessageConsent: boolean;
+
+  // Section III — Background Disclosure
   conviction: boolean;
-  convictionDetails: string;
+  convictionDescription: string;
+  convictionCourt: string;
+  convictionDate: string;
+  adverseAction: boolean;
+  adverseActionLicenseType: string;
+  adverseActionLicenseNumber: string;
+  adverseActionType: string;
+
+  // Section IV — Training Program (if applicable)
+  trainingProgramName: string;
+  trainingProgramPhone: string;
+  trainingProgramAddressLine1: string;
+  trainingProgramCity: string;
+  trainingProgramState: string;
+  trainingProgramZip: string;
+  trainingProgramId: string;
+  trainingBeginDate: string;
+  trainingEndDate: string;
+}
+
+/** One row of the CDPH E276C Individual Student Theory Record, keyed to a curriculum section (lettered theory topic). */
+export interface CdphTheoryRecordEntry {
+  sectionId: string;
+  moduleId: string;
+  hours: number;
+  date: string;
+  instructorInitials: string;
+  testScore?: number;
+}
+
+export interface UpdateCdphTheoryEntryDto {
+  hours?: number;
+  date?: string;
+  testScore?: number;
+}
+
+export interface CdphTheoryRecordHeader {
+  ssn: string;
+  startDate: string;
+  completionDate: string;
+  instructorName: string;
+}
+
+export interface UpdateCdphTheoryRecordHeaderDto {
+  ssn?: string;
+  startDate?: string;
+  completionDate?: string;
+  instructorName?: string;
+}
+
+export type CdphSkillStatus = 'S' | 'U';
+
+/** One row of the CDPH E276A Skills Checklist, keyed to an official regulatory skill item. */
+export interface CdphSkillChecklistEntry {
+  skillId: string;
+  moduleId: string;
+  status: CdphSkillStatus;
+  comments: string;
+  datePerformed: string;
+  instructorInitials: string;
+}
+
+export interface UpdateCdphSkillEntryDto {
+  status?: CdphSkillStatus;
+  comments?: string;
+  datePerformed?: string;
+}
+
+export interface CdphSkillChecklistHeader {
+  ssn: string;
+  instructorName: string;
+  trainingProgramName: string;
+  clinicalSiteName: string;
+  startDate: string;
+  completionDate: string;
+}
+
+export interface UpdateCdphSkillChecklistHeaderDto {
+  ssn?: string;
+  instructorName?: string;
+  trainingProgramName?: string;
+  clinicalSiteName?: string;
+  startDate?: string;
+  completionDate?: string;
 }
 
 export interface EntranceExamState {
@@ -531,17 +650,26 @@ export interface StudentPortalState {
   supportTickets: SupportTicket[];
   cdphForm: CdphForm;
   cdphSigned: boolean;
+  cdphTheoryHeader: CdphTheoryRecordHeader;
+  cdphTheoryRecord: CdphTheoryRecordEntry[];
+  cdphTheoryFinalGrade: string;
+  cdphSkillHeader: CdphSkillChecklistHeader;
+  cdphSkillChecklist: CdphSkillChecklistEntry[];
   liveScanGenerated: boolean;
   liveScanUploaded: boolean;
   textbookIssued: boolean;
   textbookOpened: boolean;
   exitSurveyComplete: boolean;
   learningMinutes: number;
+  /** Second-accurate total learning time — source of truth; minutes are derived. */
+  learningSeconds?: number;
   learningSessionActive: boolean;
   /** Currently active lesson receiving elapsed learning time. */
   activeLessonId?: string;
   /** Per-lesson persisted elapsed learning time, in minutes. */
   lessonElapsedMinutes: Record<string, number>;
+  /** Per-lesson second-accurate elapsed time — source of truth; minutes are derived. */
+  lessonElapsedSeconds?: Record<string, number>;
   activeLearningAttention?: ActiveLearningAttention;
   activeExamSession?: ActiveExamSession;
   reflectionResponse: string;
@@ -580,10 +708,13 @@ export interface StudentLearningSnapshot {
   modules: CurriculumModule[];
   learningMinutes: number;
   sessionMinutes: number;
+  sessionSeconds: number;
   requiredSessionMinutes: number;
+  requiredSessionSeconds: number;
   learningSessionActive: boolean;
   activeLessonId?: string;
   lessonElapsedMinutes: Record<string, number>;
+  lessonElapsedSeconds: Record<string, number>;
   activeLearningAttention?: ActiveLearningAttention;
   activeExamSession?: ActiveExamSession;
   examUnlocked: boolean;
@@ -592,6 +723,17 @@ export interface StudentLearningSnapshot {
   exitSurveyComplete: boolean;
   moduleCertificatesReady: number;
   programCertificateReady: boolean;
+}
+
+/** Live payload pushed over the learning-time socket after every server-side credit. */
+export interface LearningTimeState {
+  moduleId: string;
+  sessionSeconds: number;
+  requiredSessionSeconds: number;
+  lessonSeconds: Record<string, number>;
+  learningSeconds: number;
+  learningSessionActive: boolean;
+  examUnlocked: boolean;
 }
 
 export interface StudentAttendanceSummary {
@@ -865,17 +1007,7 @@ export interface ReplySupportTicketDto {
   status?: 'In Review' | 'Resolved';
 }
 
-export interface UpdateCdphFormDto {
-  lastName?: string;
-  firstName?: string;
-  dob?: string;
-  phone?: string;
-  email?: string;
-  city?: string;
-  zip?: string;
-  conviction?: boolean;
-  convictionDetails?: string;
-}
+export type UpdateCdphFormDto = Partial<CdphForm>;
 
 export type IntakeApprovalStatus = 'pending' | 'approved' | 'rejected';
 

@@ -87,6 +87,8 @@ export function AuditorShell({
   const [profileMenuOpen, setProfileMenuOpen] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const { unreadCount, notification, dismissNotification } = useUnreadMessagesCount();
+  const currentSectionLabel =
+    activeItem || navItems.find((item) => isActive(pathname, item.href))?.label || title;
 
   React.useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -237,49 +239,49 @@ export function AuditorShell({
 
       <header className="fixed left-0 right-0 top-0 z-40 h-16 border-b border-border-subtle bg-surface px-4 lg:left-[240px] lg:px-8">
         <div className="flex h-full items-center justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+          <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
             <button
               onClick={() => setMobileMenuOpen(true)}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-subtle text-on-surface-variant transition hover:bg-surface-high hover:text-primary lg:hidden"
             >
               <IconMenu2 className="size-5" />
             </button>
-            <span className="truncate font-display text-[22px] font-bold text-primary">
-              Compliance Audit
+            <span className="min-w-0 max-w-[240px] truncate font-display text-[20px] font-bold text-primary xl:max-w-[320px]">
+              {currentSectionLabel}
             </span>
-            <div className="hidden h-6 w-px bg-border-subtle md:block" />
-            <div className="hidden min-w-0 items-center gap-2 md:flex">
-              <span className="max-w-[260px] truncate text-sm font-medium text-primary">
+            <div className="hidden h-6 w-px shrink-0 bg-border-subtle xl:block" />
+            <div className="hidden min-w-0 items-center gap-2 xl:flex">
+              <span className="max-w-[220px] truncate text-sm font-medium text-primary 2xl:max-w-[320px]">
                 {topProgramLabel}
               </span>
-              <span className="rounded-full bg-secondary-fixed px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-on-secondary-fixed">
+              <span className="shrink-0 rounded-full bg-secondary-fixed px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-on-secondary-fixed">
                 Auditor Access
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-4">
-            <div className="relative hidden md:block">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <div className="relative hidden xl:block">
               <IconSearch className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-variant" />
-              <Input className="h-11 rounded-[16px] pl-10" placeholder={searchPlaceholder} />
+              <Input className="h-11 w-[205px] rounded-[16px] pl-10 2xl:w-[240px]" placeholder={searchPlaceholder} />
             </div>
             <ThemeToggle />
             <button className="text-on-surface-variant transition hover:text-primary">
               <IconBell className="size-5" />
             </button>
-            <button className="hidden text-on-surface-variant transition hover:text-primary sm:block">
+            <button className="hidden text-on-surface-variant transition hover:text-primary lg:block">
               <IconHelpCircle className="size-5" />
             </button>
-            <Button variant="secondary" className="hidden rounded-[16px] px-5 lg:inline-flex">
+            <Button variant="secondary" className="hidden rounded-[16px] px-4 xl:inline-flex">
               <IconIdBadge2 className="size-4" />
               Program Selector
             </Button>
             <div className="relative" data-profile-menu>
               <button
                 onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-                className="flex items-center gap-3 border-l border-border-subtle pl-2 transition hover:opacity-80 sm:pl-4"
+                className="flex items-center gap-3 border-l border-border-subtle pl-2 transition hover:opacity-80 sm:pl-3"
               >
-                <div className="hidden text-right sm:block">
+                <div className="hidden text-right 2xl:block">
                   <p className="text-sm font-semibold text-on-surface">{profileName}</p>
                   <p className="text-[12px] text-on-surface-variant">{profileRole}</p>
                 </div>

@@ -32,6 +32,7 @@ export function useLearningResourcesConfig() {
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [resetting, setResetting] = React.useState(false);
+  const [importing, setImporting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
   // Snapshot of the config as last persisted to the API. The auto-save effect
@@ -244,6 +245,57 @@ export function useLearningResourcesConfig() {
     [adminId, session?.access_token]
   );
 
+  const importConfigFile = React.useCallback(
+    async (file: File) => {
+      if (!session?.access_token) {
+        throw new Error('Sign in to import learning resources.');
+      }
+
+      try {
+        setImporting(true);
+        setError(null);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const requestUrl = buildAdminApiUrl(adminId, '/learning-resources-config/import');
+        const response = await fetch(requestUrl, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const payload = await response.json().catch(() => null);
+          throw new Error(payload?.error?.message ?? `Failed to import configuration (${response.status}).`);
+        }
+
+        const payload = await response.json();
+        const importedConfig = payload?.data?.config ?? payload?.data;
+        const importedSummary = payload?.data?.summary;
+
+        lastSavedRef.current = JSON.stringify(importedConfig);
+        setConfig(importedConfig);
+        setSuccess(
+          importedSummary
+            ? `Imported ${importedSummary.modules} modules, ${importedSummary.sections} lessons, and ${importedSummary.resources} learning activities.`
+            : 'Learning resources imported successfully.',
+        );
+        setTimeout(() => setSuccess(null), 4000);
+
+        return payload?.data;
+      } catch (importError) {
+        const requestUrl = buildAdminApiUrl(adminId, '/learning-resources-config/import');
+        setError(toRequestErrorMessage(importError, 'import learning resources configuration', requestUrl));
+        throw importError;
+      } finally {
+        setImporting(false);
+      }
+    },
+    [adminId, session?.access_token]
+  );
+
   const resetConfig = React.useCallback(async () => {
     if (!session?.access_token) {
       return;
@@ -338,6 +390,7 @@ export function useLearningResourcesConfig() {
     loading,
     saving,
     resetting,
+    importing,
     error,
     success,
     setError,
@@ -347,6 +400,7 @@ export function useLearningResourcesConfig() {
     resetConfig,
     autoSaveConfig,
     uploadFile,
+    importConfigFile,
     updateModule,
     updateSection,
     updateResource,

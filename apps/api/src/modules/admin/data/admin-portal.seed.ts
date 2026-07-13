@@ -61,12 +61,16 @@ export const adminPortalSeed: AdminPortalState[] = [
       },
     },
     operations: {
+      generatedAt: '2026-06-30T06:40:00.000Z',
       metrics: [
         { label: 'Admissions velocity', value: '82%', tone: 'primary' },
         { label: 'Instructor coverage', value: '91%', tone: 'success' },
         { label: 'Schedule pressure', value: '6 alerts', tone: 'warning' },
         { label: 'Compliance exceptions', value: '3 open', tone: 'error' },
       ],
+      trend: [],
+      workload: [],
+      modules: [],
       cohorts: [
         { id: 'cohort-1', name: 'CNA Cohort 12', size: 34, note: '2 blockers', tone: 'warning' },
         { id: 'cohort-2', name: 'CNA Cohort 13', size: 29, note: 'On track', tone: 'success' },
@@ -93,6 +97,8 @@ export const adminPortalSeed: AdminPortalState[] = [
           tone: 'warning',
         },
       ],
+      queue: [],
+      highlights: [],
     },
     applications: [
       {
@@ -213,6 +219,9 @@ export const adminPortalSeed: AdminPortalState[] = [
     ],
     activeReviewQueueId: 'queue-eve',
     reports: {
+      generatedAt: '2026-06-30T06:40:00.000Z',
+      selectedRange: '30d',
+      availableRanges: ['7d', '30d', 'quarter'],
       cards: [
         {
           id: 'operational-overview',
@@ -233,29 +242,62 @@ export const adminPortalSeed: AdminPortalState[] = [
           badge: 'Priority',
         },
       ],
-      summaryMetrics: [
-        { id: 'applications', label: 'Applications', value: '72', delta: '+8', tone: 'primary' },
-        { id: 'approved', label: 'Approved', value: '56', delta: '+6', tone: 'success' },
-        { id: 'enrolled', label: 'Enrolled', value: '45', delta: '+4', tone: 'info' },
+      reports: [
+        {
+          id: 'operational-overview',
+          title: 'Operational Overview',
+          description: 'Trend monitoring from application intake through active enrollment conversion.',
+          badge: 'Leadership',
+          formats: ['JSON', 'CSV', 'PDF'],
+        },
+        {
+          id: 'admissions-queue-audit',
+          title: 'Admissions Queue Audit',
+          description: 'Queue health, bottlenecks, and document blockers across active applications.',
+          badge: 'Daily',
+          formats: ['CSV', 'JSON'],
+        },
+        {
+          id: 'compliance-exception-digest',
+          title: 'Compliance Exception Digest',
+          description: 'Prebuilt regulator-ready exports and leadership reporting bundles.',
+          badge: 'Priority',
+          formats: ['PDF', 'JSON'],
+        },
       ],
+      summaryMetrics: [
+        { id: 'applications', label: 'Applications', value: '72', delta: '+8', tone: 'primary', note: 'Admissions volume in range.' },
+        { id: 'approved', label: 'Approved', value: '56', delta: '+6', tone: 'success', note: 'Approved decisions in range.' },
+        { id: 'enrolled', label: 'Enrolled', value: '45', delta: '+4', tone: 'info', note: 'Active students after approvals.' },
+      ],
+      narratives: [],
+      enrollmentTrend: [],
+      applicationStatus: [],
+      modulePerformance: [],
       exports: [
         {
           id: 'export-ops',
+          reportId: 'operational-overview',
           report: 'Operational Overview',
           scope: 'Leadership',
           format: 'JSON',
           cadence: 'Weekly',
           updated: '2026-06-30T06:40:00.000Z',
           status: 'Ready',
+          owner: 'Operations',
+          range: '30d',
         },
         {
           id: 'export-queue',
+          reportId: 'admissions-queue-audit',
           report: 'Admissions Queue Audit',
           scope: 'Admissions',
           format: 'CSV',
           cadence: 'Daily',
           updated: '2026-06-30T07:10:00.000Z',
           status: 'Ready',
+          owner: 'Admissions',
+          range: '7d',
         },
       ],
     },
