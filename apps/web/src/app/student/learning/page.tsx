@@ -21,6 +21,7 @@ import {
 } from '@tabler/icons-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { useStudentDemo } from '@/components/student/student-portal-store';
+import { useLearningTime } from '@/components/student/use-learning-time';
 import { StudentIntakeModal } from '@/components/student/student-intake-modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,6 +58,13 @@ function getInitials(name: string) {
 function formatSessionTime(totalMinutes: number) {
   const minutes = Math.max(0, Math.round(totalMinutes));
   return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`;
+}
+
+function formatSessionClock(totalSeconds: number) {
+  const seconds = Math.max(0, Math.floor(totalSeconds));
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  return `${hours}h ${String(minutes).padStart(2, '0')}m ${String(seconds % 60).padStart(2, '0')}s`;
 }
 
 function parseDurationToMinutes(duration?: string) {
@@ -126,7 +134,6 @@ export default function StudentLearningPage() {
     workflowStage,
     currentModule,
     modules,
-    advanceLearning,
     setLearningSession,
     recordLessonSessionStart,
     reportLearningAttentionEvent,
@@ -140,7 +147,7 @@ export default function StudentLearningPage() {
     submitModuleExam,
     refreshLearning,
   } = useStudentDemo();
-  const { user, syncedUser } = useAuth();
+  const { user, syncedUser, session } = useAuth();
   const profileName =
     typeof user?.user_metadata?.full_name === 'string' && user.user_metadata.full_name.trim()
       ? user.user_metadata.full_name.trim()
@@ -171,14 +178,28 @@ export default function StudentLearningPage() {
   const [completedLessons, setCompletedLessons] = React.useState<Set<string>>(new Set());
   const examEventCooldownRef = React.useRef<Record<string, number>>({});
   const learningEventCooldownRef = React.useRef<Record<string, number>>({});
-  const sessionRemainingMinutes = Math.max(requiredSessionMinutes - sessionMinutes, 0);
-  const sessionPercent =
-    requiredSessionMinutes > 0
-      ? Math.min(100, Math.round((sessionMinutes / requiredSessionMinutes) * 100))
-      : 100;
-
   const lessons = currentModule.steps;
   const selectedLesson = lessons.find((lesson) => lesson.id === selectedLessonId) ?? lessons[0];
+
+  // Second-accurate timer over the learning-time socket. The server clock is
+  // authoritative and persists on every flush, so the exact time survives
+  // leaving and returning. Store minutes are the fallback until the socket
+  // delivers its first state.
+  const learningTime = useLearningTime({
+    accessToken: session?.access_token,
+    enabled: portalUnlocked && learningSessionActive && !examUnlocked,
+    lessonId: selectedLesson && selectedLesson.type !== 'Quiz' ? selectedLesson.id : undefined,
+  });
+  const sessionSecondsExact = learningTime.sessionSeconds ?? sessionMinutes * 60;
+  const requiredSessionSecondsExact = learningTime.requiredSessionSeconds ?? requiredSessionMinutes * 60;
+  const sessionRemainingMinutes = Math.max(
+    Math.ceil((requiredSessionSecondsExact - sessionSecondsExact) / 60),
+    0
+  );
+  const sessionPercent =
+    requiredSessionSecondsExact > 0
+      ? Math.min(100, Math.round((sessionSecondsExact / requiredSessionSecondsExact) * 100))
+      : 100;
   const currentLessonIndex = selectedLesson
     ? lessons.findIndex((lesson) => lesson.id === selectedLesson.id)
     : -1;
@@ -235,23 +256,25 @@ export default function StudentLearningPage() {
       ? activeLearningAttention
       : null;
   const selectedLessonTargetMinutes = parseDurationToMinutes(selectedLesson?.duration);
-  const selectedLessonElapsedMinutes = selectedLesson
-    ? Math.max(0, lessonElapsedMinutes[selectedLesson.id] ?? 0)
+  const selectedLessonElapsedSeconds = selectedLesson
+    ? learningTime.lessonSecondsOf(selectedLesson.id) ??
+      Math.max(0, lessonElapsedMinutes[selectedLesson.id] ?? 0) * 60
     : 0;
+  const selectedLessonElapsedMinutes = selectedLessonElapsedSeconds / 60;
   const selectedLessonRemainingMinutes =
     selectedLessonTargetMinutes === null
       ? 0
-      : Math.max(0, selectedLessonTargetMinutes - selectedLessonElapsedMinutes);
+      : Math.max(0, Math.ceil(selectedLessonTargetMinutes - selectedLessonElapsedMinutes));
   const selectedLessonPercent =
     selectedLessonTargetMinutes && selectedLessonTargetMinutes > 0
       ? Math.min(100, Math.round((selectedLessonElapsedMinutes / selectedLessonTargetMinutes) * 100))
       : null;
   const showingLessonTimer =
     viewMode === 'lesson' && selectedLesson?.type !== 'Quiz' && selectedLessonTargetMinutes !== null;
-  const displaySessionMinutes = showingLessonTimer ? selectedLessonElapsedMinutes : sessionMinutes;
-  const displayRequiredSessionMinutes = showingLessonTimer
-    ? selectedLessonTargetMinutes ?? requiredSessionMinutes
-    : requiredSessionMinutes;
+  const displaySessionSeconds = showingLessonTimer ? selectedLessonElapsedSeconds : sessionSecondsExact;
+  const displayRequiredSessionSeconds = showingLessonTimer
+    ? (selectedLessonTargetMinutes ?? requiredSessionMinutes) * 60
+    : requiredSessionSecondsExact;
   const displaySessionPercent = showingLessonTimer ? selectedLessonPercent ?? 0 : sessionPercent;
   const canMarkCurrentLessonComplete =
     !selectedLesson ||
@@ -333,21 +356,13 @@ export default function StudentLearningPage() {
     return () => setLearningSession(false);
   }, [setLearningSession]);
 
-  // Session time is recorded server-side one real minute at a time — only while
-  // the session is running, the tab is visible, and the target is not yet met.
+  // When the socket reports the session target was reached, refresh the store
+  // so the exam unlocks without a page reload.
   React.useEffect(() => {
-    if (!portalUnlocked || !learningSessionActive || examUnlocked) {
-      return;
+    if (learningTime.examUnlocked && !examUnlocked) {
+      void refreshLearning();
     }
-
-    const interval = window.setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        advanceLearning(1);
-      }
-    }, 60_000);
-
-    return () => window.clearInterval(interval);
-  }, [advanceLearning, examUnlocked, learningSessionActive, portalUnlocked]);
+  }, [learningTime.examUnlocked, examUnlocked, refreshLearning]);
 
   React.useEffect(() => {
     if (portalHydrated && !portalUnlocked) {
@@ -697,14 +712,15 @@ export default function StudentLearningPage() {
                       : 'Session paused'}
               </span>
               <span className="font-mono text-[18px] font-bold leading-tight text-primary">
-                {formatSessionTime(displaySessionMinutes)}
+                {formatSessionClock(displaySessionSeconds)}
                 <span className="ml-1 font-sans text-xs font-medium text-on-surface-variant">
-                  / {formatSessionTime(displayRequiredSessionMinutes)}
+                  / {formatSessionClock(displayRequiredSessionSeconds)}
                 </span>
               </span>
               {showingLessonTimer ? (
                 <span className="mt-0.5 block text-[11px] text-on-surface-variant">
-                  Module total {formatSessionTime(sessionMinutes)} / {formatSessionTime(requiredSessionMinutes)}
+                  Module total {formatSessionClock(sessionSecondsExact)} /{' '}
+                  {formatSessionClock(requiredSessionSecondsExact)}
                 </span>
               ) : null}
             </div>

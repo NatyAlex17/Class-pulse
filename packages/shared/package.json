@@ -7,7 +7,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "node init && tsc -p tsconfig.json",
     "clean": "rm -rf dist"
   }
 }

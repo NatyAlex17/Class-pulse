@@ -1,6 +1,12 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Res } from '@nestjs/common';
+import type { Response } from 'express';
 
 import { createApiResponse } from '../../../common/utils/create-api-response';
+import { sendPdfResponse } from '../../../common/utils/send-pdf-response';
+import { CdphE276ConfigService } from '../../admin/services/cdph-e276-config.service';
+import { CdphPdfService } from '../../cdph-pdf/services/cdph-pdf.service';
+import { LearningResourcesConfigService } from '../../student/services/learning-resources-config.service';
+import { StudentPortalService } from '../../student/services/student-portal.service';
 import type {
   AddAuditorStudentNoteDto,
   GenerateAuditorReportExportDto,
@@ -16,7 +22,13 @@ import { AuditorPortalService } from '../services/auditor-portal.service';
 
 @Controller('auditors/:auditorId')
 export class AuditorPortalController {
-  constructor(private readonly auditorPortalService: AuditorPortalService) {}
+  constructor(
+    private readonly auditorPortalService: AuditorPortalService,
+    private readonly studentPortalService: StudentPortalService,
+    private readonly cdphE276ConfigService: CdphE276ConfigService,
+    private readonly cdphPdfService: CdphPdfService,
+    private readonly learningResourcesConfigService: LearningResourcesConfigService,
+  ) {}
 
   @Get('portal')
   getPortal(@Param('auditorId') auditorId: string) {
@@ -40,6 +52,44 @@ export class AuditorPortalController {
       this.auditorPortalService.getProfile(auditorId),
       'Auditor profile retrieved successfully.',
     );
+  }
+
+  @Get('students/:studentId/cdph/283b/pdf')
+  generateCdph283BPdf(@Param('studentId') studentId: string, @Res() res: Response) {
+    const buffer = this.studentPortalService.generateCdph283BPdf(studentId);
+    sendPdfResponse(res, buffer, `cdph-283b-${studentId}.pdf`);
+  }
+
+  @Get('students/:studentId/cdph/e276c/pdf')
+  generateCdphE276CPdf(@Param('studentId') studentId: string, @Res() res: Response) {
+    const buffer = this.studentPortalService.generateCdphE276CPdf(studentId, '');
+    sendPdfResponse(res, buffer, `cdph-e276c-${studentId}.pdf`);
+  }
+
+  @Get('students/:studentId/cdph/e276a/pdf')
+  generateCdphE276APdf(@Param('studentId') studentId: string, @Res() res: Response) {
+    const buffer = this.studentPortalService.generateCdphE276APdf(studentId, '');
+    sendPdfResponse(res, buffer, `cdph-e276a-${studentId}.pdf`);
+  }
+
+  @Get('cdph/e276/pdf')
+  generateCdphE276Pdf(@Res() res: Response) {
+    const profile = this.cdphE276ConfigService.getProfile();
+    const modules = this.learningResourcesConfigService.getConfig().modules;
+
+    const buffer = this.cdphPdfService.generateE276({
+      ...profile,
+      modules: modules
+        .slice()
+        .sort((a, b) => a.order - b.order)
+        .map((module) => ({
+          title: module.title,
+          theoryHours: module.requiredHours,
+          clinicalHours: module.minimumClinicalHours ?? 0,
+        })),
+    });
+
+    sendPdfResponse(res, buffer, 'cdph-e276.pdf');
   }
 
   @Patch('profile')
