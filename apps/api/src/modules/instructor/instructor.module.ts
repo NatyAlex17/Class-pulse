@@ -1,5 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 
+import { ConfigStoreModule } from '../../common/services/config-store.module';
 import { StudentModule } from '../student/student.module';
 import { InstructorPortalController } from './controllers/instructor-portal.controller';
 import { InstructorIntakeSubmissionService } from './services/instructor-intake-submission.service';
@@ -8,7 +9,7 @@ import { InstructorPortalRepository } from './services/instructor-portal.reposit
 import { InstructorPortalService } from './services/instructor-portal.service';
 
 @Module({
-  imports: [forwardRef(() => StudentModule)],
+  imports: [ConfigStoreModule, forwardRef(() => StudentModule)],
   controllers: [InstructorPortalController],
   providers: [
     InstructorPortalRepository,

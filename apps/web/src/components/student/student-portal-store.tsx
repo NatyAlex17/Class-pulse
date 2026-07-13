@@ -675,6 +675,62 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 const StudentDemoContext = React.createContext<StudentDemoContextValue | null>(null);
 
+const DEFAULT_CDPH_FORM: CdphForm = {
+  requestType: 'enrollment',
+  lastName: '',
+  firstName: '',
+  middleInitial: '',
+  sex: '',
+  dob: '',
+  ssn: '',
+  itin: '',
+  addressLine1: '',
+  confidentialAddressLine1: '',
+  phone: '',
+  email: '',
+  city: '',
+  state: '',
+  zip: '',
+  confidentialCity: '',
+  confidentialState: '',
+  confidentialZip: '',
+  driversLicenseNumber: '',
+  driversLicenseState: '',
+  textMessageConsent: false,
+  conviction: false,
+  convictionDescription: '',
+  convictionCourt: '',
+  convictionDate: '',
+  adverseAction: false,
+  adverseActionLicenseType: '',
+  adverseActionLicenseNumber: '',
+  adverseActionType: '',
+  trainingProgramName: '',
+  trainingProgramPhone: '',
+  trainingProgramAddressLine1: '',
+  trainingProgramCity: '',
+  trainingProgramState: '',
+  trainingProgramZip: '',
+  trainingProgramId: '',
+  trainingBeginDate: '',
+  trainingEndDate: '',
+};
+
+// Portal records saved before the CDPH form gained new fields can be missing
+// keys (and may use the legacy `convictionDetails` name); fill from defaults so
+// inputs always stay controlled.
+function normalizeCdphForm(raw: Partial<CdphForm> | undefined): CdphForm {
+  const legacy = raw as (Partial<CdphForm> & { convictionDetails?: string }) | undefined;
+  return {
+    ...DEFAULT_CDPH_FORM,
+    ...Object.fromEntries(
+      Object.entries(raw ?? {}).filter(([, value]) => value !== undefined && value !== null)
+    ),
+    convictionDescription:
+      raw?.convictionDescription ?? legacy?.convictionDetails ?? DEFAULT_CDPH_FORM.convictionDescription,
+  };
+}
+
 function createFallbackState(): StudentDemoState {
   return {
     profile: { fullName: '', email: '', cohort: '', studentNumber: '', location: '' },
@@ -760,46 +816,7 @@ function createFallbackState(): StudentDemoState {
     textbookOpened: false,
     liveScanGenerated: false,
     liveScanUploaded: false,
-    cdphForm: {
-      requestType: 'enrollment',
-      lastName: '',
-      firstName: '',
-      middleInitial: '',
-      sex: '',
-      dob: '',
-      ssn: '',
-      itin: '',
-      addressLine1: '',
-      confidentialAddressLine1: '',
-      phone: '',
-      email: '',
-      city: '',
-      state: '',
-      zip: '',
-      confidentialCity: '',
-      confidentialState: '',
-      confidentialZip: '',
-      driversLicenseNumber: '',
-      driversLicenseState: '',
-      textMessageConsent: false,
-      conviction: false,
-      convictionDescription: '',
-      convictionCourt: '',
-      convictionDate: '',
-      adverseAction: false,
-      adverseActionLicenseType: '',
-      adverseActionLicenseNumber: '',
-      adverseActionType: '',
-      trainingProgramName: '',
-      trainingProgramPhone: '',
-      trainingProgramAddressLine1: '',
-      trainingProgramCity: '',
-      trainingProgramState: '',
-      trainingProgramZip: '',
-      trainingProgramId: '',
-      trainingBeginDate: '',
-      trainingEndDate: '',
-    },
+    cdphForm: { ...DEFAULT_CDPH_FORM },
     cdphSigned: false,
     exitSurveyComplete: false,
     lastAction: 'Student portal is waiting for authenticated sync.',
@@ -873,7 +890,7 @@ function mapPortalToState(portal: StudentPortalApi): StudentDemoState {
     textbookOpened: portal.textbookOpened,
     liveScanGenerated: portal.liveScanGenerated,
     liveScanUploaded: portal.liveScanUploaded,
-    cdphForm: portal.cdphForm,
+    cdphForm: normalizeCdphForm(portal.cdphForm),
     cdphSigned: portal.cdphSigned,
     exitSurveyComplete: portal.exitSurveyComplete,
     lastAction: portal.lastAction,

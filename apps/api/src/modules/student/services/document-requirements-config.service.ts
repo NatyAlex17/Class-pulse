@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
 
-const DATA_DIR = path.join(process.cwd(), 'apps/api/.data');
-const CONFIG_FILE = path.join(DATA_DIR, 'document-requirements-config.json');
+import { ConfigStoreService } from '../../../common/services/config-store.service';
+
+const CONFIG_KEY = 'document-requirements-config';
+const LEGACY_CONFIG_FILE = 'document-requirements-config.json';
 
 export type DocumentAppliesTo = 'student' | 'instructor' | 'both';
 
@@ -51,8 +51,10 @@ const VALID_APPLIES_TO: DocumentAppliesTo[] = ['student', 'instructor', 'both'];
 export class DocumentRequirementsConfigService implements OnModuleInit {
   private config: DocumentRequirementsConfig = defaultDocumentRequirementsConfig;
 
-  onModuleInit() {
-    this.loadConfig();
+  constructor(private readonly configStore: ConfigStoreService) {}
+
+  async onModuleInit() {
+    await this.loadConfig();
   }
 
   getConfig(): DocumentRequirementsConfig {
@@ -119,19 +121,15 @@ export class DocumentRequirementsConfigService implements OnModuleInit {
     return { documents };
   }
 
-  private ensureDataDir() {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-
-  private loadConfig() {
+  private async loadConfig() {
     try {
-      if (fs.existsSync(CONFIG_FILE)) {
-        const raw = fs.readFileSync(CONFIG_FILE, 'utf8');
-        this.config = JSON.parse(raw) as DocumentRequirementsConfig;
+      const stored = await this.configStore.load<DocumentRequirementsConfig>(CONFIG_KEY, LEGACY_CONFIG_FILE);
+      if (stored) {
+        this.config = stored;
         return;
       }
     } catch {
-      // Fall through to defaults on unreadable/corrupt file.
+      // Fall through to defaults on unreadable/corrupt stored config.
     }
 
     this.config = defaultDocumentRequirementsConfig;
@@ -139,7 +137,6 @@ export class DocumentRequirementsConfigService implements OnModuleInit {
   }
 
   private persistConfig() {
-    this.ensureDataDir();
-    fs.writeFileSync(CONFIG_FILE, JSON.stringify(this.config, null, 2), 'utf8');
+    void this.configStore.set(CONFIG_KEY, this.config);
   }
 }

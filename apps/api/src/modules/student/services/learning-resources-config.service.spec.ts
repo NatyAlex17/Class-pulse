@@ -1,10 +1,16 @@
+import type { ConfigStoreService } from '../../../common/services/config-store.service';
 import { LearningResourcesConfigService } from './learning-resources-config.service';
+
+const configStoreStub = {
+  load: async () => null,
+  set: async () => undefined,
+} as unknown as ConfigStoreService;
 
 describe('LearningResourcesConfigService', () => {
   let service: LearningResourcesConfigService;
 
   beforeEach(() => {
-    service = new LearningResourcesConfigService();
+    service = new LearningResourcesConfigService(configStoreStub);
     service.resetToDefault();
   });
 

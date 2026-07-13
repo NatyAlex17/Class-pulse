@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
+
+import { ConfigStoreService } from '../../../common/services/config-store.service';
 
 export type CdphE276ProviderType = 'Educational Institution' | 'Skilled Nursing Facility' | 'Intermediate Care Facility';
 
@@ -29,8 +29,8 @@ export interface CdphE276ProgramProfile {
   studentFees: string;
 }
 
-const DATA_DIR = path.join(process.cwd(), 'apps/api/.data');
-const CONFIG_FILE = path.join(DATA_DIR, 'cdph-e276-program.json');
+const CONFIG_KEY = 'cdph-e276-program';
+const LEGACY_CONFIG_FILE = 'cdph-e276-program.json';
 
 const defaultProfile: CdphE276ProgramProfile = {
   providerName: '',
@@ -54,26 +54,21 @@ const defaultProfile: CdphE276ProgramProfile = {
 export class CdphE276ConfigService implements OnModuleInit {
   private profile: CdphE276ProgramProfile = { ...defaultProfile };
 
-  onModuleInit() {
-    this.loadConfig();
+  constructor(private readonly configStore: ConfigStoreService) {}
+
+  async onModuleInit() {
+    await this.loadConfig();
   }
 
-  private ensureDataDir() {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-  }
-
-  private loadConfig() {
+  private async loadConfig() {
     try {
-      this.ensureDataDir();
-      if (fs.existsSync(CONFIG_FILE)) {
-        const fileContent = fs.readFileSync(CONFIG_FILE, 'utf-8');
-        this.profile = { ...defaultProfile, ...JSON.parse(fileContent) };
-      } else {
-        this.profile = { ...defaultProfile };
-        this.persistConfig();
+      const stored = await this.configStore.load<Partial<CdphE276ProgramProfile>>(CONFIG_KEY, LEGACY_CONFIG_FILE);
+      if (stored) {
+        this.profile = { ...defaultProfile, ...stored };
+        return;
       }
+      this.profile = { ...defaultProfile };
+      this.persistConfig();
     } catch (error) {
       console.error('Error loading CDPH E276 program profile:', error);
       this.profile = { ...defaultProfile };
@@ -81,8 +76,7 @@ export class CdphE276ConfigService implements OnModuleInit {
   }
 
   private persistConfig() {
-    this.ensureDataDir();
-    fs.writeFileSync(CONFIG_FILE, JSON.stringify(this.profile, null, 2), 'utf-8');
+    void this.configStore.set(CONFIG_KEY, this.profile);
   }
 
   getProfile(): CdphE276ProgramProfile {

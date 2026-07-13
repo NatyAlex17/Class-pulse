@@ -1840,7 +1840,7 @@
           "title": "CDPH 283B Application",
           "status": "Submitted",
           "description": "State application package required before certification scheduling.",
-          "lastUpdated": "2026-07-10T17:48:15.464Z",
+          "lastUpdated": "2026-07-13T16:47:33.632Z",
           "actionLabel": "View form"
         },
         {
@@ -1937,7 +1937,9 @@
         "state": "a",
         "zip": "a",
         "conviction": false,
-        "convictionDetails": ""
+        "convictionDetails": "",
+        "requestType": "enrollment",
+        "sex": "Male"
       },
       "cdphSigned": true,
       "cdphTheoryRecord": [
@@ -1975,7 +1977,7 @@
         }
       ],
       "liveScanGenerated": true,
-      "liveScanUploaded": false,
+      "liveScanUploaded": true,
       "textbookIssued": false,
       "textbookOpened": false,
       "exitSurveyComplete": false,
@@ -1984,8 +1986,93 @@
       "lessonElapsedMinutes": {},
       "reflectionResponse": "",
       "questionOfDayAnswer": "",
-      "lastAction": "CDPH E276A skills checklist updated.",
+      "lastAction": "Live Scan receipt uploaded to the student record.",
       "auditTrail": [
+        {
+          "id": "audit-1783961255488-136",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.form.live-scan.upload.toggled",
+          "target": "live-scan",
+          "occurredAt": "2026-07-13T16:47:35.488Z",
+          "details": {
+            "uploaded": true
+          }
+        },
+        {
+          "id": "audit-1783961253632-801",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.form.cdph.signed",
+          "target": "cdph-283b",
+          "occurredAt": "2026-07-13T16:47:33.632Z"
+        },
+        {
+          "id": "audit-1783961253439-449",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.form.cdph.signed",
+          "target": "cdph-283b",
+          "occurredAt": "2026-07-13T16:47:33.439Z"
+        },
+        {
+          "id": "audit-1783961253320-843",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.form.cdph.signed",
+          "target": "cdph-283b",
+          "occurredAt": "2026-07-13T16:47:33.320Z"
+        },
+        {
+          "id": "audit-1783961253010-173",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.form.cdph.signed",
+          "target": "cdph-283b",
+          "occurredAt": "2026-07-13T16:47:33.010Z"
+        },
+        {
+          "id": "audit-1783961251722-919",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.form.cdph.signed",
+          "target": "cdph-283b",
+          "occurredAt": "2026-07-13T16:47:31.722Z"
+        },
+        {
+          "id": "audit-1783961229274-815",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.form.cdph.updated",
+          "target": "cdph-283b",
+          "occurredAt": "2026-07-13T16:47:09.274Z",
+          "details": {
+            "sex": "Male"
+          }
+        },
+        {
+          "id": "audit-1783961226205-221",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.form.cdph.updated",
+          "target": "cdph-283b",
+          "occurredAt": "2026-07-13T16:47:06.205Z",
+          "details": {
+            "requestType": "enrollment"
+          }
+        },
+        {
+          "id": "audit-1783961224984-853",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.form.cdph.updated",
+          "target": "cdph-283b",
+          "occurredAt": "2026-07-13T16:47:04.984Z",
+          "details": {
+            "requestType": "reconsideration"
+          }
+        },
+        {
+          "id": "audit-1783961222568-949",
+          "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "action": "student.form.cdph.updated",
+          "target": "cdph-283b",
+          "occurredAt": "2026-07-13T16:47:02.568Z",
+          "details": {
+            "requestType": "enrollment"
+          }
+        },
         {
           "id": "audit-1783761528907-585",
           "actor": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",

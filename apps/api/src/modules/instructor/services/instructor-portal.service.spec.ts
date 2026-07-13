@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 
+import type { ConfigStoreService } from '../../../common/services/config-store.service';
 import { DocumentRequirementsConfigService } from '../../student/services/document-requirements-config.service';
 import { LearningResourcesConfigService } from '../../student/services/learning-resources-config.service';
 import type { StudentPortalService } from '../../student/services/student-portal.service';
@@ -88,14 +89,19 @@ const studentPortalServiceStub = {
   },
 } as unknown as StudentPortalService;
 
+const configStoreStub = {
+  load: async () => null,
+  set: async () => undefined,
+} as unknown as ConfigStoreService;
+
 describe('InstructorPortalService', () => {
   let service: InstructorPortalService;
 
   beforeEach(() => {
     service = new InstructorPortalService(
-      new InstructorPortalRepository(new InstructorOnboardingQuestionsConfigService()),
-      new DocumentRequirementsConfigService(),
-      new LearningResourcesConfigService(),
+      new InstructorPortalRepository(new InstructorOnboardingQuestionsConfigService(configStoreStub)),
+      new DocumentRequirementsConfigService(configStoreStub),
+      new LearningResourcesConfigService(configStoreStub),
       new InstructorIntakeSubmissionService(),
       studentPortalServiceStub,
     );

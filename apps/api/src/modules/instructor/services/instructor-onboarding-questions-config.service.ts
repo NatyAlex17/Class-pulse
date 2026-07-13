@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
+
+import { ConfigStoreService } from '../../../common/services/config-store.service';
 
 export interface InstructorOnboardingQuestionOption {
   label: string;
@@ -20,8 +20,8 @@ export interface InstructorOnboardingQuestionsConfig {
   questions: InstructorOnboardingQuestionDefinition[];
 }
 
-const DATA_DIR = path.join(process.cwd(), 'apps/api/.data');
-const CONFIG_FILE = path.join(DATA_DIR, 'instructor-onboarding-questions-config.json');
+const CONFIG_KEY = 'instructor-onboarding-questions-config';
+const LEGACY_CONFIG_FILE = 'instructor-onboarding-questions-config.json';
 
 const defaultInstructorOnboardingQuestionsConfig: InstructorOnboardingQuestionsConfig = {
   questions: [
@@ -56,8 +56,10 @@ const defaultInstructorOnboardingQuestionsConfig: InstructorOnboardingQuestionsC
 export class InstructorOnboardingQuestionsConfigService implements OnModuleInit {
   private config: InstructorOnboardingQuestionsConfig = defaultInstructorOnboardingQuestionsConfig;
 
-  onModuleInit() {
-    this.loadConfig();
+  constructor(private readonly configStore: ConfigStoreService) {}
+
+  async onModuleInit() {
+    await this.loadConfig();
   }
 
   getConfig(): InstructorOnboardingQuestionsConfig {
@@ -125,22 +127,18 @@ export class InstructorOnboardingQuestionsConfigService implements OnModuleInit 
     return { questions };
   }
 
-  private ensureDataDir() {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-  }
-
-  private loadConfig() {
+  private async loadConfig() {
     try {
-      this.ensureDataDir();
-      if (fs.existsSync(CONFIG_FILE)) {
-        const fileContent = fs.readFileSync(CONFIG_FILE, 'utf-8');
-        this.config = this.validateConfig(JSON.parse(fileContent));
-      } else {
-        this.config = defaultInstructorOnboardingQuestionsConfig;
-        this.persistConfig();
+      const stored = await this.configStore.load<InstructorOnboardingQuestionsConfig>(
+        CONFIG_KEY,
+        LEGACY_CONFIG_FILE,
+      );
+      if (stored) {
+        this.config = this.validateConfig(stored);
+        return;
       }
+      this.config = defaultInstructorOnboardingQuestionsConfig;
+      this.persistConfig();
     } catch (error) {
       console.error('Error loading instructor onboarding questions config:', error);
       this.config = defaultInstructorOnboardingQuestionsConfig;
@@ -148,11 +146,6 @@ export class InstructorOnboardingQuestionsConfigService implements OnModuleInit 
   }
 
   private persistConfig() {
-    try {
-      this.ensureDataDir();
-      fs.writeFileSync(CONFIG_FILE, JSON.stringify(this.config, null, 2), 'utf-8');
-    } catch (error) {
-      console.error('Error persisting instructor onboarding questions config:', error);
-    }
+    void this.configStore.set(CONFIG_KEY, this.config);
   }
 }

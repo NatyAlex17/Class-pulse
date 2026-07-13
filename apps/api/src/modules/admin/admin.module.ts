@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core';
 
 import { SupabaseAuthGuard } from '../../common/auth/supabase-auth.guard';
 import { AuditLogService } from '../../common/services/audit-log.service';
+import { ConfigStoreModule } from '../../common/services/config-store.module';
 import { AuthModule } from '../auth/auth.module';
 import { AuditorModule } from '../auditor/auditor.module';
 import { CdphPdfModule } from '../cdph-pdf/cdph-pdf.module';
@@ -15,6 +16,7 @@ import { AdminPortalService } from './services/admin-portal.service';
 
 @Module({
   imports: [
+    ConfigStoreModule,
     forwardRef(() => AuthModule),
     forwardRef(() => StudentModule),
     forwardRef(() => InstructorModule),

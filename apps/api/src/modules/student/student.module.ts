@@ -2,6 +2,7 @@ import { forwardRef, Module } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
 import { SupabaseAuthGuard } from '../../common/auth/supabase-auth.guard';
+import { ConfigStoreModule } from '../../common/services/config-store.module';
 import { AuthModule } from '../auth/auth.module';
 import { CdphPdfModule } from '../cdph-pdf/cdph-pdf.module';
 import { InstructorModule } from '../instructor/instructor.module';
@@ -20,7 +21,7 @@ import { GeminiService } from './services/gemini.service';
 import { StripePaymentsService } from './services/stripe-payments.service';
 
 @Module({
-  imports: [forwardRef(() => AuthModule), CdphPdfModule, forwardRef(() => InstructorModule)],
+  imports: [ConfigStoreModule, forwardRef(() => AuthModule), CdphPdfModule, forwardRef(() => InstructorModule)],
   controllers: [StudentPortalController],
   providers: [Reflector, SupabaseAuthGuard, ExamConfigService, EnrollmentWizardConfigService, OrientationSurveyConfigService, LearningResourcesConfigService, CohortsConfigService, DocumentRequirementsConfigService, IntakeSubmissionService, StudentPortalRepository, StudentPortalService, GeminiService, StripePaymentsService, LearningTimeGateway],
   exports: [StudentPortalService, ExamConfigService, EnrollmentWizardConfigService, OrientationSurveyConfigService, LearningResourcesConfigService, CohortsConfigService, DocumentRequirementsConfigService, IntakeSubmissionService, StripePaymentsService],

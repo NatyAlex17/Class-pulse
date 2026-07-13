@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
 
-const DATA_DIR = path.join(process.cwd(), 'apps/api/.data');
-const CONFIG_FILE = path.join(DATA_DIR, 'cohorts-config.json');
+import { ConfigStoreService } from '../../../common/services/config-store.service';
+
+const CONFIG_KEY = 'cohorts-config';
+const LEGACY_CONFIG_FILE = 'cohorts-config.json';
 
 export interface CohortDefinition {
   id: string;
@@ -26,8 +26,10 @@ const defaultCohortsConfig: CohortsConfig = {
 export class CohortsConfigService implements OnModuleInit {
   private config: CohortsConfig = defaultCohortsConfig;
 
-  onModuleInit() {
-    this.loadConfig();
+  constructor(private readonly configStore: ConfigStoreService) {}
+
+  async onModuleInit() {
+    await this.loadConfig();
   }
 
   getConfig(): CohortsConfig {
@@ -91,19 +93,15 @@ export class CohortsConfigService implements OnModuleInit {
     return { cohorts };
   }
 
-  private ensureDataDir() {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-
-  private loadConfig() {
+  private async loadConfig() {
     try {
-      if (fs.existsSync(CONFIG_FILE)) {
-        const raw = fs.readFileSync(CONFIG_FILE, 'utf8');
-        this.config = JSON.parse(raw) as CohortsConfig;
+      const stored = await this.configStore.load<CohortsConfig>(CONFIG_KEY, LEGACY_CONFIG_FILE);
+      if (stored) {
+        this.config = stored;
         return;
       }
     } catch {
-      // Fall through to defaults on unreadable/corrupt file.
+      // Fall through to defaults on unreadable/corrupt stored config.
     }
 
     this.config = defaultCohortsConfig;
@@ -111,7 +109,6 @@ export class CohortsConfigService implements OnModuleInit {
   }
 
   private persistConfig() {
-    this.ensureDataDir();
-    fs.writeFileSync(CONFIG_FILE, JSON.stringify(this.config, null, 2), 'utf8');
+    void this.configStore.set(CONFIG_KEY, this.config);
   }
 }
