@@ -2,25 +2,34 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   Get,
   NotFoundException,
   Param,
   Patch,
   Post,
+  Query,
   Req,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import * as fs from 'fs';
 import { diskStorage } from 'multer';
 import * as path from 'path';
 
+import type { AuthenticatedUserContext } from '../../../common/auth/authenticated-request.interface';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { Roles } from '../../../common/decorators/roles.decorator';
 import { SupabaseAuthGuard } from '../../../common/auth/supabase-auth.guard';
 import { createApiResponse } from '../../../common/utils/create-api-response';
+import { sendPdfResponse } from '../../../common/utils/send-pdf-response';
 import { LEARNING_RESOURCES_UPLOADS_DIR, UPLOADS_URL_PREFIX } from '../../../common/utils/upload-paths';
+import { CdphPdfService } from '../../cdph-pdf/services/cdph-pdf.service';
+import { CdphE276ConfigService, type CdphE276ProgramProfile } from '../services/cdph-e276-config.service';
 import { ExamConfigService, type EntranceExamConfig } from '../../student/services/exam-config.service';
 import { EnrollmentWizardConfigService, type EnrollmentWizardConfig } from '../../student/services/enrollment-wizard-config.service';
 import {
@@ -36,8 +45,16 @@ import {
 import { IntakeSubmissionService } from '../../student/services/intake-submission.service';
 import { StudentPortalService } from '../../student/services/student-portal.service';
 import type { ApproveIntakeDto, ReplySupportTicketDto } from '../../student/types/student-portal.types';
+import { InstructorIntakeSubmissionService } from '../../instructor/services/instructor-intake-submission.service';
+import {
+  InstructorOnboardingQuestionsConfigService,
+  type InstructorOnboardingQuestionsConfig,
+} from '../../instructor/services/instructor-onboarding-questions-config.service';
+import { InstructorPortalService } from '../../instructor/services/instructor-portal.service';
+import type { ApproveInstructorIntakeDto } from '../../instructor/types/instructor-portal.types';
 import type {
   AddAdminApplicationNoteDto,
+  CreateAuditorAccountDto,
   GenerateAdminReportExportDto,
   UpdateAdminApplicationStatusDto,
   UploadAdminDocumentDto,
@@ -56,6 +73,11 @@ export class AdminPortalController {
     private readonly documentRequirementsConfigService: DocumentRequirementsConfigService,
     private readonly intakeSubmissionService: IntakeSubmissionService,
     private readonly studentPortalService: StudentPortalService,
+    private readonly instructorPortalService: InstructorPortalService,
+    private readonly instructorIntakeSubmissionService: InstructorIntakeSubmissionService,
+    private readonly instructorOnboardingQuestionsConfigService: InstructorOnboardingQuestionsConfigService,
+    private readonly cdphE276ConfigService: CdphE276ConfigService,
+    private readonly cdphPdfService: CdphPdfService,
   ) {}
 
   @Get('portal')
@@ -155,9 +177,9 @@ export class AdminPortalController {
   }
 
   @Get('reports')
-  getReports(@Param('adminId') adminId: string) {
+  getReports(@Param('adminId') adminId: string, @Query('range') range?: '7d' | '30d' | 'quarter') {
     return createApiResponse(
-      this.adminPortalService.getReports(adminId),
+      this.adminPortalService.getReports(adminId, range ?? '30d'),
       'Admin reports retrieved successfully.',
     );
   }
@@ -219,6 +241,35 @@ export class AdminPortalController {
   }
 
   @UseGuards(SupabaseAuthGuard)
+  @Roles('admin')
+  @Get('auditors')
+  async listAuditors(
+    @Param('adminId') adminId: string,
+    @CurrentUser() currentUser: AuthenticatedUserContext,
+  ) {
+    this.assertAdminAccess(adminId, currentUser);
+    return createApiResponse(
+      await this.adminPortalService.listAuditors(),
+      'Auditor accounts retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Roles('admin')
+  @Post('auditors')
+  async createAuditorAccount(
+    @Param('adminId') adminId: string,
+    @Body() body: CreateAuditorAccountDto,
+    @CurrentUser() currentUser: AuthenticatedUserContext,
+  ) {
+    this.assertAdminAccess(adminId, currentUser);
+    return createApiResponse(
+      await this.adminPortalService.createAuditorAccount(adminId, body),
+      'Auditor account created successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
   @Get('exam-config')
   getExamConfig() {
     return createApiResponse(
@@ -242,6 +293,33 @@ export class AdminPortalController {
     return createApiResponse(
       this.examConfigService.resetToDefault(),
       'Entrance exam configuration reset to default successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('instructor-onboarding-questions-config')
+  getInstructorOnboardingQuestionsConfig() {
+    return createApiResponse(
+      this.instructorOnboardingQuestionsConfigService.getConfig(),
+      'Instructor onboarding questions configuration retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Patch('instructor-onboarding-questions-config')
+  updateInstructorOnboardingQuestionsConfig(@Body() config: InstructorOnboardingQuestionsConfig) {
+    return createApiResponse(
+      this.instructorOnboardingQuestionsConfigService.updateConfig(config),
+      'Instructor onboarding questions configuration updated successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Post('instructor-onboarding-questions-config/reset')
+  resetInstructorOnboardingQuestionsConfig() {
+    return createApiResponse(
+      this.instructorOnboardingQuestionsConfigService.resetToDefault(),
+      'Instructor onboarding questions configuration reset to default successfully.',
     );
   }
 
@@ -354,6 +432,45 @@ export class AdminPortalController {
   }
 
   @UseGuards(SupabaseAuthGuard)
+  @Post('learning-resources-config/import')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (_req, file, callback) => {
+        const extension = path.extname(file.originalname).toLowerCase();
+        const supportedExtensions = new Set(['.csv', '.txt']);
+        const supportedMimeTypes = new Set([
+          'text/csv',
+          'text/plain',
+          'application/csv',
+          'application/vnd.ms-excel',
+        ]);
+
+        if (supportedExtensions.has(extension) || supportedMimeTypes.has(file.mimetype)) {
+          callback(null, true);
+        } else {
+          callback(
+            new BadRequestException('Only CSV files are supported for curriculum imports. Export Excel files as CSV first.'),
+            false,
+          );
+        }
+      },
+    }),
+  )
+  importLearningResourcesConfig(@UploadedFile() file: Express.Multer.File | undefined) {
+    if (!file) {
+      throw new BadRequestException('No file received. Attach a CSV file under the "file" field.');
+    }
+
+    const imported = this.learningResourcesConfigService.importFromCsvContent(file.buffer.toString('utf-8'));
+
+    return createApiResponse(
+      imported,
+      `Learning resources import completed successfully. Imported ${imported.summary.modules} modules, ${imported.summary.sections} lessons, and ${imported.summary.resources} learning activities.`,
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
   @Post('learning-resources-config/upload')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -402,6 +519,45 @@ export class AdminPortalController {
   }
 
   @UseGuards(SupabaseAuthGuard)
+  @Get('cdph/e276')
+  getCdphE276Profile() {
+    return createApiResponse(
+      this.cdphE276ConfigService.getProfile(),
+      'CDPH E276 program profile retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Patch('cdph/e276')
+  updateCdphE276Profile(@Body() body: Partial<CdphE276ProgramProfile>) {
+    return createApiResponse(
+      this.cdphE276ConfigService.updateProfile(body),
+      'CDPH E276 program profile updated successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('cdph/e276/pdf')
+  generateCdphE276Pdf(@Res() res: Response) {
+    const profile = this.cdphE276ConfigService.getProfile();
+    const modules = this.learningResourcesConfigService.getConfig().modules;
+
+    const buffer = this.cdphPdfService.generateE276({
+      ...profile,
+      modules: modules
+        .slice()
+        .sort((a, b) => a.order - b.order)
+        .map((module) => ({
+          title: module.title,
+          theoryHours: module.requiredHours,
+          clinicalHours: module.minimumClinicalHours ?? 0,
+        })),
+    });
+
+    sendPdfResponse(res, buffer, 'cdph-e276.pdf');
+  }
+
+  @UseGuards(SupabaseAuthGuard)
   @Get('orientation-survey-config')
   getOrientationSurveyConfig() {
     return createApiResponse(
@@ -425,6 +581,15 @@ export class AdminPortalController {
     return createApiResponse(
       this.orientationSurveyConfigService.resetToDefault(),
       'Orientation survey configuration reset to default successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('onboarding/incomplete')
+  async getIncompleteOnboarding() {
+    return createApiResponse(
+      await this.adminPortalService.getIncompleteOnboarding(),
+      'Registered users with incomplete onboarding retrieved successfully.',
     );
   }
 
@@ -466,6 +631,27 @@ export class AdminPortalController {
       return { ...submission, studentName: profile.fullName, studentEmail: profile.email };
     } catch {
       return { ...submission, studentName: submission.studentId };
+    }
+  }
+
+  private withInstructorName<T extends { instructorId: string }>(
+    submission: T,
+  ): T & { instructorName: string; instructorEmail?: string } {
+    try {
+      const profile = this.instructorPortalService.getProfile(submission.instructorId);
+      return { ...submission, instructorName: profile.fullName, instructorEmail: profile.email };
+    } catch {
+      return { ...submission, instructorName: submission.instructorId };
+    }
+  }
+
+  private assertAdminAccess(adminId: string, currentUser: AuthenticatedUserContext) {
+    if (currentUser.localUser.role !== 'admin') {
+      throw new ForbiddenException('Only admin users can manage auditor accounts.');
+    }
+
+    if (currentUser.localUser.id !== adminId) {
+      throw new ForbiddenException('You can only manage auditor accounts from your own admin workspace.');
     }
   }
 
@@ -551,5 +737,70 @@ export class AdminPortalController {
       this.withStudentName({ ...ticket, studentId }),
       'Support ticket reply sent successfully.',
     );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('instructor-intake/pending-submissions')
+  getPendingInstructorSubmissions() {
+    return createApiResponse(
+      this.instructorIntakeSubmissionService.getPendingSubmissions().map((submission) => this.withInstructorName(submission)),
+      'Pending instructor onboarding submissions retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('instructor-intake/submissions')
+  getAllInstructorSubmissions() {
+    return createApiResponse(
+      this.instructorIntakeSubmissionService.getAllSubmissions().map((submission) => this.withInstructorName(submission)),
+      'Instructor onboarding submissions retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Get('instructor-intake/submissions/:submissionId')
+  getInstructorSubmissionById(@Param('submissionId') submissionId: string) {
+    const submission = this.instructorIntakeSubmissionService.getSubmission(submissionId);
+
+    if (!submission) {
+      throw new NotFoundException('Instructor onboarding submission not found.');
+    }
+
+    return createApiResponse(
+      this.withInstructorName(submission),
+      'Instructor onboarding submission retrieved successfully.',
+    );
+  }
+
+  @UseGuards(SupabaseAuthGuard)
+  @Patch('instructor-intake/submissions/:submissionId/approve')
+  approveInstructorSubmission(
+    @Param('adminId') adminId: string,
+    @Param('submissionId') submissionId: string,
+    @Body() body: ApproveInstructorIntakeDto,
+  ) {
+    if (body.approved) {
+      const submission = this.instructorIntakeSubmissionService.approveIntake(
+        submissionId,
+        adminId,
+        body.documentReviews,
+      );
+      this.instructorPortalService.markOnboardingApproved(submission.instructorId);
+
+      return createApiResponse(submission, 'Instructor onboarding approved successfully.');
+    } else {
+      const submission = this.instructorIntakeSubmissionService.rejectIntake(
+        submissionId,
+        adminId,
+        body.rejectionReason || 'Rejected',
+        body.documentReviews,
+      );
+      this.instructorPortalService.markOnboardingRejected(
+        submission.instructorId,
+        submission.rejectionReason || 'Rejected',
+      );
+
+      return createApiResponse(submission, 'Instructor onboarding rejected successfully.');
+    }
   }
 }

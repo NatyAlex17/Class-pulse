@@ -18,11 +18,6 @@ coverage/
 .turbo/
 
 # Environment files (keep templates like .env.example in repo)
-.env
-.env.local
-.env.development
-.env.production
-.env.test
 .env.*.local
 
 # Service-specific env files (explicitly ignore API envs)
@@ -48,7 +43,6 @@ pnpm-debug.log*
 # OS / Editor
 .DS_Store
 Thumbs.db
-.vscode/
 .idea/
 
 # Next.js / frontend
@@ -60,3 +54,7 @@ next-env.d.ts
 
 # TypeScript
 *.tsbuildinfo
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
+config.bat
