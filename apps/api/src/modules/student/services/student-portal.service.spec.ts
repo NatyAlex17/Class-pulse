@@ -4,6 +4,7 @@ import { join } from 'path';
 import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
+import type { ConfigStoreService } from '../../../common/services/config-store.service';
 import { CohortsConfigService } from './cohorts-config.service';
 import { DocumentRequirementsConfigService } from './document-requirements-config.service';
 import { ExamConfigService } from './exam-config.service';
@@ -13,6 +14,11 @@ import { LearningResourcesConfigService } from './learning-resources-config.serv
 import { StripePaymentsService } from './stripe-payments.service';
 import { StudentPortalRepository } from './student-portal.repository';
 import { StudentPortalService } from './student-portal.service';
+
+const configStoreStub = {
+  load: async () => null,
+  set: async () => undefined,
+} as unknown as ConfigStoreService;
 
 describe('StudentPortalService', () => {
   let service: StudentPortalService;
@@ -42,9 +48,9 @@ describe('StudentPortalService', () => {
       rmSync(studentPortalPath);
     }
 
-    const examConfigService = new ExamConfigService();
-    learningResourcesConfigService = new LearningResourcesConfigService();
-    cohortsConfigService = new CohortsConfigService();
+    const examConfigService = new ExamConfigService(configStoreStub);
+    learningResourcesConfigService = new LearningResourcesConfigService(configStoreStub);
+    cohortsConfigService = new CohortsConfigService(configStoreStub);
     stripePaymentsService = new StripePaymentsService(
       new ConfigService({
         STRIPE_SECRET_KEY: 'sk_test_placeholder',
@@ -60,7 +66,7 @@ describe('StudentPortalService', () => {
       intakeSubmissionService,
       learningResourcesConfigService,
       cohortsConfigService,
-      new DocumentRequirementsConfigService(),
+      new DocumentRequirementsConfigService(configStoreStub),
       new GeminiService(new ConfigService()),
       stripePaymentsService,
     );
@@ -451,9 +457,9 @@ describe('StudentPortalService', () => {
     });
     service.submitEntranceSurvey('student-amara-singh');
 
-    const reloadedExamConfigService = new ExamConfigService();
-    const reloadedLearningResourcesConfigService = new LearningResourcesConfigService();
-    const reloadedCohortsConfigService = new CohortsConfigService();
+    const reloadedExamConfigService = new ExamConfigService(configStoreStub);
+    const reloadedLearningResourcesConfigService = new LearningResourcesConfigService(configStoreStub);
+    const reloadedCohortsConfigService = new CohortsConfigService(configStoreStub);
     const reloadedIntakeSubmissionService = new IntakeSubmissionService();
     const reloadedService = new StudentPortalService(
       new StudentPortalRepository(
@@ -465,7 +471,7 @@ describe('StudentPortalService', () => {
       reloadedIntakeSubmissionService,
       reloadedLearningResourcesConfigService,
       reloadedCohortsConfigService,
-      new DocumentRequirementsConfigService(),
+      new DocumentRequirementsConfigService(configStoreStub),
       new GeminiService(new ConfigService()),
       new StripePaymentsService(
         new ConfigService({

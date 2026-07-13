@@ -32,6 +32,11 @@ export type LearningSection = {
   resources: LearningResource[];
 };
 
+export type ModuleSkill = {
+  id: string;
+  name: string;
+};
+
 export type LearningModule = {
   id: string;
   title: string;
@@ -40,6 +45,8 @@ export type LearningModule = {
   moduleFee: number;
   order: number;
   minimumHoursForCertification?: number;
+  minimumClinicalHours?: number;
+  skills?: ModuleSkill[];
   sections: LearningSection[];
 };
 
@@ -56,9 +63,11 @@ export type ModuleRow = {
   id: string;
   title: string;
   requiredHours: number;
+  minimumClinicalHours?: number;
   moduleFee: number;
   sections: number;
   items: number;
+  skillCount: number;
 };
 
 export type SectionRow = {

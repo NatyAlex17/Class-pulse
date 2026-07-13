@@ -1,9 +1,15 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 
+import type { LocalUserRecord } from '../../auth/types/auth-user.types';
+import { CDPH_E276A_SKILLS } from '../../cdph-pdf/data/cdph-e276a-skills.data';
+import { InstructorPortalService } from '../../instructor/services/instructor-portal.service';
+import { LearningResourcesConfigService } from '../../student/services/learning-resources-config.service';
+import { StudentPortalService } from '../../student/services/student-portal.service';
 import type {
   AddAuditorStudentNoteDto,
   AuditorAuditEvent,
   AuditorClinicalComplianceItem,
+  AuditorDashboardSnapshot,
   AuditorInstructorQualificationRecord,
   AuditorPortalState,
   AuditorStudentRecord,
@@ -18,16 +24,182 @@ import type {
 } from '../types/auditor-portal.types';
 import { AuditorPortalRepository } from './auditor-portal.repository';
 
+const CLINICAL_HOURS_REQUIRED = 40;
+const TOTAL_SKILL_ITEMS = CDPH_E276A_SKILLS.reduce((sum, skillModule) => sum + skillModule.items.length, 0);
+
 @Injectable()
 export class AuditorPortalService {
-  constructor(private readonly repository: AuditorPortalRepository) {}
+  constructor(
+    private readonly repository: AuditorPortalRepository,
+    private readonly studentPortalService: StudentPortalService,
+    private readonly instructorPortalService: InstructorPortalService,
+    private readonly learningResourcesConfigService: LearningResourcesConfigService,
+  ) {}
+
+  ensurePortalForLocalUser(localUser: LocalUserRecord, options?: { fullName?: string }) {
+    return this.repository.ensureForLocalUser(localUser, options);
+  }
 
   getPortal(auditorId: string) {
     return this.repository.findByAuditorId(auditorId);
   }
 
-  getDashboard(auditorId: string) {
-    return this.repository.findByAuditorId(auditorId).dashboard;
+  getDashboard(auditorId: string): AuditorDashboardSnapshot {
+    const seededDashboard = this.repository.findByAuditorId(auditorId).dashboard;
+    const compliance = this.buildComplianceSnapshot();
+
+    return {
+      ...seededDashboard,
+      cohortLabel: `${compliance.totalStudents} student${compliance.totalStudents === 1 ? '' : 's'} under review`,
+      kpis: compliance.kpis,
+      summaryCards: compliance.summaryCards,
+      evidenceReadiness: compliance.evidenceReadiness,
+      openExceptions: compliance.openExceptions,
+      auditTrailSnapshot: compliance.auditTrailSnapshot,
+    };
+  }
+
+  /**
+   * Every number here is derived live from real student/instructor portal state
+   * (CDPH 283B signature, theory ledger, skills checklist, clinical logs, instructor
+   * credentials) rather than seeded placeholder data.
+   */
+  private buildComplianceSnapshot() {
+    const students = this.studentPortalService.findAllStudentPortals();
+    const instructors = this.instructorPortalService.findAllInstructorPortals();
+    const theoryHoursRequired = this.learningResourcesConfigService
+      .getConfig()
+      .modules.reduce((sum, module) => sum + module.requiredHours, 0);
+
+    const totalStudents = students.length;
+    const gapsByStudent: { studentName: string; gaps: string[] }[] = [];
+    let signedCount = 0;
+    let theoryCompleteCount = 0;
+    let skillsCompleteCount = 0;
+    let clinicalCompliantCount = 0;
+    let fullyCompliantCount = 0;
+
+    students.forEach((portal) => {
+      const gaps: string[] = [];
+      const theoryHoursLogged = portal.cdphTheoryRecord.reduce((sum, entry) => sum + entry.hours, 0);
+      const skillsSatisfied = portal.cdphSkillChecklist.filter((entry) => entry.status === 'S').length;
+      const clinicalHoursLogged = portal.clinicalLogs.reduce((sum, log) => sum + log.hours, 0);
+
+      const isSigned = portal.cdphSigned;
+      const isTheoryComplete = theoryHoursLogged >= theoryHoursRequired;
+      const isSkillsComplete = skillsSatisfied >= TOTAL_SKILL_ITEMS;
+      const isClinicalCompliant = clinicalHoursLogged >= CLINICAL_HOURS_REQUIRED;
+
+      if (isSigned) signedCount += 1;
+      else gaps.push(`CDPH 283B application not yet signed`);
+
+      if (isTheoryComplete) theoryCompleteCount += 1;
+      else gaps.push(`Theory hours ${theoryHoursLogged}/${theoryHoursRequired} logged`);
+
+      if (isSkillsComplete) skillsCompleteCount += 1;
+      else gaps.push(`Skills checklist ${skillsSatisfied}/${TOTAL_SKILL_ITEMS} verified`);
+
+      if (isClinicalCompliant) clinicalCompliantCount += 1;
+
+      if (isSigned && isTheoryComplete && isSkillsComplete) fullyCompliantCount += 1;
+
+      if (gaps.length > 0) {
+        gapsByStudent.push({ studentName: portal.profile.fullName, gaps });
+      }
+    });
+
+    const totalInstructors = instructors.length;
+    const instructorsCompliant = instructors.filter((instructor) =>
+      instructor.profile.credentials.every((credential) => credential.status === 'Active'),
+    ).length;
+
+    const pct = (numerator: number, denominator: number) =>
+      denominator === 0 ? 100 : Math.round((numerator / denominator) * 100);
+
+    const cohortCompliancePct = pct(fullyCompliantCount, totalStudents);
+    const instructorStatusPct = pct(instructorsCompliant, totalInstructors);
+    const signedPct = pct(signedCount, totalStudents);
+    const clinicalCompliancePct = pct(clinicalCompliantCount, totalStudents);
+    const skillsCompliancePct = pct(skillsCompleteCount, totalStudents);
+    const missingEvidenceCount = gapsByStudent.reduce((sum, entry) => sum + entry.gaps.length, 0);
+    const auditReadinessPct = Math.round((cohortCompliancePct + instructorStatusPct + signedPct) / 3);
+
+    const tone = (value: number): 'success' | 'warning' | 'error' =>
+      value >= 90 ? 'success' : value >= 70 ? 'warning' : 'error';
+
+    return {
+      totalStudents,
+      kpis: [
+        {
+          label: 'COHORT COMPLIANCE',
+          value: `${cohortCompliancePct}%`,
+          tone: tone(cohortCompliancePct),
+          note: `${fullyCompliantCount}/${totalStudents} students fully compliant`,
+        },
+        {
+          label: 'MISSING EVIDENCE',
+          value: String(missingEvidenceCount).padStart(2, '0'),
+          tone: missingEvidenceCount === 0 ? ('success' as const) : ('warning' as const),
+          note: `${gapsByStudent.length} student${gapsByStudent.length === 1 ? '' : 's'} with open gaps`,
+        },
+        {
+          label: 'INSTRUCTOR STATUS',
+          value: `${instructorStatusPct}%`,
+          tone: tone(instructorStatusPct),
+          note: `${instructorsCompliant}/${totalInstructors} instructors current`,
+        },
+        {
+          label: 'AUDIT READINESS',
+          value: `${auditReadinessPct}%`,
+          tone: tone(auditReadinessPct),
+          note: `${missingEvidenceCount} issue${missingEvidenceCount === 1 ? '' : 's'} open`,
+        },
+      ],
+      summaryCards: [
+        {
+          id: 'student-file-verification',
+          title: 'Student file verification',
+          detail: `${theoryCompleteCount}/${totalStudents} students have logged all required theory hours.`,
+          badge: theoryCompleteCount === totalStudents ? 'Stable' : 'Needs review',
+          tone: theoryCompleteCount === totalStudents ? ('success' as const) : ('warning' as const),
+        },
+        {
+          id: 'certification-readiness',
+          title: 'Certification readiness',
+          detail: `${totalStudents - fullyCompliantCount} candidate${totalStudents - fullyCompliantCount === 1 ? '' : 's'} blocked by outstanding CDPH evidence before certification release.`,
+          badge: fullyCompliantCount === totalStudents ? 'Ready' : 'Needs review',
+          tone: fullyCompliantCount === totalStudents ? ('success' as const) : ('warning' as const),
+        },
+        {
+          id: 'exceptions-and-gaps',
+          title: 'Exceptions and gaps',
+          detail: `${missingEvidenceCount} open evidence gap${missingEvidenceCount === 1 ? '' : 's'} across ${gapsByStudent.length} student file${gapsByStudent.length === 1 ? '' : 's'}.`,
+          badge: missingEvidenceCount === 0 ? 'Resolved' : 'Open',
+          tone: missingEvidenceCount === 0 ? ('success' as const) : ('error' as const),
+        },
+      ],
+      evidenceReadiness: [
+        { id: 'student-records', label: 'CDPH 283B signed', value: signedPct, tone: 'success' as const },
+        { id: 'instructor-qualifications', label: 'Instructor qualifications', value: instructorStatusPct, tone: 'primary' as const },
+        { id: 'clinical-compliance', label: 'Clinical hours compliance', value: clinicalCompliancePct, tone: 'warning' as const },
+        { id: 'program-requirements', label: 'Skills checklist completion', value: skillsCompliancePct, tone: 'info' as const },
+      ],
+      openExceptions: gapsByStudent
+        .flatMap((entry) => entry.gaps.map((gap) => ({ studentName: entry.studentName, gap })))
+        .slice(0, 10)
+        .map((item, index) => ({
+          id: `gap-${index}`,
+          title: item.studentName,
+          detail: item.gap,
+          priority: 'Medium' as const,
+          status: 'Open' as const,
+        })),
+      auditTrailSnapshot: {
+        lastEvidenceExport: gapsByStudent.length === 0 ? 'No open gaps' : `${missingEvidenceCount} evidence gaps outstanding`,
+        latestVerificationEvent: `${fullyCompliantCount}/${totalStudents} students certification-ready`,
+        certificationBatch: `${fullyCompliantCount} pending release`,
+      },
+    };
   }
 
   getProfile(auditorId: string) {

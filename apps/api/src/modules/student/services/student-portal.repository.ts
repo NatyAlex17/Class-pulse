@@ -380,6 +380,7 @@ export class StudentPortalRepository {
         ),
         examScore: existingModule?.examScore,
         certificateUnlocked: existingModule?.certificateUnlocked ?? false,
+        skills: configuredModule.skills ?? [],
         steps,
       } satisfies CurriculumModule;
     });

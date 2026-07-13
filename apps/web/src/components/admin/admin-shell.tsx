@@ -20,6 +20,7 @@ import {
   IconAdjustments,
   IconShieldExclamation,
   IconUser,
+  IconUserPlus,
   IconUsersGroup,
   IconX,
   IconChevronDown,
@@ -57,6 +58,28 @@ function formatRoleLabel(role?: string) {
     .join(' ');
 }
 
+function looksLikeGeneratedIdentifier(value?: string | null) {
+  if (!value) {
+    return false;
+  }
+
+  const trimmed = value.trim();
+  return /^[a-f0-9-]{24,}$/i.test(trimmed) || /^[a-f0-9]{8,}$/i.test(trimmed.replace(/\s+/g, ''));
+}
+
+function humanizeEmail(email?: string | null) {
+  if (!email) {
+    return '';
+  }
+
+  const localPart = email.split('@')[0] ?? '';
+  return localPart
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
 type AdminNavItem = {
   label: string;
   href?: string;
@@ -70,6 +93,7 @@ const navItems: AdminNavItem[] = [
   { label: 'Applications', href: '/admin/applications', icon: IconClipboardList },
   { label: 'Review Workspace', href: '/admin/applications/review', icon: IconAppWindow },
   { label: 'Violations Log', href: '/admin/violations', icon: IconShieldExclamation },
+  { label: 'Manage Auditors', href: '/admin/manage-auditors', icon: IconUserPlus },
   { label: 'Support Requests', href: '/admin/support', icon: IconHeadset },
   { label: 'Reports', href: '/admin/reports', icon: IconFileAnalytics },
   {
@@ -124,7 +148,7 @@ export function AdminShell({
   const { unreadCount, notification, dismissNotification } = useUnreadMessagesCount();
   const [fetchedProfile, setFetchedProfile] = React.useState<{ fullName: string; title: string; avatarUrl?: string } | null>(null);
 
-  const adminId = syncedUser?.localUserId;
+  const adminId = syncedUser?.role === 'admin' && syncedUser?.localUserId ? syncedUser.localUserId : 'admin-001';
   const accessToken = session?.access_token;
 
   React.useEffect(() => {
@@ -157,11 +181,21 @@ export function AdminShell({
     };
   }, [accessToken, adminId]);
 
-  const resolvedProfileName =
-    profileName ||
-    fetchedProfile?.fullName ||
+  const metadataFullName =
     (typeof user?.user_metadata?.full_name === 'string' && user.user_metadata.full_name.trim()) ||
     (typeof user?.user_metadata?.name === 'string' && user.user_metadata.name.trim()) ||
+    '';
+  const emailDisplayName = humanizeEmail(syncedUser?.email || user?.email || null);
+  const safeFetchedProfileName =
+    fetchedProfile?.fullName && !looksLikeGeneratedIdentifier(fetchedProfile.fullName)
+      ? fetchedProfile.fullName
+      : '';
+
+  const resolvedProfileName =
+    profileName ||
+    metadataFullName ||
+    emailDisplayName ||
+    safeFetchedProfileName ||
     syncedUser?.email ||
     'Admin';
   const resolvedProfileRole = profileRole || fetchedProfile?.title || formatRoleLabel(syncedUser?.role);

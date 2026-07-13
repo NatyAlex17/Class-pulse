@@ -7,6 +7,8 @@ import {
   IconBell,
   IconCalendarTime,
   IconChartBar,
+  IconClipboardCheck,
+  IconClock,
   IconClockCog,
   IconDashboard,
   IconDots,
@@ -25,6 +27,7 @@ import {
 import { useAuth } from '@/components/auth/auth-provider';
 import { SignOutButton } from '@/components/auth/sign-out-button';
 import { UnreadMessageBanner } from '@/components/chat/unread-message-banner';
+import { InstructorIntakeModal } from '@/components/instructor/instructor-intake-modal';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useUnreadMessagesCount } from '@/lib/chat/use-unread-count';
@@ -54,6 +57,21 @@ function formatRoleLabel(role?: string) {
     .join(' ');
 }
 
+interface ActiveClinicalTimer {
+  studentName: string;
+  moduleTitle: string;
+  startedAt: string;
+}
+
+function formatTimerElapsed(startedAt: string): string {
+  const elapsedMs = Math.max(0, Date.now() - new Date(startedAt).getTime());
+  const totalSeconds = Math.floor(elapsedMs / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return [hours, minutes, seconds].map((value) => String(value).padStart(2, '0')).join(':');
+}
+
 type InstructorNavItem = {
   label: string;
   href: string;
@@ -72,6 +90,8 @@ const navItems: InstructorNavItem[] = [
     mobileLabel: 'Schedule',
   },
   { label: 'Skills Checklists', href: '/instructor/skills', icon: IconChartBar, mobileLabel: 'Skills' },
+  { label: 'CDPH E276C', href: '/instructor/cdph-e276c', icon: IconClipboardCheck, mobileLabel: 'E276C' },
+  { label: 'CDPH E276A', href: '/instructor/cdph-e276a', icon: IconClipboardCheck, mobileLabel: 'E276A' },
   { label: 'Clinical Logs', href: '/instructor/clinical-logs', icon: IconHistory, mobileLabel: 'Logs' },
   { label: 'Availability', href: '/instructor/availability', icon: IconClockCog, mobileLabel: 'Time' },
   { label: 'Documents', href: '/instructor/documents', icon: IconFileDescription, mobileLabel: 'Docs' },
@@ -122,9 +142,83 @@ export function InstructorShell({
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const { unreadCount, notification, dismissNotification } = useUnreadMessagesCount();
   const [fetchedProfile, setFetchedProfile] = React.useState<{ fullName: string; title: string; avatarUrl?: string } | null>(null);
+  const [workflowStage, setWorkflowStage] = React.useState<'onboarding' | 'admin_review' | 'active' | 'rejected' | null>(null);
+  const [workflowOpen, setWorkflowOpen] = React.useState(false);
+  const [activeTimer, setActiveTimer] = React.useState<ActiveClinicalTimer | null>(null);
+  const [, forceTimerTick] = React.useState(0);
 
   const instructorId = syncedUser?.localUserId;
   const accessToken = session?.access_token;
+
+  React.useEffect(() => {
+    if (!instructorId || !accessToken) {
+      setWorkflowStage(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    fetch(`${API_BASE_URL}/instructors/${instructorId}/onboarding`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: 'no-store',
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (cancelled || !payload?.data) return;
+        setWorkflowStage(payload.data.workflowStage);
+      })
+      .catch(() => {
+        if (!cancelled) setWorkflowStage(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, instructorId, pathname]);
+
+  React.useEffect(() => {
+    if (workflowStage && workflowStage !== 'active') {
+      setWorkflowOpen(true);
+    }
+  }, [workflowStage]);
+
+  React.useEffect(() => {
+    if (!instructorId || !accessToken) {
+      setActiveTimer(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadTimer = () => {
+      fetch(`${API_BASE_URL}/instructors/${instructorId}/clinical-logs/timer`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        cache: 'no-store',
+      })
+        .then((response) => (response.ok ? response.json() : null))
+        .then((payload) => {
+          if (cancelled) return;
+          setActiveTimer(payload?.data ?? null);
+        })
+        .catch(() => {
+          if (!cancelled) setActiveTimer(null);
+        });
+    };
+
+    loadTimer();
+    const pollInterval = setInterval(loadTimer, 15000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(pollInterval);
+    };
+  }, [accessToken, instructorId, pathname]);
+
+  React.useEffect(() => {
+    if (!activeTimer) return;
+    const tickInterval = setInterval(() => forceTimerTick((tick) => tick + 1), 1000);
+    return () => clearInterval(tickInterval);
+  }, [activeTimer]);
 
   React.useEffect(() => {
     if (!instructorId || !accessToken) {
@@ -361,6 +455,19 @@ export function InstructorShell({
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
+            {activeTimer ? (
+              <Link
+                href="/instructor/clinical-logs"
+                title={`Timing ${activeTimer.studentName} / ${activeTimer.moduleTitle}`}
+                className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/20"
+              >
+                <IconClock className="size-4 shrink-0 animate-pulse" />
+                <span className="hidden max-w-[200px] truncate sm:inline">
+                  {activeTimer.studentName} · {activeTimer.moduleTitle}
+                </span>
+                <span className="font-mono">{formatTimerElapsed(activeTimer.startedAt)}</span>
+              </Link>
+            ) : null}
             {topActions}
             <ThemeToggle />
             <button className="text-on-surface-variant transition hover:text-primary">
@@ -500,6 +607,8 @@ export function InstructorShell({
           );
         })}
       </nav>
+
+      <InstructorIntakeModal open={workflowOpen} onClose={() => setWorkflowOpen(false)} />
     </div>
   );
 }

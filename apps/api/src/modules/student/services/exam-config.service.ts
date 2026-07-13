@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
+
+import { ConfigStoreService } from '../../../common/services/config-store.service';
 import type { EntranceExamQuestionDefinition } from '../types/student-portal.types';
 import { defaultEntranceExamConfig } from '../data/student-portal.seed';
 
@@ -10,34 +10,28 @@ export interface EntranceExamConfig {
   questions: EntranceExamQuestionDefinition[];
 }
 
-const DATA_DIR = path.join(process.cwd(), 'apps/api/.data');
-const CONFIG_FILE = path.join(DATA_DIR, 'exam-config.json');
+const CONFIG_KEY = 'exam-config';
+const LEGACY_CONFIG_FILE = 'exam-config.json';
 
 @Injectable()
 export class ExamConfigService implements OnModuleInit {
   private config: EntranceExamConfig = defaultEntranceExamConfig;
 
-  onModuleInit() {
-    this.loadConfig();
+  constructor(private readonly configStore: ConfigStoreService) {}
+
+  async onModuleInit() {
+    await this.loadConfig();
   }
 
-  private ensureDataDir() {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-  }
-
-  private loadConfig() {
+  private async loadConfig() {
     try {
-      this.ensureDataDir();
-      if (fs.existsSync(CONFIG_FILE)) {
-        const fileContent = fs.readFileSync(CONFIG_FILE, 'utf-8');
-        const loadedConfig = JSON.parse(fileContent);
-        this.config = this.validateConfig(loadedConfig);
-      } else {
-        this.config = defaultEntranceExamConfig;
-        this.persistConfig();
+      const stored = await this.configStore.load<EntranceExamConfig>(CONFIG_KEY, LEGACY_CONFIG_FILE);
+      if (stored) {
+        this.config = this.validateConfig(stored);
+        return;
       }
+      this.config = defaultEntranceExamConfig;
+      this.persistConfig();
     } catch (error) {
       console.error('Error loading exam config:', error);
       this.config = defaultEntranceExamConfig;
@@ -45,12 +39,7 @@ export class ExamConfigService implements OnModuleInit {
   }
 
   private persistConfig() {
-    try {
-      this.ensureDataDir();
-      fs.writeFileSync(CONFIG_FILE, JSON.stringify(this.config, null, 2), 'utf-8');
-    } catch (error) {
-      console.error('Error persisting exam config:', error);
-    }
+    void this.configStore.set(CONFIG_KEY, this.config);
   }
 
   getConfig(): EntranceExamConfig {
