@@ -297,7 +297,7 @@ export default function StudentDocumentsPage() {
                           disabled={isUploading}
                           onClick={() => handleRequestDocumentUpload(document.id)}
                         >
-                          {isUploading ? 'Uploading...' : complete ? 'Replace' : 'Upload'}
+                          {isUploading ? 'Uploading...' : complete ? 'Update' : 'Upload'}
                         </button>
                       </div>
                     </div>

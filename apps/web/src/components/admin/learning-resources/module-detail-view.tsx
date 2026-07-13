@@ -226,6 +226,81 @@ export function ModuleDetailView({
           </div>
 
           <div className="mt-4">
+            <label className="mb-2 block text-sm font-semibold text-on-surface">Minimum Clinical Hours</label>
+            <Input
+              type="number"
+              min={0}
+              value={selectedModule.minimumClinicalHours ?? ''}
+              onChange={(event) =>
+                updateModule(selectedModule.id, (module) => ({
+                  ...module,
+                  minimumClinicalHours: event.target.value ? Number(event.target.value) : undefined,
+                }))
+              }
+              placeholder="Leave blank if no requirement"
+            />
+            <p className="mt-1 text-xs text-on-surface-variant">
+              Minimum clinical/placement hours a student must log for this module.
+            </p>
+          </div>
+
+          <div className="mt-4">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-semibold text-on-surface">Skills</label>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() =>
+                  updateModule(selectedModule.id, (module) => ({
+                    ...module,
+                    skills: [...(module.skills ?? []), { id: `skill-${Date.now()}`, name: '' }],
+                  }))
+                }
+              >
+                <IconPlus className="size-4" />
+                Add Skill
+              </Button>
+            </div>
+            <p className="mt-1 text-xs text-on-surface-variant">
+              Skills instructors will assess students on for this module.
+            </p>
+            {(selectedModule.skills ?? []).length > 0 && (
+              <div className="mt-3 space-y-2">
+                {(selectedModule.skills ?? []).map((skill, index) => (
+                  <div key={skill.id} className="flex items-center gap-2">
+                    <Input
+                      value={skill.name}
+                      onChange={(event) =>
+                        updateModule(selectedModule.id, (module) => ({
+                          ...module,
+                          skills: (module.skills ?? []).map((item, itemIndex) =>
+                            itemIndex === index ? { ...item, name: event.target.value } : item,
+                          ),
+                        }))
+                      }
+                      placeholder="e.g., Vital Signs Assessment"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateModule(selectedModule.id, (module) => ({
+                          ...module,
+                          skills: (module.skills ?? []).filter((_, itemIndex) => itemIndex !== index),
+                        }))
+                      }
+                      className="shrink-0 rounded-lg p-2 text-error transition hover:bg-error/10"
+                      title="Remove skill"
+                    >
+                      <IconTrash className="size-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4">
             <label className="mb-2 block text-sm font-semibold text-on-surface">Summary</label>
             <Textarea
               className="min-h-24"

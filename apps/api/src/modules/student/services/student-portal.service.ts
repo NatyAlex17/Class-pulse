@@ -12,10 +12,14 @@ import type {
   AttendanceCheckInDto,
   AttendanceRecord,
   CdphForm,
+  CdphSkillChecklistEntry,
+  CdphTheoryRecordEntry,
   ClinicalLogEntry,
+  ClinicalLogStatus,
   CreateEnrollmentPaymentIntentDto,
   CurriculumModule,
   DocumentChecklistItem,
+  LearningTimeState,
   LogClinicalHoursDto,
   OnboardingState,
   RecordPaymentDto,
@@ -46,6 +50,10 @@ import type {
   SubmitSupportTicketDto,
   TextAnswerDto,
   UpdateCdphFormDto,
+  UpdateCdphSkillEntryDto,
+  UpdateCdphSkillChecklistHeaderDto,
+  UpdateCdphTheoryRecordHeaderDto,
+  UpdateCdphTheoryEntryDto,
   UpdateEnrollmentWizardAgreementsDto,
   UpdateEnrollmentWizardDto,
   UpdateOnboardingAcknowledgementsDto,
@@ -55,6 +63,8 @@ import type {
   UpdateWizardStepDto,
   UploadStudentDocumentDto,
 } from '../types/student-portal.types';
+import { CdphPdfService } from '../../cdph-pdf/services/cdph-pdf.service';
+import { CDPH_E276A_SKILLS } from '../../cdph-pdf/data/cdph-e276a-skills.data';
 import { CohortsConfigService } from './cohorts-config.service';
 import { DocumentRequirementsConfigService } from './document-requirements-config.service';
 import { ExamConfigService } from './exam-config.service';
@@ -116,6 +126,7 @@ export class StudentPortalService {
     private readonly documentRequirementsConfigService: DocumentRequirementsConfigService,
     private readonly geminiService: GeminiService,
     private readonly stripePaymentsService: StripePaymentsService,
+    private readonly cdphPdfService: CdphPdfService,
   ) {}
 
   ensurePortalForLocalUser(localUser: LocalUserRecord) {
@@ -231,6 +242,13 @@ export class StudentPortalService {
     } | null = null;
 
     if (pricing.amount > 0) {
+      portal.financials = {
+        ...portal.financials,
+        totalTuition: pricing.amount,
+        balance: Math.max(0, pricing.amount - portal.financials.amountPaid),
+      };
+      this.repository.save(portal);
+
       paymentVerified = await this.stripePaymentsService.verifyEnrollmentPayment(
         studentId,
         cohort.id,
@@ -258,10 +276,11 @@ export class StudentPortalService {
     };
 
     if (pricing.amount > 0) {
+      const refreshedFinancials = this.repository.findByStudentId(studentId).financials;
       portal.financials = {
-        ...portal.financials,
+        ...refreshedFinancials,
         totalTuition: pricing.amount,
-        balance: Math.max(0, pricing.amount - portal.financials.amountPaid),
+        balance: Math.max(0, pricing.amount - refreshedFinancials.amountPaid),
       };
     }
 
@@ -730,7 +749,9 @@ export class StudentPortalService {
     const portal = this.repository.findByStudentId(studentId);
     const currentModule = this.getCurrentModule(portal);
     const requiredSessionMinutes = this.getRequiredSessionMinutes(currentModule);
-    const sessionMinutes = Math.min(this.getModuleSessionMinutes(currentModule), requiredSessionMinutes);
+    const requiredSessionSeconds = this.getRequiredSessionSeconds(currentModule);
+    const sessionSeconds = Math.min(this.getModuleSessionSeconds(currentModule), requiredSessionSeconds);
+    const sessionMinutes = Math.min(Math.floor(sessionSeconds / 60), requiredSessionMinutes);
 
     return {
       activeModuleId: portal.activeModuleId,
@@ -738,13 +759,16 @@ export class StudentPortalService {
       modules: portal.modules,
       learningMinutes: portal.learningMinutes,
       sessionMinutes,
+      sessionSeconds,
       requiredSessionMinutes,
+      requiredSessionSeconds,
       learningSessionActive: portal.learningSessionActive,
       activeLessonId: portal.activeLessonId,
       lessonElapsedMinutes: this.getLessonElapsedMinutes(portal),
+      lessonElapsedSeconds: this.getLessonElapsedSeconds(portal),
       activeLearningAttention: portal.activeLearningAttention,
       activeExamSession: portal.activeExamSession,
-      examUnlocked: sessionMinutes >= requiredSessionMinutes,
+      examUnlocked: sessionSeconds >= requiredSessionSeconds,
       textbookIssued: portal.textbookIssued,
       textbookOpened: portal.textbookOpened,
       exitSurveyComplete: portal.exitSurveyComplete,
@@ -754,7 +778,6 @@ export class StudentPortalService {
   }
 
   advanceLearning(studentId: string, payload: AdvanceLearningDto) {
-    const portal = this.repository.findByStudentId(studentId);
     const minutes = payload.minutes ?? 1;
 
     if (!Number.isFinite(minutes) || minutes <= 0) {
@@ -762,6 +785,25 @@ export class StudentPortalService {
     }
 
     if (minutes > 60) {
+      throw new BadRequestException('Learning time is recorded automatically in small increments.');
+    }
+
+    this.recordLearningSeconds(studentId, Math.round(minutes * 60));
+    return this.repository.findByStudentId(studentId).modules;
+  }
+
+  /**
+   * Credits second-accurate learning time against the active module and lesson.
+   * Called by the learning-time socket gateway with server-measured elapsed seconds.
+   */
+  recordLearningSeconds(studentId: string, seconds: number): LearningTimeState {
+    const portal = this.repository.findByStudentId(studentId);
+
+    if (!Number.isFinite(seconds) || seconds <= 0) {
+      throw new BadRequestException('Learning seconds must be greater than zero.');
+    }
+
+    if (seconds > 3600) {
       throw new BadRequestException('Learning time is recorded automatically in small increments.');
     }
 
@@ -780,28 +822,36 @@ export class StudentPortalService {
       throw new BadRequestException('Locked modules cannot record learning time.');
     }
 
-    const requiredSessionMinutes = this.getRequiredSessionMinutes(activeModule);
-    const currentSessionMinutes = this.getModuleSessionMinutes(activeModule);
-    const nextSessionMinutes = Math.min(currentSessionMinutes + minutes, requiredSessionMinutes);
-    const creditedMinutes = Math.max(0, nextSessionMinutes - currentSessionMinutes);
+    const requiredSessionSeconds = this.getRequiredSessionSeconds(activeModule);
+    const currentSessionSeconds = this.getModuleSessionSeconds(activeModule);
+    const nextSessionSeconds = Math.min(currentSessionSeconds + Math.round(seconds), requiredSessionSeconds);
+    const creditedSeconds = Math.max(0, nextSessionSeconds - currentSessionSeconds);
 
-    portal.learningMinutes += creditedMinutes;
-    const lessonElapsedMinutes = this.getLessonElapsedMinutes(portal);
+    const previousLearningSeconds =
+      portal.learningSeconds ?? Math.max(0, Math.round(portal.learningMinutes)) * 60;
+    portal.learningSeconds = previousLearningSeconds + creditedSeconds;
+    portal.learningMinutes = Math.floor(portal.learningSeconds / 60);
 
-    if (creditedMinutes > 0 && portal.activeLessonId) {
+    const lessonElapsedSeconds = this.getLessonElapsedSeconds(portal);
+
+    if (creditedSeconds > 0 && portal.activeLessonId) {
       const activeLessonExists = activeModule.steps.some((step) => step.id === portal.activeLessonId);
 
       if (activeLessonExists) {
-        lessonElapsedMinutes[portal.activeLessonId] =
-          Math.max(0, lessonElapsedMinutes[portal.activeLessonId] ?? 0) + creditedMinutes;
-        portal.lessonElapsedMinutes = lessonElapsedMinutes;
+        lessonElapsedSeconds[portal.activeLessonId] =
+          Math.max(0, lessonElapsedSeconds[portal.activeLessonId] ?? 0) + creditedSeconds;
       }
     }
+
+    portal.lessonElapsedSeconds = lessonElapsedSeconds;
+    portal.lessonElapsedMinutes = Object.fromEntries(
+      Object.entries(lessonElapsedSeconds).map(([lessonId, value]) => [lessonId, Math.floor(value / 60)]),
+    );
 
     portal.activeExamSession = undefined;
     portal.modules[activeIndex] = this.recalculateModule({
       ...activeModule,
-      sessionMinutes: nextSessionMinutes,
+      sessionSeconds: nextSessionSeconds,
       steps: [...activeModule.steps],
     });
 
@@ -811,15 +861,41 @@ export class StudentPortalService {
       );
     }
 
-    portal.lastAction =
-      nextSessionMinutes >= requiredSessionMinutes
-        ? `${activeModule.title} session time completed — module assessment unlocked.`
-        : 'Learning session time recorded.';
+    const sessionCompleted = nextSessionSeconds >= requiredSessionSeconds;
+    portal.lastAction = sessionCompleted
+      ? `${activeModule.title} session time completed — module assessment unlocked.`
+      : 'Learning session time recorded.';
 
-    this.recordAudit(portal, 'student.learning.advanced', portal.activeModuleId, {
-      minutes: creditedMinutes,
-    });
-    return this.repository.save(portal).modules;
+    // Audit whole-minute boundaries only, so per-second ticks don't flood the trail.
+    if (Math.floor(nextSessionSeconds / 60) > Math.floor(currentSessionSeconds / 60)) {
+      this.recordAudit(portal, 'student.learning.advanced', portal.activeModuleId, {
+        minutes: Math.floor(nextSessionSeconds / 60) - Math.floor(currentSessionSeconds / 60),
+      });
+    }
+
+    const saved = this.repository.save(portal);
+    return this.getLearningTimeState(saved);
+  }
+
+  /** Current authoritative timing state, as pushed over the learning-time socket. */
+  getLearningTimeState(portalOrStudentId: StudentPortalState | string): LearningTimeState {
+    const portal =
+      typeof portalOrStudentId === 'string'
+        ? this.repository.findByStudentId(portalOrStudentId)
+        : portalOrStudentId;
+    const currentModule = this.getCurrentModule(portal);
+    const requiredSessionSeconds = this.getRequiredSessionSeconds(currentModule);
+    const sessionSeconds = Math.min(this.getModuleSessionSeconds(currentModule), requiredSessionSeconds);
+
+    return {
+      moduleId: currentModule.id,
+      sessionSeconds,
+      requiredSessionSeconds,
+      lessonSeconds: this.getLessonElapsedSeconds(portal),
+      learningSeconds: portal.learningSeconds ?? Math.max(0, Math.round(portal.learningMinutes)) * 60,
+      learningSessionActive: portal.learningSessionActive,
+      examUnlocked: sessionSeconds >= requiredSessionSeconds,
+    };
   }
 
   setLearningSession(studentId: string, payload: SetLearningSessionDto) {
@@ -1120,12 +1196,13 @@ export class StudentPortalService {
       throw new BadRequestException(`Lesson "${lessonId}" was not found in the active module.`);
     }
 
-    const lessonElapsedMinutes = this.getLessonElapsedMinutes(portal);
+    const lessonElapsedSeconds = this.getLessonElapsedSeconds(portal);
     portal.activeLessonId = lessonId;
-    portal.lessonElapsedMinutes = {
-      ...lessonElapsedMinutes,
-      [lessonId]: Math.max(0, lessonElapsedMinutes[lessonId] ?? 0),
+    portal.lessonElapsedSeconds = {
+      ...lessonElapsedSeconds,
+      [lessonId]: Math.max(0, lessonElapsedSeconds[lessonId] ?? 0),
     };
+    portal.lessonElapsedMinutes = this.getLessonElapsedMinutes(portal);
     portal.activeLearningAttention = this.ensureLearningAttentionSession(portal, activeModule.id, lessonId);
     portal.lastAction = `Lesson timer resumed for ${lesson.title}.`;
     this.recordAudit(portal, 'student.learning.lesson-session.started', lessonId, {
@@ -1469,6 +1546,57 @@ export class StudentPortalService {
     return this.repository.save(portal).clinicalLogs[0];
   }
 
+  /** Lets a supervising instructor verify/flag a student's self-logged clinical hours. */
+  reviewClinicalLogForInstructor(
+    studentId: string,
+    logId: string,
+    status: ClinicalLogStatus,
+    note?: string,
+  ): ClinicalLogEntry {
+    const portal = this.repository.findByStudentId(studentId);
+    const log = portal.clinicalLogs.find((item) => item.id === logId);
+
+    if (!log) {
+      throw new BadRequestException(`Clinical log "${logId}" was not found.`);
+    }
+
+    log.status = status;
+    log.note = note?.trim() || log.note;
+    this.recordAudit(portal, 'student.clinical-log.reviewed', logId, { status });
+    const saved = this.repository.save(portal);
+    return saved.clinicalLogs.find((item) => item.id === logId) as ClinicalLogEntry;
+  }
+
+  /**
+   * Logs clinical hours a supervising instructor personally timed for a student.
+   * Since the instructor directly observed the session, the entry is verified immediately
+   * rather than starting in the 'Pending' state a student's own self-report would use.
+   */
+  logClinicalHoursFromInstructor(
+    studentId: string,
+    payload: { moduleId: string; moduleTitle: string; hours: number; instructor: string; note?: string },
+  ): ClinicalLogEntry {
+    const portal = this.repository.findByStudentId(studentId);
+    const logEntry: ClinicalLogEntry = {
+      id: `log-${Date.now()}`,
+      date: this.formatIsoDay(),
+      moduleId: payload.moduleId,
+      moduleTitle: payload.moduleTitle,
+      hours: payload.hours,
+      instructor: payload.instructor,
+      note: payload.note?.trim(),
+      status: 'Verified',
+    };
+
+    portal.clinicalLogs = [logEntry, ...portal.clinicalLogs];
+    portal.lastAction = `Clinical hours logged and verified by ${payload.instructor}.`;
+    this.recordAudit(portal, 'student.clinical-log.instructor-logged', logEntry.id, {
+      moduleId: payload.moduleId,
+      hours: payload.hours,
+    });
+    return this.repository.save(portal).clinicalLogs[0];
+  }
+
   getAttendance(studentId: string): StudentAttendanceSummary {
     const portal = this.repository.findByStudentId(studentId);
     const today = this.formatIsoDay();
@@ -1720,6 +1848,231 @@ export class StudentPortalService {
     return this.repository.save(portal).cdphSigned;
   }
 
+  generateCdph283BPdf(studentId: string): Buffer {
+    const portal = this.repository.findByStudentId(studentId);
+    if (!portal.cdphSigned) {
+      throw new BadRequestException('CDPH 283B must be signed before it can be generated as a PDF.');
+    }
+
+    const signedEvent = portal.auditTrail.find((event) => event.action === 'student.form.cdph.signed');
+
+    return this.cdphPdfService.generate283B({
+      ...portal.cdphForm,
+      trainingProgramName: portal.cdphForm.trainingProgramName || portal.profile.cohort || '',
+      signedAt: signedEvent?.occurredAt ?? null,
+    });
+  }
+
+  getCdphTheoryRecord(studentId: string) {
+    const portal = this.repository.findByStudentId(studentId);
+    portal.cdphTheoryHeader ??= {
+      ssn: portal.cdphForm.ssn ?? '',
+      startDate: '',
+      completionDate: '',
+      instructorName: '',
+    };
+    return {
+      header: portal.cdphTheoryHeader,
+      entries: portal.cdphTheoryRecord,
+      finalGrade: portal.cdphTheoryFinalGrade,
+    };
+  }
+
+  updateCdphTheoryRecordHeader(studentId: string, payload: UpdateCdphTheoryRecordHeaderDto) {
+    const portal = this.repository.findByStudentId(studentId);
+    portal.cdphTheoryHeader ??= {
+      ssn: portal.cdphForm.ssn ?? '',
+      startDate: '',
+      completionDate: '',
+      instructorName: '',
+    };
+    portal.cdphTheoryHeader = {
+      ...portal.cdphTheoryHeader,
+      ...this.trimStringFields({ ...payload }),
+    };
+    portal.lastAction = 'CDPH E276C header updated.';
+    this.recordAudit(portal, 'student.cdph.e276c.header.updated', 'cdph-e276c', { ...payload });
+    return this.repository.save(portal).cdphTheoryHeader;
+  }
+
+  updateCdphTheoryEntry(
+    studentId: string,
+    sectionId: string,
+    moduleId: string,
+    payload: UpdateCdphTheoryEntryDto,
+    instructorInitials: string,
+  ) {
+    const portal = this.repository.findByStudentId(studentId);
+    const existingIndex = portal.cdphTheoryRecord.findIndex((entry) => entry.sectionId === sectionId);
+    const existing = existingIndex >= 0 ? portal.cdphTheoryRecord[existingIndex] : undefined;
+
+    const updatedEntry: CdphTheoryRecordEntry = {
+      sectionId,
+      moduleId,
+      hours: payload.hours ?? existing?.hours ?? 0,
+      date: payload.date ?? existing?.date ?? new Date().toISOString().slice(0, 10),
+      instructorInitials,
+      testScore: payload.testScore ?? existing?.testScore,
+    };
+
+    if (existingIndex >= 0) {
+      portal.cdphTheoryRecord = portal.cdphTheoryRecord.map((entry, index) =>
+        index === existingIndex ? updatedEntry : entry,
+      );
+    } else {
+      portal.cdphTheoryRecord = [...portal.cdphTheoryRecord, updatedEntry];
+    }
+
+    portal.lastAction = 'CDPH E276C theory record updated.';
+    this.recordAudit(portal, 'student.cdph.e276c.entry.updated', sectionId, { moduleId });
+    return this.repository.save(portal).cdphTheoryRecord;
+  }
+
+  updateCdphTheoryFinalGrade(studentId: string, finalGrade: string) {
+    const portal = this.repository.findByStudentId(studentId);
+    portal.cdphTheoryFinalGrade = finalGrade;
+    portal.lastAction = 'CDPH E276C final grade recorded.';
+    this.recordAudit(portal, 'student.cdph.e276c.final-grade.updated', 'cdph-e276c');
+    return this.repository.save(portal).cdphTheoryFinalGrade;
+  }
+
+  generateCdphE276CPdf(studentId: string, instructorFullName: string): Buffer {
+    const portal = this.repository.findByStudentId(studentId);
+    const modules = this.learningResourcesConfigService.getConfig().modules;
+    const entryBySectionId = new Map(portal.cdphTheoryRecord.map((entry) => [entry.sectionId, entry]));
+
+    const moduleRows = modules
+      .slice()
+      .sort((a, b) => a.order - b.order)
+      .map((module) => ({
+        moduleTitle: module.title,
+        topics: module.sections.map((section) => {
+          const entry = entryBySectionId.get(section.id);
+          return {
+            topicId: section.id,
+            label: section.title,
+            hours: entry?.hours ?? null,
+            date: entry?.date ?? null,
+            instructorInitials: entry?.instructorInitials ?? null,
+            testScore: entry?.testScore ?? null,
+          };
+        }),
+      }));
+
+    const studentName = `${portal.cdphForm.firstName} ${portal.cdphForm.lastName}`.trim() || portal.profile.fullName;
+
+    return this.cdphPdfService.generateE276C({
+      studentName,
+      ssn: portal.cdphTheoryHeader.ssn || portal.cdphForm.ssn,
+      startDate: portal.cdphTheoryHeader.startDate,
+      completionDate: portal.cdphTheoryHeader.completionDate,
+      instructorName: portal.cdphTheoryHeader.instructorName || instructorFullName,
+      finalGrade: portal.cdphTheoryFinalGrade,
+      modules: moduleRows,
+    });
+  }
+
+  getCdphSkillChecklist(studentId: string) {
+    const portal = this.repository.findByStudentId(studentId);
+    portal.cdphSkillHeader ??= {
+      ssn: portal.cdphForm.ssn ?? '',
+      instructorName: '',
+      trainingProgramName: portal.profile.cohort || '',
+      clinicalSiteName: '',
+      startDate: '',
+      completionDate: '',
+    };
+    return { header: portal.cdphSkillHeader, entries: portal.cdphSkillChecklist };
+  }
+
+  updateCdphSkillChecklistHeader(studentId: string, payload: UpdateCdphSkillChecklistHeaderDto) {
+    const portal = this.repository.findByStudentId(studentId);
+    portal.cdphSkillHeader ??= {
+      ssn: portal.cdphForm.ssn ?? '',
+      instructorName: '',
+      trainingProgramName: portal.profile.cohort || '',
+      clinicalSiteName: '',
+      startDate: '',
+      completionDate: '',
+    };
+    portal.cdphSkillHeader = {
+      ...portal.cdphSkillHeader,
+      ...this.trimStringFields({ ...payload }),
+    };
+    portal.lastAction = 'CDPH E276A header updated.';
+    this.recordAudit(portal, 'student.cdph.e276a.header.updated', 'cdph-e276a', { ...payload });
+    return this.repository.save(portal).cdphSkillHeader;
+  }
+
+  updateCdphSkillEntry(
+    studentId: string,
+    skillId: string,
+    moduleId: string,
+    payload: UpdateCdphSkillEntryDto,
+    instructorInitials: string,
+  ) {
+    const portal = this.repository.findByStudentId(studentId);
+    const existingIndex = portal.cdphSkillChecklist.findIndex((entry) => entry.skillId === skillId);
+    const existing = existingIndex >= 0 ? portal.cdphSkillChecklist[existingIndex] : undefined;
+
+    const updatedEntry: CdphSkillChecklistEntry = {
+      skillId,
+      moduleId,
+      status: payload.status ?? existing?.status ?? 'U',
+      comments: payload.comments ?? existing?.comments ?? '',
+      datePerformed: payload.datePerformed ?? existing?.datePerformed ?? new Date().toISOString().slice(0, 10),
+      instructorInitials,
+    };
+
+    if (existingIndex >= 0) {
+      portal.cdphSkillChecklist = portal.cdphSkillChecklist.map((entry, index) =>
+        index === existingIndex ? updatedEntry : entry,
+      );
+    } else {
+      portal.cdphSkillChecklist = [...portal.cdphSkillChecklist, updatedEntry];
+    }
+
+    portal.lastAction = 'CDPH E276A skills checklist updated.';
+    this.recordAudit(portal, 'student.cdph.e276a.entry.updated', skillId, { moduleId });
+    return this.repository.save(portal).cdphSkillChecklist;
+  }
+
+  generateCdphE276APdf(studentId: string, instructorFullName: string): Buffer {
+    const portal = this.repository.findByStudentId(studentId);
+    const modules = this.learningResourcesConfigService.getConfig().modules;
+    const moduleTitleById = new Map(modules.map((module) => [module.id, module.title]));
+    const entryBySkillId = new Map(portal.cdphSkillChecklist.map((entry) => [entry.skillId, entry]));
+
+    const moduleRows = CDPH_E276A_SKILLS.map((skillModule) => ({
+      moduleTitle: moduleTitleById.get(skillModule.moduleId) ?? skillModule.moduleId,
+      clinicalHours: skillModule.clinicalHours,
+      items: skillModule.items.map((item) => {
+        const entry = entryBySkillId.get(item.id);
+        return {
+          skillId: item.id,
+          label: item.label,
+          status: entry?.status ?? null,
+          comments: entry?.comments ?? null,
+          datePerformed: entry?.datePerformed ?? null,
+          instructorInitials: entry?.instructorInitials ?? null,
+        };
+      }),
+    }));
+
+    const studentName = `${portal.cdphForm.firstName} ${portal.cdphForm.lastName}`.trim() || portal.profile.fullName;
+
+    return this.cdphPdfService.generateE276A({
+      studentName,
+      ssn: portal.cdphSkillHeader?.ssn || portal.cdphForm.ssn,
+      instructorName: portal.cdphSkillHeader?.instructorName || instructorFullName,
+      trainingProgramName: portal.cdphSkillHeader?.trainingProgramName || portal.profile.cohort || '',
+      clinicalSiteName: portal.cdphSkillHeader?.clinicalSiteName || '',
+      startDate: portal.cdphSkillHeader?.startDate || '',
+      completionDate: portal.cdphSkillHeader?.completionDate || '',
+      modules: moduleRows,
+    });
+  }
+
   getSettings(studentId: string) {
     return this.repository.findByStudentId(studentId).settings;
   }
@@ -1771,6 +2124,10 @@ export class StudentPortalService {
       reason,
     });
     return this.repository.save(portal).workflowStage;
+  }
+
+  findAllStudentPortals(): StudentPortalState[] {
+    return this.repository.findAll();
   }
 
   getSecurityViolationsLog(): StudentViolationLogEntry[] {
@@ -1964,7 +2321,24 @@ export class StudentPortalService {
   }
 
   private getLessonElapsedMinutes(portal: StudentPortalState) {
-    return { ...(portal.lessonElapsedMinutes ?? {}) };
+    const seconds = this.getLessonElapsedSeconds(portal);
+    return Object.fromEntries(
+      Object.entries(seconds).map(([lessonId, value]) => [lessonId, Math.floor(value / 60)]),
+    );
+  }
+
+  private getLessonElapsedSeconds(portal: StudentPortalState) {
+    if (portal.lessonElapsedSeconds) {
+      return { ...portal.lessonElapsedSeconds };
+    }
+
+    // Migrate portals persisted before per-second tracking from their minute totals.
+    return Object.fromEntries(
+      Object.entries(portal.lessonElapsedMinutes ?? {}).map(([lessonId, minutes]) => [
+        lessonId,
+        Math.max(0, Math.round(minutes)) * 60,
+      ]),
+    );
   }
 
   private ensureLearningAttentionSession(
@@ -2055,13 +2429,14 @@ export class StudentPortalService {
     const completedSteps = module.steps.filter((step) => step.complete).length;
     const progressPercent =
       module.steps.length > 0 ? Math.round((completedSteps / module.steps.length) * 100) : 0;
-    const requiredSessionMinutes = this.getRequiredSessionMinutes(module);
-    const sessionMinutes = Math.min(this.getModuleSessionMinutes(module), requiredSessionMinutes);
-    const sessionComplete = sessionMinutes >= requiredSessionMinutes;
+    const requiredSessionSeconds = this.getRequiredSessionSeconds(module);
+    const sessionSeconds = Math.min(this.getModuleSessionSeconds(module), requiredSessionSeconds);
+    const sessionMinutes = Math.floor(sessionSeconds / 60);
+    const sessionComplete = sessionSeconds >= requiredSessionSeconds;
     // Hours completed reflect real recorded session time, not manual step toggles.
     const completedHours = Math.min(
       module.requiredHours,
-      Math.round((sessionMinutes / 60) * 10) / 10,
+      Math.round((sessionSeconds / 3600) * 10) / 10,
     );
 
     return {
@@ -2069,10 +2444,11 @@ export class StudentPortalService {
       progressPercent,
       completedHours,
       sessionMinutes,
+      sessionSeconds,
       status:
         module.status === 'Complete' || (progressPercent >= 100 && sessionComplete)
           ? 'Complete'
-          : (progressPercent > 0 || sessionMinutes > 0) && module.status !== 'Locked'
+          : (progressPercent > 0 || sessionSeconds > 0) && module.status !== 'Locked'
             ? 'In Progress'
             : module.status,
     } satisfies CurriculumModule;
@@ -2082,10 +2458,22 @@ export class StudentPortalService {
     return Math.max(0, Math.round(module.requiredHours * 60));
   }
 
+  private getRequiredSessionSeconds(module: CurriculumModule) {
+    return this.getRequiredSessionMinutes(module) * 60;
+  }
+
+  private getModuleSessionSeconds(module: CurriculumModule) {
+    if (typeof module.sessionSeconds === 'number' && Number.isFinite(module.sessionSeconds)) {
+      return Math.max(0, Math.round(module.sessionSeconds));
+    }
+
+    // Portals persisted before per-second tracking fall back to their recorded
+    // minutes (or completed hours) so students keep the time they already earned.
+    return Math.max(0, Math.round(module.sessionMinutes ?? module.completedHours * 60)) * 60;
+  }
+
   private getModuleSessionMinutes(module: CurriculumModule) {
-    // Portals persisted before per-module session tracking fall back to their
-    // recorded completed hours so students keep the time they already earned.
-    return Math.max(0, Math.round(module.sessionMinutes ?? module.completedHours * 60));
+    return Math.floor(this.getModuleSessionSeconds(module) / 60);
   }
 
   private formatMinutes(totalMinutes: number) {
@@ -2095,17 +2483,38 @@ export class StudentPortalService {
   }
 
   private validateCdphForm(form: CdphForm) {
-    const requiredFields = [form.firstName, form.lastName, form.dob, form.phone, form.email, form.city, form.zip];
+    const requiredFields = [
+      form.firstName,
+      form.lastName,
+      form.dob,
+      form.addressLine1,
+      form.phone,
+      form.email,
+      form.city,
+      form.state,
+      form.zip,
+    ];
     if (requiredFields.some((value) => value.trim().length === 0)) {
       throw new BadRequestException('CDPH form is incomplete. All required fields must be filled.');
+    }
+
+    if (form.ssn.trim().length === 0 && form.itin.trim().length === 0) {
+      throw new BadRequestException('A Social Security Number or Individual Taxpayer Identification Number is required.');
     }
 
     if (!form.email.includes('@')) {
       throw new BadRequestException('CDPH form requires a valid email address.');
     }
 
-    if (form.conviction && form.convictionDetails.trim().length === 0) {
+    if (form.conviction && form.convictionDescription.trim().length === 0) {
       throw new BadRequestException('Conviction details are required when conviction is marked yes.');
+    }
+
+    if (
+      form.adverseAction &&
+      (form.adverseActionLicenseType.trim().length === 0 || form.adverseActionType.trim().length === 0)
+    ) {
+      throw new BadRequestException('Adverse action details are required when adverse action is marked yes.');
     }
   }
 

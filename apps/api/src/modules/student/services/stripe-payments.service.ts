@@ -33,13 +33,9 @@ export class StripePaymentsService {
       throw new BadRequestException(`Cohort "${cohort.name}" is not open for registration.`);
     }
 
-    const modulesById = new Map(
-      this.learningResourcesConfigService.getConfig().modules.map((module) => [module.id, module]),
-    );
-    const amount = cohort.moduleIds.reduce((sum, moduleId) => {
-      const module = modulesById.get(moduleId);
-      return sum + Math.max(0, module?.moduleFee ?? 0);
-    }, 0);
+    const amount = this.learningResourcesConfigService
+      .getConfig()
+      .modules.reduce((sum, module) => sum + Math.max(0, module.moduleFee ?? 0), 0);
 
     return {
       cohortId: cohort.id,

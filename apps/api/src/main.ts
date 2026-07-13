@@ -12,13 +12,13 @@ async function bootstrap() {
   const configuredOrigins = process.env.CORS_ORIGIN?.split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
-  const allowedOrigins =
-    configuredOrigins && configuredOrigins.length > 0
-      ? configuredOrigins
-      : ['http://localhost:3000', 'http://localhost:3001'];
+  const allowAllOrigins =
+    !configuredOrigins ||
+    configuredOrigins.length === 0 ||
+    configuredOrigins.includes('*');
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: allowAllOrigins ? true : configuredOrigins,
     credentials: true,
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: '*',

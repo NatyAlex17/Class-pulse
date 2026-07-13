@@ -131,15 +131,44 @@ type ClinicalLog = {
 };
 
 type CdphForm = {
+  requestType: 'enrollment' | 'reconsideration';
   lastName: string;
   firstName: string;
+  middleInitial: string;
+  sex: 'Male' | 'Female' | '';
   dob: string;
+  ssn: string;
+  itin: string;
+  addressLine1: string;
   phone: string;
   email: string;
   city: string;
+  state: string;
   zip: string;
+  confidentialAddressLine1: string;
+  confidentialCity: string;
+  confidentialState: string;
+  confidentialZip: string;
+  driversLicenseNumber: string;
+  driversLicenseState: string;
+  textMessageConsent: boolean;
   conviction: boolean;
-  convictionDetails: string;
+  convictionDescription: string;
+  convictionCourt: string;
+  convictionDate: string;
+  adverseAction: boolean;
+  adverseActionLicenseType: string;
+  adverseActionLicenseNumber: string;
+  adverseActionType: string;
+  trainingProgramName: string;
+  trainingProgramPhone: string;
+  trainingProgramAddressLine1: string;
+  trainingProgramCity: string;
+  trainingProgramState: string;
+  trainingProgramZip: string;
+  trainingProgramId: string;
+  trainingBeginDate: string;
+  trainingEndDate: string;
 };
 
 type StudentWorkflowStage =
@@ -788,15 +817,44 @@ const initialState: StudentDemoState = {
   liveScanGenerated: false,
   liveScanUploaded: false,
   cdphForm: {
+    requestType: 'enrollment',
     lastName: 'Singh',
     firstName: 'Amara',
+    middleInitial: '',
+    sex: '',
     dob: '',
+    ssn: '',
+    itin: '',
+    addressLine1: '',
     phone: '(555) 010-2291',
     email: 'amara.singh@classverse.edu',
     city: 'San Francisco',
+    state: 'CA',
     zip: '94110',
+    confidentialAddressLine1: '',
+    confidentialCity: '',
+    confidentialState: '',
+    confidentialZip: '',
+    driversLicenseNumber: '',
+    driversLicenseState: '',
+    textMessageConsent: false,
     conviction: false,
-    convictionDetails: '',
+    convictionDescription: '',
+    convictionCourt: '',
+    convictionDate: '',
+    adverseAction: false,
+    adverseActionLicenseType: '',
+    adverseActionLicenseNumber: '',
+    adverseActionType: '',
+    trainingProgramName: '',
+    trainingProgramPhone: '',
+    trainingProgramAddressLine1: '',
+    trainingProgramCity: '',
+    trainingProgramState: '',
+    trainingProgramZip: '',
+    trainingProgramId: '',
+    trainingBeginDate: '',
+    trainingEndDate: '',
   },
   cdphSigned: false,
   exitSurveyComplete: false,

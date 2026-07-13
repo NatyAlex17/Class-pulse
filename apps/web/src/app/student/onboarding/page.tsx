@@ -202,7 +202,7 @@ export default function StudentOnboardingPage() {
                           disabled={isUploading}
                           onClick={() => handleRequestDocumentUpload(document.id)}
                         >
-                          {isUploading ? 'Uploading...' : complete ? 'Replace' : 'Upload'}
+                          {isUploading ? 'Uploading...' : complete ? 'Update' : 'Upload'}
                         </Button>
                       </div>
                     </div>

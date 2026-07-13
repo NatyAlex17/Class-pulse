@@ -10,6 +10,27 @@ describe('AuditorPortalService', () => {
     service = new AuditorPortalService(new AuditorPortalRepository());
   });
 
+  it('provisions a new auditor portal for a local user', () => {
+    const portal = service.ensurePortalForLocalUser(
+      {
+        id: 'auditor-new',
+        supabaseUserId: 'supabase-auditor-new',
+        email: 'new.auditor@classpulse.edu',
+        role: 'auditor',
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        fullName: 'New Auditor',
+      },
+    );
+
+    expect(portal.profile.id).toBe('auditor-new');
+    expect(portal.profile.fullName).toBe('New Auditor');
+    expect(portal.profile.email).toBe('new.auditor@classpulse.edu');
+  });
+
   it('returns the auditor dashboard snapshot', () => {
     const dashboard = service.getDashboard('auditor-alex');
 

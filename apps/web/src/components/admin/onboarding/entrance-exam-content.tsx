@@ -1,12 +1,15 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth/auth-provider';
 import { ExamQuestionsTable } from '@/components/admin/exam-questions-table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { IconCheck } from '@tabler/icons-react';
+import { InstructorOnboardingQuestionsConfigContent } from '@/components/admin/onboarding/instructor-questions-content';
+import { cn } from '@/lib/utils';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
@@ -25,6 +28,12 @@ interface ExamConfig {
 
 export function EntranceExamConfigContent() {
   const { session, syncedUser } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const audience = searchParams.get('audience') === 'instructor' ? 'instructor' : 'student';
+  const setAudience = (next: 'student' | 'instructor') => {
+    router.push(`?tab=entrance-exam&audience=${next}`, { scroll: false } as any);
+  };
   const [config, setConfig] = React.useState<ExamConfig | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
@@ -131,16 +140,56 @@ export function EntranceExamConfigContent() {
     }
   };
 
+  const audienceFilter = (
+    <div className="inline-flex items-center gap-1 rounded-[14px] border border-border-subtle bg-surface-muted p-1">
+      {(['student', 'instructor'] as const).map((option) => (
+        <button
+          key={option}
+          onClick={() => setAudience(option)}
+          className={cn(
+            'rounded-[10px] px-4 py-2 text-sm font-semibold transition',
+            audience === option
+              ? 'bg-primary text-white'
+              : 'text-on-surface-variant hover:text-on-surface',
+          )}
+        >
+          {option === 'student' ? 'Student' : 'Instructor'}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (audience === 'instructor') {
+    return (
+      <div className="space-y-6">
+        {audienceFilter}
+        <InstructorOnboardingQuestionsConfigContent />
+      </div>
+    );
+  }
+
   if (loading) {
-    return <div className="p-8 text-center">Loading configuration...</div>;
+    return (
+      <div className="space-y-6">
+        {audienceFilter}
+        <div className="p-8 text-center">Loading configuration...</div>
+      </div>
+    );
   }
 
   if (!config) {
-    return <div className="p-8 text-center text-error">{error ?? 'Failed to load configuration'}</div>;
+    return (
+      <div className="space-y-6">
+        {audienceFilter}
+        <div className="p-8 text-center text-error">{error ?? 'Failed to load configuration'}</div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
+      {audienceFilter}
+
       {error && (
         <div className="rounded-[12px] border border-error/20 bg-error/10 p-4 text-sm text-error">
           {error}

@@ -59,6 +59,9 @@ export interface AdminCohortRecord {
   size: number;
   note: string;
   tone: 'warning' | 'success';
+  pendingAdmissions?: number;
+  activeInstructors?: number;
+  completionRate?: number;
 }
 
 export interface AdminEscalationItem {
@@ -68,10 +71,56 @@ export interface AdminEscalationItem {
   tone: 'error' | 'warning';
 }
 
+export interface AdminOperationsTrendPoint {
+  label: string;
+  studentSubmissions: number;
+  instructorSubmissions: number;
+  activeStudents: number;
+}
+
+export interface AdminOperationsBreakdownSlice {
+  name: string;
+  value: number;
+}
+
+export interface AdminOperationsModuleRow {
+  id: string;
+  title: string;
+  learners: number;
+  avgProgress: number;
+  completed: number;
+  inProgress: number;
+  blocked: number;
+}
+
+export interface AdminOperationsQueueRow {
+  id: string;
+  type: 'Student Intake' | 'Instructor Onboarding';
+  candidate: string;
+  track: string;
+  submittedAt: string;
+  status: string;
+  documentsComplete: string;
+  blockers: string;
+}
+
+export interface AdminOperationsHighlight {
+  id: string;
+  title: string;
+  detail: string;
+  tone: AdminTone;
+}
+
 export interface AdminOperationsSnapshot {
+  generatedAt: string;
   metrics: AdminKpi[];
+  trend: AdminOperationsTrendPoint[];
+  workload: AdminOperationsBreakdownSlice[];
+  modules: AdminOperationsModuleRow[];
   cohorts: AdminCohortRecord[];
   escalations: AdminEscalationItem[];
+  queue: AdminOperationsQueueRow[];
+  highlights: AdminOperationsHighlight[];
 }
 
 export interface AdminApplicationDetail {
@@ -116,25 +165,75 @@ export interface AdminReportCard {
   badge: string;
 }
 
+export type AdminReportRange = '7d' | '30d' | 'quarter';
+export type AdminReportFormat = 'CSV' | 'JSON' | 'PDF';
+
+export interface AdminReportDefinition {
+  id: string;
+  title: string;
+  description: string;
+  badge: string;
+  formats: AdminReportFormat[];
+}
+
+export interface AdminReportNarrative {
+  title: string;
+  text: string;
+}
+
+export interface AdminReportTrendPoint {
+  label: string;
+  applications: number;
+  approved: number;
+  activeStudents: number;
+  activeInstructors: number;
+}
+
+export interface AdminReportStatusSlice {
+  name: string;
+  value: number;
+}
+
+export interface AdminReportModulePoint {
+  moduleId: string;
+  moduleTitle: string;
+  learners: number;
+  completion: number;
+  inProgress: number;
+  blocked: number;
+}
+
 export interface AdminReportExport {
   id: string;
+  reportId?: string;
   report: string;
   scope: string;
   format: string;
   cadence: string;
   updated: string;
   status: AdminExportStatus;
+  owner?: string;
+  range?: AdminReportRange;
 }
 
 export interface AdminReportsWorkspace {
+  generatedAt: string;
+  selectedRange: AdminReportRange;
+  availableRanges: AdminReportRange[];
   cards: AdminReportCard[];
+  reports: AdminReportDefinition[];
   summaryMetrics: Array<{
     id: string;
     label: string;
     value: string;
     delta: string;
     tone: AdminTone;
+    note?: string;
   }>;
+  narratives: AdminReportNarrative[];
+  enrollmentTrend: AdminReportTrendPoint[];
+  applicationStatus: AdminReportStatusSlice[];
+  modulePerformance: AdminReportModulePoint[];
   exports: AdminReportExport[];
 }
 
@@ -220,4 +319,38 @@ export interface UploadAdminDocumentDto {
 export interface GenerateAdminReportExportDto {
   reportId: string;
   format: string;
+  range?: AdminReportRange;
+}
+
+export interface CreateAuditorAccountDto {
+  email: string;
+  password: string;
+  fullName?: string;
+}
+
+export interface AdminAuditorAccount {
+  id: string;
+  email: string;
+  role: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  fullName: string;
+  title: string;
+}
+
+export interface AdminIncompleteOnboardingUser {
+  id: string;
+  role: 'student' | 'instructor';
+  fullName: string;
+  email: string;
+  workflowStage: string;
+  /** From the users table; unavailable when the database lookup fails. */
+  registeredAt?: string;
+}
+
+export interface AdminIncompleteOnboardingReport {
+  students: AdminIncompleteOnboardingUser[];
+  instructors: AdminIncompleteOnboardingUser[];
+  generatedAt: string;
 }
