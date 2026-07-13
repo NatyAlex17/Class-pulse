@@ -1,0 +1,2018 @@
+{
+  "portals": [
+    {
+      "profile": {
+        "id": "instructor-sarah-chen",
+        "fullName": "Dr. Sarah Chen",
+        "title": "Lead Clinical Instructor",
+        "email": "schen@classpulse.edu",
+        "phone": "(415) 555-0183",
+        "notes": "Primary reviewer for CNA Cohorts 12 and 13. Approved for simulation lab signoff and placement oversight.",
+        "avatarUrl": "https://example.com/instructor-sarah-chen.jpg",
+        "credentials": [
+          {
+            "id": "cred-1",
+            "label": "State CNA Instructor License",
+            "status": "Active",
+            "expiresAt": "2027-03-18"
+          },
+          {
+            "id": "cred-2",
+            "label": "BLS Instructor Certification",
+            "status": "Active",
+            "expiresAt": "2026-11-02"
+          },
+          {
+            "id": "cred-3",
+            "label": "Annual Clinical Supervision Review",
+            "status": "Renewal due",
+            "expiresAt": "2026-07-15"
+          }
+        ]
+      },
+      "workflowStage": "active",
+      "onboarding": {
+        "questions": [
+          {
+            "id": "q1",
+            "prompt": "Describe your clinical teaching experience and the settings you have worked in.",
+            "type": "text",
+            "placeholder": "Write your response...",
+            "options": [],
+            "answer": ""
+          },
+          {
+            "id": "q2",
+            "prompt": "What is your approach to mentoring students who are struggling with a clinical skill?",
+            "type": "text",
+            "placeholder": "Write your response...",
+            "options": [],
+            "answer": ""
+          },
+          {
+            "id": "q3",
+            "prompt": "Do you have any scheduling constraints or availability limitations we should know about?",
+            "type": "text",
+            "placeholder": "Write your response...",
+            "options": [],
+            "answer": ""
+          }
+        ],
+        "readinessUploads": {},
+        "readinessDocumentFiles": {},
+        "agreedToTerms": true,
+        "selectedModuleIds": [
+          "m1"
+        ],
+        "submitted": true
+      },
+      "studentNotes": {
+        "student-alice-smith": [
+          {
+            "date": "2026-07-08",
+            "note": "Observed strong improvement during lab review.",
+            "instructor": "Dr. Sarah Chen"
+          },
+          {
+            "date": "2026-07-07",
+            "note": "Observed strong improvement during lab review.",
+            "instructor": "Dr. Sarah Chen"
+          },
+          {
+            "date": "2026-07-07",
+            "note": "Observed strong improvement during lab review.",
+            "instructor": "Dr. Sarah Chen"
+          },
+          {
+            "date": "2026-07-07",
+            "note": "Observed strong improvement during lab review.",
+            "instructor": "Dr. Sarah Chen"
+          },
+          {
+            "date": "2026-07-07",
+            "note": "Observed strong improvement during lab review.",
+            "instructor": "Dr. Sarah Chen"
+          },
+          {
+            "date": "2026-07-07",
+            "note": "Observed strong improvement during lab review.",
+            "instructor": "Dr. Sarah Chen"
+          },
+          {
+            "date": "2026-07-07",
+            "note": "Observed strong improvement during lab review.",
+            "instructor": "Dr. Sarah Chen"
+          },
+          {
+            "date": "2026-07-07",
+            "note": "Observed strong improvement during lab review.",
+            "instructor": "Dr. Sarah Chen"
+          },
+          {
+            "date": "2026-07-07",
+            "note": "Observed strong improvement during lab review.",
+            "instructor": "Dr. Sarah Chen"
+          },
+          {
+            "date": "2026-07-07",
+            "note": "Observed strong improvement during lab review.",
+            "instructor": "Dr. Sarah Chen"
+          }
+        ]
+      },
+      "activeStudentId": "",
+      "dashboard": {
+        "profile": {
+          "id": "instructor-sarah-chen",
+          "fullName": "Dr. Sarah Chen",
+          "title": "Lead Clinical Instructor"
+        },
+        "metrics": [
+          {
+            "label": "Critical Actions",
+            "value": "3",
+            "tone": "error"
+          },
+          {
+            "label": "Students Assigned",
+            "value": "42",
+            "tone": "primary"
+          },
+          {
+            "label": "Avg. Checklist",
+            "value": "87%",
+            "tone": "success"
+          },
+          {
+            "label": "Hours Pending",
+            "value": "16",
+            "tone": "warning"
+          }
+        ],
+        "priorityActions": [
+          {
+            "id": "priority-inbox",
+            "title": "Review 3 urgent student messages",
+            "detail": "Placement questions and one escalation require a response.",
+            "href": "/instructor/inbox",
+            "urgency": "high"
+          },
+          {
+            "id": "priority-logs",
+            "title": "Approve 5 clinical log submissions",
+            "detail": "Hours are waiting on your verification before audit closeout.",
+            "href": "/instructor/clinical-logs",
+            "urgency": "critical"
+          },
+          {
+            "id": "priority-availability",
+            "title": "Resolve 1 scheduling conflict",
+            "detail": "Wednesday rotation overlaps with a competency assessment block.",
+            "href": "/instructor/availability",
+            "urgency": "medium"
+          }
+        ],
+        "students": [
+          {
+            "id": "student-alice-smith",
+            "name": "Alice Smith",
+            "cohort": "CNA 12",
+            "hoursLogged": 34,
+            "hoursRequired": 40,
+            "checklistCompletion": 90,
+            "status": "On Track",
+            "progress": 85
+          },
+          {
+            "id": "student-marcus-chen",
+            "name": "Marcus Chen",
+            "cohort": "CNA 12",
+            "hoursLogged": 28,
+            "hoursRequired": 40,
+            "checklistCompletion": 75,
+            "status": "At Risk",
+            "progress": 70
+          }
+        ],
+        "sessions": [
+          {
+            "id": "session-1",
+            "date": "Jun 30",
+            "time": "08:00 AM",
+            "title": "Skills Lab / Vitals Practicum",
+            "site": "Simulation Lab B",
+            "students": 12
+          },
+          {
+            "id": "session-2",
+            "date": "Jul 01",
+            "time": "10:30 AM",
+            "title": "Clinical Rotation / Sunrise Care",
+            "site": "Sunrise Long-Term Care",
+            "students": 8
+          }
+        ],
+        "studentsNeedingReview": [
+          {
+            "id": "student-alice-smith",
+            "name": "Alice Smith",
+            "issue": "Needs final wound care signoff",
+            "status": "Ready now",
+            "priority": "high"
+          },
+          {
+            "id": "student-marcus-chen",
+            "name": "Marcus Chen",
+            "issue": "Missing 2 verified hours this week",
+            "status": "At risk",
+            "priority": "critical"
+          }
+        ]
+      },
+      "conversations": [
+        {
+          "id": "conv-alice",
+          "name": "Alice Smith",
+          "note": "You are cleared for tomorrow morning. Bring the updated checklist.",
+          "time": "2026-07-08T04:39:20.109Z",
+          "cohort": "CNA Cohort 12",
+          "placement": "Sunrise Care",
+          "status": "Active",
+          "messages": [
+            {
+              "id": "msg-1",
+              "from": "student",
+              "body": "Hi Dr. Chen, I uploaded the revised log and checklist. Can you confirm if I am cleared for Thursday?",
+              "stamp": "2026-06-30T10:31:00.000Z"
+            },
+            {
+              "id": "msg-2",
+              "from": "instructor",
+              "body": "I reviewed the upload. Your checklist is almost complete, but I still need one verified wound care observation.",
+              "stamp": "2026-06-30T10:38:00.000Z"
+            },
+            {
+              "id": "msg-1783442731684",
+              "from": "instructor",
+              "body": "You are cleared for tomorrow morning. Bring the updated checklist.",
+              "stamp": "2026-07-07T16:45:31.684Z"
+            },
+            {
+              "id": "msg-1783448423219",
+              "from": "instructor",
+              "body": "You are cleared for tomorrow morning. Bring the updated checklist.",
+              "stamp": "2026-07-07T18:20:23.219Z"
+            },
+            {
+              "id": "msg-1783448788308",
+              "from": "instructor",
+              "body": "You are cleared for tomorrow morning. Bring the updated checklist.",
+              "stamp": "2026-07-07T18:26:28.308Z"
+            },
+            {
+              "id": "msg-1783452909677",
+              "from": "instructor",
+              "body": "You are cleared for tomorrow morning. Bring the updated checklist.",
+              "stamp": "2026-07-07T19:35:09.677Z"
+            },
+            {
+              "id": "msg-1783453012771",
+              "from": "instructor",
+              "body": "You are cleared for tomorrow morning. Bring the updated checklist.",
+              "stamp": "2026-07-07T19:36:52.771Z"
+            },
+            {
+              "id": "msg-1783453098944",
+              "from": "instructor",
+              "body": "You are cleared for tomorrow morning. Bring the updated checklist.",
+              "stamp": "2026-07-07T19:38:18.944Z"
+            },
+            {
+              "id": "msg-1783453929830",
+              "from": "instructor",
+              "body": "You are cleared for tomorrow morning. Bring the updated checklist.",
+              "stamp": "2026-07-07T19:52:09.830Z"
+            },
+            {
+              "id": "msg-1783456263934",
+              "from": "instructor",
+              "body": "You are cleared for tomorrow morning. Bring the updated checklist.",
+              "stamp": "2026-07-07T20:31:03.934Z"
+            },
+            {
+              "id": "msg-1783456279464",
+              "from": "instructor",
+              "body": "You are cleared for tomorrow morning. Bring the updated checklist.",
+              "stamp": "2026-07-07T20:31:19.464Z"
+            },
+            {
+              "id": "msg-1783485560109",
+              "from": "instructor",
+              "body": "You are cleared for tomorrow morning. Bring the updated checklist.",
+              "stamp": "2026-07-08T04:39:20.109Z"
+            }
+          ]
+        },
+        {
+          "id": "conv-marcus",
+          "name": "Marcus Chen",
+          "note": "Concerned about missing verified hours this week.",
+          "time": "2026-06-30T09:18:00.000Z",
+          "cohort": "CNA Cohort 12",
+          "placement": "Oak Ridge Rehab",
+          "status": "Active",
+          "messages": [
+            {
+              "id": "msg-3",
+              "from": "student",
+              "body": "Hey instructor, I was wondering if I can make up the missed hours from last week?",
+              "stamp": "2026-06-30T09:05:00.000Z"
+            }
+          ]
+        }
+      ],
+      "activeConversationId": "conv-alice",
+      "schedule": [
+        {
+          "id": "slot-1",
+          "weekStart": "2026-06-29",
+          "day": 0,
+          "time": "08:00",
+          "students": [
+            {
+              "id": "student-alice-smith",
+              "name": "Alice Smith",
+              "cohort": "CNA 12"
+            }
+          ],
+          "notes": "Vitals Lab - Simulation"
+        },
+        {
+          "id": "slot-2",
+          "weekStart": "2026-06-29",
+          "day": 1,
+          "time": "10:00",
+          "students": [
+            {
+              "id": "student-marcus-chen",
+              "name": "Marcus Chen",
+              "cohort": "CNA 12"
+            }
+          ],
+          "notes": "Sunrise Care Rotation"
+        },
+        {
+          "id": "slot-1783450786152",
+          "weekStart": "2026-07-06",
+          "day": 0,
+          "time": "08:00",
+          "students": [],
+          "notes": "Overlapping session"
+        }
+      ],
+      "skillsWorkspace": {
+        "studentId": "student-alice-smith",
+        "studentName": "Alice Smith",
+        "autosave": true,
+        "savedAt": "2026-07-07T16:45:31.789Z",
+        "completionPercent": 100,
+        "groups": [
+          {
+            "id": "group-1",
+            "title": "Module 4 / Vital Signs",
+            "progressPercent": 100,
+            "items": [
+              {
+                "id": "skill-1",
+                "label": "Hand hygiene protocol",
+                "status": "Verified"
+              },
+              {
+                "id": "skill-2",
+                "label": "Temperature and pulse sequence",
+                "status": "Verified"
+              },
+              {
+                "id": "skill-3",
+                "label": "Blood pressure measurement",
+                "status": "Verified",
+                "feedback": "Observed and approved during supervised practice."
+              }
+            ]
+          }
+        ]
+      },
+      "clinicalLogs": [
+        {
+          "id": "log-1",
+          "studentId": "student-alice-smith",
+          "student": "Alice Smith",
+          "site": "Sunrise Care",
+          "date": "2026-06-28",
+          "hours": 6,
+          "status": "Flagged",
+          "note": "Need supervisor initials before verification."
+        },
+        {
+          "id": "log-2",
+          "studentId": "student-marcus-chen",
+          "student": "Marcus Chen",
+          "site": "Oak Ridge Rehab",
+          "date": "2026-06-28",
+          "hours": 4.5,
+          "status": "Flagged",
+          "note": "Missing supervisor initials."
+        }
+      ],
+      "availability": {
+        "monday": "08:00 - 04:00",
+        "tuesday": "08:00 - 04:00",
+        "wednesday": "09:00 - 12:00",
+        "thursday": "10:00 - 06:00",
+        "friday": "08:00 - 02:00",
+        "weekend": "Reserved for make-up sessions and approvals only.",
+        "allowAutoPlacement": true,
+        "travelBuffer": true,
+        "conflicts": [
+          "Wednesday 09:00 - 12:00 overlaps with Marcus Chen / competency assessment",
+          "Friday 01:30 PM site visit ends 15 minutes after your recurring block"
+        ]
+      },
+      "documents": [
+        {
+          "id": "doc-1",
+          "name": "Instructor Credential Packet",
+          "category": "Compliance",
+          "owner": "Dr. Sarah Chen",
+          "updated": "2026-06-27",
+          "status": "Approved"
+        },
+        {
+          "id": "doc-2",
+          "name": "Sunrise Care Placement Roster",
+          "category": "Placement",
+          "owner": "Placement Office",
+          "updated": "2026-06-28",
+          "status": "Pending"
+        }
+      ],
+      "reports": {
+        "cards": [
+          {
+            "id": "report-hours-audit",
+            "title": "Clinical Hours Audit",
+            "detail": "Cross-check verified hours by student, cohort, and site.",
+            "badge": "Most used"
+          },
+          {
+            "id": "report-checklist-matrix",
+            "title": "Checklist Completion Matrix",
+            "detail": "Compare competency completion against program requirements.",
+            "badge": "Daily"
+          }
+        ],
+        "exports": [
+          {
+            "id": "export-1783485560254",
+            "reportId": "clinical-compliance-audit",
+            "report": "Clinical Compliance Audit",
+            "format": "CSV",
+            "cadence": "On demand",
+            "updated": "2026-07-08T04:39:20.254Z",
+            "status": "Queued",
+            "range": "30d"
+          },
+          {
+            "id": "export-1783456279636",
+            "report": "Clinical Hours Audit",
+            "format": "CSV",
+            "cadence": "On demand",
+            "updated": "2026-07-07T20:31:19.636Z",
+            "status": "Queued",
+            "range": "30d"
+          },
+          {
+            "id": "export-1783456264125",
+            "report": "Clinical Hours Audit",
+            "format": "CSV",
+            "cadence": "On demand",
+            "updated": "2026-07-07T20:31:04.125Z",
+            "status": "Queued",
+            "range": "30d"
+          },
+          {
+            "id": "export-1783453930001",
+            "report": "Clinical Hours Audit",
+            "format": "CSV",
+            "cadence": "On demand",
+            "updated": "2026-07-07T19:52:10.001Z",
+            "status": "Queued",
+            "range": "30d"
+          },
+          {
+            "id": "export-1783453099056",
+            "report": "Clinical Hours Audit",
+            "format": "CSV",
+            "cadence": "On demand",
+            "updated": "2026-07-07T19:38:19.056Z",
+            "status": "Queued",
+            "range": "30d"
+          },
+          {
+            "id": "export-1783453012903",
+            "report": "Clinical Hours Audit",
+            "format": "CSV",
+            "cadence": "On demand",
+            "updated": "2026-07-07T19:36:52.903Z",
+            "status": "Queued",
+            "range": "30d"
+          },
+          {
+            "id": "export-1783452909797",
+            "report": "Clinical Hours Audit",
+            "format": "CSV",
+            "cadence": "On demand",
+            "updated": "2026-07-07T19:35:09.797Z",
+            "status": "Queued",
+            "range": "30d"
+          },
+          {
+            "id": "export-1783448788570",
+            "report": "Clinical Hours Audit",
+            "format": "CSV",
+            "cadence": "On demand",
+            "updated": "2026-07-07T18:26:28.570Z",
+            "status": "Queued",
+            "range": "30d"
+          },
+          {
+            "id": "export-1783448423482",
+            "report": "Clinical Hours Audit",
+            "format": "CSV",
+            "cadence": "On demand",
+            "updated": "2026-07-07T18:20:23.482Z",
+            "status": "Queued",
+            "range": "30d"
+          },
+          {
+            "id": "export-1783442731867",
+            "report": "Clinical Hours Audit",
+            "format": "CSV",
+            "cadence": "On demand",
+            "updated": "2026-07-07T16:45:31.867Z",
+            "status": "Queued",
+            "range": "30d"
+          },
+          {
+            "id": "export-1",
+            "report": "Clinical Hours Audit",
+            "format": "CSV",
+            "cadence": "Daily",
+            "updated": "2026-06-28 07:10",
+            "status": "Ready",
+            "range": "30d"
+          }
+        ]
+      },
+      "auditTrail": [
+        {
+          "id": "audit-1783485560434-350",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.availability.updated",
+          "target": "availability",
+          "occurredAt": "2026-07-08T04:39:20.434Z",
+          "details": {
+            "monday": "08:00 - 04:00"
+          }
+        },
+        {
+          "id": "audit-1783485560427-625",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.availability.updated",
+          "target": "availability",
+          "occurredAt": "2026-07-08T04:39:20.427Z",
+          "details": {
+            "monday": "09:00 - 05:00"
+          }
+        },
+        {
+          "id": "audit-1783485560356-152",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.clinical-timer.discarded",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-08T04:39:20.356Z",
+          "details": {
+            "moduleId": "m1"
+          }
+        },
+        {
+          "id": "audit-1783485560351-940",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.clinical-timer.started",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-08T04:39:20.351Z",
+          "details": {
+            "moduleId": "m1"
+          }
+        },
+        {
+          "id": "audit-1783489160284-29",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.clinical-timer.stopped",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-08T05:39:20.284Z",
+          "details": {
+            "moduleId": "m1",
+            "hours": 1
+          }
+        },
+        {
+          "id": "audit-1783485560284-956",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.clinical-timer.started",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-08T04:39:20.284Z",
+          "details": {
+            "moduleId": "m1"
+          }
+        },
+        {
+          "id": "audit-1783485560254-621",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.report.export.generated",
+          "target": "export-1783485560254",
+          "occurredAt": "2026-07-08T04:39:20.254Z",
+          "details": {
+            "reportId": "clinical-compliance-audit",
+            "format": "CSV",
+            "range": "30d"
+          }
+        },
+        {
+          "id": "audit-1783485560231-740",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.clinical-log.reviewed",
+          "target": "log-1",
+          "occurredAt": "2026-07-08T04:39:20.231Z",
+          "details": {
+            "studentId": "student-alice-smith",
+            "status": "Flagged"
+          }
+        },
+        {
+          "id": "audit-1783485560195-36",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.skills.item.reviewed",
+          "target": "skill-3",
+          "occurredAt": "2026-07-08T04:39:20.195Z",
+          "details": {
+            "studentId": "student-alice-smith",
+            "status": "Verified"
+          }
+        },
+        {
+          "id": "audit-1783485560109-407",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.message.sent",
+          "target": "conv-alice",
+          "occurredAt": "2026-07-08T04:39:20.109Z"
+        },
+        {
+          "id": "audit-1783485560074-367",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.student.note.added",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-08T04:39:20.074Z"
+        },
+        {
+          "id": "audit-1783456279837-8",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.availability.updated",
+          "target": "availability",
+          "occurredAt": "2026-07-07T20:31:19.837Z",
+          "details": {
+            "monday": "08:00 - 04:00"
+          }
+        },
+        {
+          "id": "audit-1783456279833-593",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.availability.updated",
+          "target": "availability",
+          "occurredAt": "2026-07-07T20:31:19.833Z",
+          "details": {
+            "monday": "09:00 - 05:00"
+          }
+        },
+        {
+          "id": "audit-1783456279756-620",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.clinical-timer.discarded",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-07T20:31:19.756Z",
+          "details": {
+            "moduleId": "m1"
+          }
+        },
+        {
+          "id": "audit-1783456279750-935",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.clinical-timer.started",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-07T20:31:19.750Z",
+          "details": {
+            "moduleId": "m1"
+          }
+        },
+        {
+          "id": "audit-1783459879673-485",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.clinical-timer.stopped",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-07T21:31:19.673Z",
+          "details": {
+            "moduleId": "m1",
+            "hours": 1
+          }
+        },
+        {
+          "id": "audit-1783456279673-675",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.clinical-timer.started",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-07T20:31:19.673Z",
+          "details": {
+            "moduleId": "m1"
+          }
+        },
+        {
+          "id": "audit-1783456279636-176",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.report.export.generated",
+          "target": "export-1783456279636",
+          "occurredAt": "2026-07-07T20:31:19.636Z",
+          "details": {
+            "reportId": "report-hours-audit",
+            "format": "CSV"
+          }
+        },
+        {
+          "id": "audit-1783456279601-311",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.clinical-log.reviewed",
+          "target": "log-1",
+          "occurredAt": "2026-07-07T20:31:19.601Z",
+          "details": {
+            "studentId": "student-alice-smith",
+            "status": "Flagged"
+          }
+        },
+        {
+          "id": "audit-1783456279560-976",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.skills.item.reviewed",
+          "target": "skill-3",
+          "occurredAt": "2026-07-07T20:31:19.560Z",
+          "details": {
+            "studentId": "student-alice-smith",
+            "status": "Verified"
+          }
+        },
+        {
+          "id": "audit-1783456279464-286",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.message.sent",
+          "target": "conv-alice",
+          "occurredAt": "2026-07-07T20:31:19.464Z"
+        },
+        {
+          "id": "audit-1783456279428-479",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.student.note.added",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-07T20:31:19.428Z"
+        },
+        {
+          "id": "audit-1783456264357-431",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.availability.updated",
+          "target": "availability",
+          "occurredAt": "2026-07-07T20:31:04.357Z",
+          "details": {
+            "monday": "08:00 - 04:00"
+          }
+        },
+        {
+          "id": "audit-1783456264350-278",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.availability.updated",
+          "target": "availability",
+          "occurredAt": "2026-07-07T20:31:04.350Z",
+          "details": {
+            "monday": "09:00 - 05:00"
+          }
+        },
+        {
+          "id": "audit-1783456264268-946",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.clinical-timer.discarded",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-07T20:31:04.268Z",
+          "details": {
+            "moduleId": "m1"
+          }
+        },
+        {
+          "id": "audit-1783456264260-183",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.clinical-timer.started",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-07T20:31:04.260Z",
+          "details": {
+            "moduleId": "m1"
+          }
+        },
+        {
+          "id": "audit-1783459864168-79",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.clinical-timer.stopped",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-07T21:31:04.168Z",
+          "details": {
+            "moduleId": "m1",
+            "hours": 1
+          }
+        },
+        {
+          "id": "audit-1783456264168-531",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.clinical-timer.started",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-07T20:31:04.168Z",
+          "details": {
+            "moduleId": "m1"
+          }
+        },
+        {
+          "id": "audit-1783456264125-963",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.report.export.generated",
+          "target": "export-1783456264125",
+          "occurredAt": "2026-07-07T20:31:04.125Z",
+          "details": {
+            "reportId": "report-hours-audit",
+            "format": "CSV"
+          }
+        },
+        {
+          "id": "audit-1783456264085-376",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.clinical-log.reviewed",
+          "target": "log-1",
+          "occurredAt": "2026-07-07T20:31:04.085Z",
+          "details": {
+            "studentId": "student-alice-smith",
+            "status": "Flagged"
+          }
+        },
+        {
+          "id": "audit-1783456264042-220",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.skills.item.reviewed",
+          "target": "skill-3",
+          "occurredAt": "2026-07-07T20:31:04.042Z",
+          "details": {
+            "studentId": "student-alice-smith",
+            "status": "Verified"
+          }
+        },
+        {
+          "id": "audit-1783456263934-510",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.message.sent",
+          "target": "conv-alice",
+          "occurredAt": "2026-07-07T20:31:03.934Z"
+        },
+        {
+          "id": "audit-1783456263895-870",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.student.note.added",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-07T20:31:03.895Z"
+        },
+        {
+          "id": "audit-1783453930001-688",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.report.export.generated",
+          "target": "export-1783453930001",
+          "occurredAt": "2026-07-07T19:52:10.001Z",
+          "details": {
+            "reportId": "report-hours-audit",
+            "format": "CSV"
+          }
+        },
+        {
+          "id": "audit-1783453929966-278",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.clinical-log.reviewed",
+          "target": "log-1",
+          "occurredAt": "2026-07-07T19:52:09.966Z",
+          "details": {
+            "studentId": "student-alice-smith",
+            "status": "Flagged"
+          }
+        },
+        {
+          "id": "audit-1783453929928-270",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.skills.item.reviewed",
+          "target": "skill-3",
+          "occurredAt": "2026-07-07T19:52:09.928Z",
+          "details": {
+            "studentId": "student-alice-smith",
+            "status": "Verified"
+          }
+        },
+        {
+          "id": "audit-1783453929830-512",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.message.sent",
+          "target": "conv-alice",
+          "occurredAt": "2026-07-07T19:52:09.830Z"
+        },
+        {
+          "id": "audit-1783453929788-603",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.student.note.added",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-07T19:52:09.788Z"
+        },
+        {
+          "id": "audit-1783453099056-198",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.report.export.generated",
+          "target": "export-1783453099056",
+          "occurredAt": "2026-07-07T19:38:19.056Z",
+          "details": {
+            "reportId": "report-hours-audit",
+            "format": "CSV"
+          }
+        },
+        {
+          "id": "audit-1783453099025-503",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.clinical-log.reviewed",
+          "target": "log-1",
+          "occurredAt": "2026-07-07T19:38:19.025Z",
+          "details": {
+            "studentId": "student-alice-smith",
+            "status": "Flagged"
+          }
+        },
+        {
+          "id": "audit-1783453098995-516",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.skills.item.reviewed",
+          "target": "skill-3",
+          "occurredAt": "2026-07-07T19:38:18.995Z",
+          "details": {
+            "studentId": "student-alice-smith",
+            "status": "Verified"
+          }
+        },
+        {
+          "id": "audit-1783453098944-222",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.message.sent",
+          "target": "conv-alice",
+          "occurredAt": "2026-07-07T19:38:18.944Z"
+        },
+        {
+          "id": "audit-1783453098914-85",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.student.note.added",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-07T19:38:18.914Z"
+        },
+        {
+          "id": "audit-1783453012903-530",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.report.export.generated",
+          "target": "export-1783453012903",
+          "occurredAt": "2026-07-07T19:36:52.903Z",
+          "details": {
+            "reportId": "report-hours-audit",
+            "format": "CSV"
+          }
+        },
+        {
+          "id": "audit-1783453012871-73",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.clinical-log.reviewed",
+          "target": "log-1",
+          "occurredAt": "2026-07-07T19:36:52.871Z",
+          "details": {
+            "studentId": "student-alice-smith",
+            "status": "Flagged"
+          }
+        },
+        {
+          "id": "audit-1783453012840-41",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.skills.item.reviewed",
+          "target": "skill-3",
+          "occurredAt": "2026-07-07T19:36:52.840Z",
+          "details": {
+            "studentId": "student-alice-smith",
+            "status": "Verified"
+          }
+        },
+        {
+          "id": "audit-1783453012771-981",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.message.sent",
+          "target": "conv-alice",
+          "occurredAt": "2026-07-07T19:36:52.771Z"
+        },
+        {
+          "id": "audit-1783453012737-85",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.student.note.added",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-07T19:36:52.737Z"
+        },
+        {
+          "id": "audit-1783452909797-813",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.report.export.generated",
+          "target": "export-1783452909797",
+          "occurredAt": "2026-07-07T19:35:09.797Z",
+          "details": {
+            "reportId": "report-hours-audit",
+            "format": "CSV"
+          }
+        },
+        {
+          "id": "audit-1783452909755-483",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.skills.item.reviewed",
+          "target": "skill-3",
+          "occurredAt": "2026-07-07T19:35:09.755Z",
+          "details": {
+            "studentId": "student-alice-smith",
+            "status": "Verified"
+          }
+        },
+        {
+          "id": "audit-1783452909677-878",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.message.sent",
+          "target": "conv-alice",
+          "occurredAt": "2026-07-07T19:35:09.677Z"
+        },
+        {
+          "id": "audit-1783452909504-338",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.student.note.added",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-07T19:35:09.504Z"
+        },
+        {
+          "id": "audit-1783450786152-781",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.schedule.slot.created",
+          "target": "slot-1783450786152",
+          "occurredAt": "2026-07-07T18:59:46.152Z"
+        },
+        {
+          "id": "audit-1783448788570-513",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.report.export.generated",
+          "target": "export-1783448788570",
+          "occurredAt": "2026-07-07T18:26:28.570Z",
+          "details": {
+            "reportId": "report-hours-audit",
+            "format": "CSV"
+          }
+        },
+        {
+          "id": "audit-1783448788530-899",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.clinical-log.reviewed",
+          "target": "log-1",
+          "occurredAt": "2026-07-07T18:26:28.530Z",
+          "details": {
+            "status": "Flagged"
+          }
+        },
+        {
+          "id": "audit-1783448788477-289",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.skills.item.reviewed",
+          "target": "skill-3",
+          "occurredAt": "2026-07-07T18:26:28.477Z",
+          "details": {
+            "studentId": "student-alice-smith",
+            "status": "Verified"
+          }
+        },
+        {
+          "id": "audit-1783448788308-550",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.message.sent",
+          "target": "conv-alice",
+          "occurredAt": "2026-07-07T18:26:28.308Z"
+        },
+        {
+          "id": "audit-1783448788275-259",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.student.note.added",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-07T18:26:28.275Z"
+        },
+        {
+          "id": "audit-1783448423482-505",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.report.export.generated",
+          "target": "export-1783448423482",
+          "occurredAt": "2026-07-07T18:20:23.482Z",
+          "details": {
+            "reportId": "report-hours-audit",
+            "format": "CSV"
+          }
+        },
+        {
+          "id": "audit-1783448423419-950",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.clinical-log.reviewed",
+          "target": "log-1",
+          "occurredAt": "2026-07-07T18:20:23.419Z",
+          "details": {
+            "status": "Flagged"
+          }
+        },
+        {
+          "id": "audit-1783448423371-526",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.skills.item.reviewed",
+          "target": "skill-3",
+          "occurredAt": "2026-07-07T18:20:23.371Z",
+          "details": {
+            "studentId": "student-alice-smith",
+            "status": "Verified"
+          }
+        },
+        {
+          "id": "audit-1783448423219-108",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.message.sent",
+          "target": "conv-alice",
+          "occurredAt": "2026-07-07T18:20:23.219Z"
+        },
+        {
+          "id": "audit-1783448423168-546",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.student.note.added",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-07T18:20:23.168Z"
+        },
+        {
+          "id": "audit-1783442731867-962",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.report.export.generated",
+          "target": "export-1783442731867",
+          "occurredAt": "2026-07-07T16:45:31.867Z",
+          "details": {
+            "reportId": "report-hours-audit",
+            "format": "CSV"
+          }
+        },
+        {
+          "id": "audit-1783442731829-291",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.clinical-log.reviewed",
+          "target": "log-1",
+          "occurredAt": "2026-07-07T16:45:31.829Z",
+          "details": {
+            "status": "Flagged"
+          }
+        },
+        {
+          "id": "audit-1783442731789-997",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.skills.item.reviewed",
+          "target": "skill-3",
+          "occurredAt": "2026-07-07T16:45:31.789Z",
+          "details": {
+            "status": "Verified"
+          }
+        },
+        {
+          "id": "audit-1783442731684-102",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.message.sent",
+          "target": "conv-alice",
+          "occurredAt": "2026-07-07T16:45:31.684Z"
+        },
+        {
+          "id": "audit-1783442731627-128",
+          "actor": "instructor-sarah-chen",
+          "action": "instructor.student.note.added",
+          "target": "student-alice-smith",
+          "occurredAt": "2026-07-07T16:45:31.627Z"
+        },
+        {
+          "id": "audit-1",
+          "actor": "system",
+          "action": "instructor.portal.seeded",
+          "target": "instructor-sarah-chen",
+          "occurredAt": "2026-06-30T07:00:00.000Z",
+          "details": {
+            "source": "instructor-portal-seed"
+          }
+        }
+      ],
+      "skillReviews": {
+        "student-alice-smith": {
+          "skill-3": {
+            "status": "Verified",
+            "feedback": "Observed and approved during supervised practice.",
+            "reviewedAt": "2026-07-08T04:39:20.195Z"
+          }
+        }
+      }
+    },
+    {
+      "profile": {
+        "id": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+        "fullName": "Rrptfrm3ut",
+        "title": "Lead Clinical Instructor",
+        "email": "rrptfrm3ut@bltiwd.com",
+        "phone": "(415) 555-0183",
+        "notes": "",
+        "credentials": []
+      },
+      "workflowStage": "active",
+      "onboarding": {
+        "questions": [
+          {
+            "id": "q1",
+            "prompt": "Describe your clinical teaching experience and the settings you have worked in.",
+            "type": "text",
+            "placeholder": "Write your response...",
+            "preferredAnswer": "Reviewer looks for hands-on clinical teaching experience relevant to the program.",
+            "options": [],
+            "answer": "sup man"
+          },
+          {
+            "id": "q2",
+            "prompt": "What is your approach to mentoring students who are struggling with a clinical skill?",
+            "type": "text",
+            "placeholder": "Write your response...",
+            "preferredAnswer": "Reviewer looks for a structured, patient mentoring approach.",
+            "options": [],
+            "answer": "sup man"
+          },
+          {
+            "id": "q3",
+            "prompt": "Do you have any scheduling constraints or availability limitations we should know about?",
+            "type": "text",
+            "placeholder": "Write your response...",
+            "preferredAnswer": "Reviewer notes any constraints for scheduling purposes.",
+            "options": [],
+            "answer": "sds"
+          }
+        ],
+        "readinessUploads": {
+          "certificate": true
+        },
+        "readinessDocumentFiles": {
+          "certificate": {
+            "fileName": "APPEN - MASTER SERVICES AGREEMENT.pdf",
+            "url": "http://localhost:4000/uploads/instructor-readiness-documents/1783439894513-appen-master-services-agreement.pdf",
+            "uploadedAt": "2026-07-07T15:58:31.933Z"
+          }
+        },
+        "agreedToTerms": true,
+        "selectedModuleIds": [
+          "intro-care"
+        ],
+        "submitted": true
+      },
+      "studentNotes": {
+        "00b37ecb-b5a7-41e8-84a9-7b8408012a39": [
+          {
+            "date": "2026-07-10",
+            "note": "sdfds",
+            "instructor": "Rrptfrm3ut"
+          }
+        ]
+      },
+      "activeStudentId": "",
+      "dashboard": {
+        "profile": {
+          "id": "instructor-sarah-chen",
+          "fullName": "Dr. Sarah Chen",
+          "title": "Lead Clinical Instructor"
+        },
+        "metrics": [
+          {
+            "label": "Critical Actions",
+            "value": "3",
+            "tone": "error"
+          },
+          {
+            "label": "Students Assigned",
+            "value": "42",
+            "tone": "primary"
+          },
+          {
+            "label": "Avg. Checklist",
+            "value": "87%",
+            "tone": "success"
+          },
+          {
+            "label": "Hours Pending",
+            "value": "16",
+            "tone": "warning"
+          }
+        ],
+        "priorityActions": [
+          {
+            "id": "priority-inbox",
+            "title": "Review 3 urgent student messages",
+            "detail": "Placement questions and one escalation require a response.",
+            "href": "/instructor/inbox",
+            "urgency": "high"
+          },
+          {
+            "id": "priority-logs",
+            "title": "Approve 5 clinical log submissions",
+            "detail": "Hours are waiting on your verification before audit closeout.",
+            "href": "/instructor/clinical-logs",
+            "urgency": "critical"
+          },
+          {
+            "id": "priority-availability",
+            "title": "Resolve 1 scheduling conflict",
+            "detail": "Wednesday rotation overlaps with a competency assessment block.",
+            "href": "/instructor/availability",
+            "urgency": "medium"
+          }
+        ],
+        "students": [
+          {
+            "id": "student-alice-smith",
+            "name": "Alice Smith",
+            "cohort": "CNA 12",
+            "hoursLogged": 34,
+            "hoursRequired": 40,
+            "checklistCompletion": 90,
+            "status": "On Track",
+            "progress": 85
+          },
+          {
+            "id": "student-marcus-chen",
+            "name": "Marcus Chen",
+            "cohort": "CNA 12",
+            "hoursLogged": 28,
+            "hoursRequired": 40,
+            "checklistCompletion": 75,
+            "status": "At Risk",
+            "progress": 70
+          }
+        ],
+        "sessions": [
+          {
+            "id": "session-1",
+            "date": "Jun 30",
+            "time": "08:00 AM",
+            "title": "Skills Lab / Vitals Practicum",
+            "site": "Simulation Lab B",
+            "students": 12
+          },
+          {
+            "id": "session-2",
+            "date": "Jul 01",
+            "time": "10:30 AM",
+            "title": "Clinical Rotation / Sunrise Care",
+            "site": "Sunrise Long-Term Care",
+            "students": 8
+          }
+        ],
+        "studentsNeedingReview": [
+          {
+            "id": "student-alice-smith",
+            "name": "Alice Smith",
+            "issue": "Needs final wound care signoff",
+            "status": "Ready now",
+            "priority": "high"
+          },
+          {
+            "id": "student-marcus-chen",
+            "name": "Marcus Chen",
+            "issue": "Missing 2 verified hours this week",
+            "status": "At risk",
+            "priority": "critical"
+          }
+        ]
+      },
+      "conversations": [],
+      "activeConversationId": "",
+      "schedule": [
+        {
+          "id": "slot-1783451131649",
+          "weekStart": "2026-07-05",
+          "day": 0,
+          "time": "08:00",
+          "students": [
+            {
+              "id": "student-amara-singh",
+              "name": "Amara Singh",
+              "cohort": "CNA Cohort 12"
+            }
+          ],
+          "notes": "hh"
+        },
+        {
+          "id": "slot-1783710595374",
+          "weekStart": "2026-07-05",
+          "day": 0,
+          "time": "09:00",
+          "students": [
+            {
+              "id": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+              "name": "Dagim Assefa098",
+              "cohort": "CNA Paid"
+            }
+          ],
+          "notes": "this is urgent"
+        }
+      ],
+      "skillsWorkspace": {
+        "studentId": "student-alice-smith",
+        "studentName": "Alice Smith",
+        "autosave": true,
+        "savedAt": "2026-06-30T14:32:00.000Z",
+        "completionPercent": 75,
+        "groups": [
+          {
+            "id": "group-1",
+            "title": "Module 4 / Vital Signs",
+            "progressPercent": 75,
+            "items": [
+              {
+                "id": "skill-1",
+                "label": "Hand hygiene protocol",
+                "status": "Verified"
+              },
+              {
+                "id": "skill-2",
+                "label": "Temperature and pulse sequence",
+                "status": "Verified"
+              },
+              {
+                "id": "skill-3",
+                "label": "Blood pressure measurement",
+                "status": "Needs observation"
+              }
+            ]
+          }
+        ]
+      },
+      "clinicalLogs": [],
+      "availability": {
+        "monday": "08:00 - 04:00",
+        "tuesday": "08:00 - 04:00",
+        "wednesday": "09:00 - 12:00",
+        "thursday": "10:00 - 06:00",
+        "friday": "08:00 - 02:00",
+        "weekend": "Reserved for make-up sessions and approvals only.",
+        "allowAutoPlacement": true,
+        "travelBuffer": true,
+        "conflicts": [
+          "Wednesday 09:00 - 12:00 overlaps with Marcus Chen / competency assessment",
+          "Friday 01:30 PM site visit ends 15 minutes after your recurring block"
+        ]
+      },
+      "documents": [
+        {
+          "id": "doc-1783456471153",
+          "name": "CPR Certification",
+          "category": "Compliance",
+          "owner": "Rrptfrm3ut",
+          "updated": "2026-07-07",
+          "status": "Pending",
+          "fileName": "test-doc.pdf",
+          "fileUrl": "http://localhost:4000/uploads/instructor-documents/1783456471147-test-doc.pdf"
+        }
+      ],
+      "reports": {
+        "cards": [
+          {
+            "id": "report-hours-audit",
+            "title": "Clinical Hours Audit",
+            "detail": "Cross-check verified hours by student, cohort, and site.",
+            "badge": "Most used"
+          },
+          {
+            "id": "report-checklist-matrix",
+            "title": "Checklist Completion Matrix",
+            "detail": "Compare competency completion against program requirements.",
+            "badge": "Daily"
+          }
+        ],
+        "exports": [
+          {
+            "id": "export-1",
+            "report": "Clinical Hours Audit",
+            "format": "CSV",
+            "cadence": "Daily",
+            "updated": "2026-06-28 07:10",
+            "status": "Ready"
+          }
+        ]
+      },
+      "auditTrail": [
+        {
+          "id": "audit-1783761528915-275",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276a.entry.updated",
+          "target": "m2-1",
+          "occurredAt": "2026-07-11T09:18:48.915Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m2"
+          }
+        },
+        {
+          "id": "audit-1783761527763-517",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276a.entry.updated",
+          "target": "m2-1",
+          "occurredAt": "2026-07-11T09:18:47.763Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m2"
+          }
+        },
+        {
+          "id": "audit-1783761007501-849",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276c.final-grade.updated",
+          "target": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "occurredAt": "2026-07-11T09:10:07.501Z"
+        },
+        {
+          "id": "audit-1783761003452-686",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276c.entry.updated",
+          "target": "cdphe-m1-a",
+          "occurredAt": "2026-07-11T09:10:03.452Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m1"
+          }
+        },
+        {
+          "id": "audit-1783754933495-862",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276a.entry.updated",
+          "target": "m2-1",
+          "occurredAt": "2026-07-11T07:28:53.495Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m2"
+          }
+        },
+        {
+          "id": "audit-1783754414993-469",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276a.entry.updated",
+          "target": "m2-1",
+          "occurredAt": "2026-07-11T07:20:14.993Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m2"
+          }
+        },
+        {
+          "id": "audit-1783754190341-609",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276a.entry.updated",
+          "target": "m2-1",
+          "occurredAt": "2026-07-11T07:16:30.341Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m2"
+          }
+        },
+        {
+          "id": "audit-1783754076307-672",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276a.entry.updated",
+          "target": "m2-1",
+          "occurredAt": "2026-07-11T07:14:36.307Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m2"
+          }
+        },
+        {
+          "id": "audit-1783754064071-193",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276c.entry.updated",
+          "target": "cdphe-m2-a",
+          "occurredAt": "2026-07-11T07:14:24.071Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m2"
+          }
+        },
+        {
+          "id": "audit-1783754055893-344",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276c.entry.updated",
+          "target": "cdphe-m1-c",
+          "occurredAt": "2026-07-11T07:14:15.893Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m1"
+          }
+        },
+        {
+          "id": "audit-1783754049731-469",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276c.entry.updated",
+          "target": "cdphe-m1-a",
+          "occurredAt": "2026-07-11T07:14:09.731Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m1"
+          }
+        },
+        {
+          "id": "audit-1783754045840-927",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.cdph.e276c.entry.updated",
+          "target": "cdphe-m1-a",
+          "occurredAt": "2026-07-11T07:14:05.840Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+            "moduleId": "cdphe-m1"
+          }
+        },
+        {
+          "id": "audit-1783710936058-25",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.availability.updated",
+          "target": "availability",
+          "occurredAt": "2026-07-10T19:15:36.058Z",
+          "details": {
+            "monday": "08:00 - 04:00",
+            "tuesday": "08:00 - 04:00",
+            "wednesday": "09:00 - 12:00",
+            "thursday": "10:00 - 06:00",
+            "friday": "08:00 - 02:00",
+            "weekend": "Reserved for make-up sessions and approvals only.",
+            "allowAutoPlacement": true,
+            "travelBuffer": true
+          }
+        },
+        {
+          "id": "audit-1783710860775-565",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.clinical-timer.stopped",
+          "target": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "occurredAt": "2026-07-10T19:14:20.775Z",
+          "details": {
+            "moduleId": "intro-care",
+            "hours": 0.01
+          }
+        },
+        {
+          "id": "audit-1783710827572-975",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.clinical-timer.started",
+          "target": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "occurredAt": "2026-07-10T19:13:47.572Z",
+          "details": {
+            "moduleId": "intro-care"
+          }
+        },
+        {
+          "id": "audit-1783710595413-911",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.schedule.student.assigned",
+          "target": "slot-1783710595374",
+          "occurredAt": "2026-07-10T19:09:55.413Z",
+          "details": {
+            "studentId": "00b37ecb-b5a7-41e8-84a9-7b8408012a39"
+          }
+        },
+        {
+          "id": "audit-1783710595374-623",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.schedule.slot.created",
+          "target": "slot-1783710595374",
+          "occurredAt": "2026-07-10T19:09:55.374Z"
+        },
+        {
+          "id": "audit-1783710421024-637",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.student.note.added",
+          "target": "00b37ecb-b5a7-41e8-84a9-7b8408012a39",
+          "occurredAt": "2026-07-10T19:07:01.024Z"
+        },
+        {
+          "id": "audit-1783483548957-407",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.clinical-timer.stopped",
+          "target": "student-amara-singh",
+          "occurredAt": "2026-07-08T04:05:48.957Z",
+          "details": {
+            "moduleId": "intro-care",
+            "hours": 0.02
+          }
+        },
+        {
+          "id": "audit-1783483486067-169",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.clinical-timer.started",
+          "target": "student-amara-singh",
+          "occurredAt": "2026-07-08T04:04:46.067Z",
+          "details": {
+            "moduleId": "intro-care"
+          }
+        },
+        {
+          "id": "audit-1783483476080-921",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.clinical-timer.discarded",
+          "target": "student-amara-singh",
+          "occurredAt": "2026-07-08T04:04:36.080Z",
+          "details": {
+            "moduleId": "intro-care"
+          }
+        },
+        {
+          "id": "audit-1783483472382-322",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.clinical-timer.started",
+          "target": "student-amara-singh",
+          "occurredAt": "2026-07-08T04:04:32.382Z",
+          "details": {
+            "moduleId": "intro-care"
+          }
+        },
+        {
+          "id": "audit-1783483449313-692",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.clinical-timer.stopped",
+          "target": "student-amara-singh",
+          "occurredAt": "2026-07-08T04:04:09.313Z",
+          "details": {
+            "moduleId": "intro-care",
+            "hours": 0.04
+          }
+        },
+        {
+          "id": "audit-1783483304051-549",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.clinical-timer.started",
+          "target": "student-amara-singh",
+          "occurredAt": "2026-07-08T04:01:44.051Z",
+          "details": {
+            "moduleId": "intro-care"
+          }
+        },
+        {
+          "id": "audit-1783482978693-231",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.clinical-timer.discarded",
+          "target": "student-amara-singh",
+          "occurredAt": "2026-07-08T03:56:18.693Z",
+          "details": {
+            "moduleId": "intro-care"
+          }
+        },
+        {
+          "id": "audit-1783482978429-28",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.clinical-timer.started",
+          "target": "student-amara-singh",
+          "occurredAt": "2026-07-08T03:56:18.429Z",
+          "details": {
+            "moduleId": "intro-care"
+          }
+        },
+        {
+          "id": "audit-1783482888498-0",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.clinical-timer.stopped",
+          "target": "student-amara-singh",
+          "occurredAt": "2026-07-08T03:54:48.498Z",
+          "details": {
+            "moduleId": "intro-care",
+            "hours": 0.01
+          }
+        },
+        {
+          "id": "audit-1783482850205-9",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.clinical-timer.started",
+          "target": "student-amara-singh",
+          "occurredAt": "2026-07-08T03:54:10.205Z",
+          "details": {
+            "moduleId": "intro-care"
+          }
+        },
+        {
+          "id": "audit-1783482828896-488",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.clinical-timer.discarded",
+          "target": "student-amara-singh",
+          "occurredAt": "2026-07-08T03:53:48.896Z",
+          "details": {
+            "moduleId": "intro-care"
+          }
+        },
+        {
+          "id": "audit-1783482816921-423",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.clinical-timer.started",
+          "target": "student-amara-singh",
+          "occurredAt": "2026-07-08T03:53:36.921Z",
+          "details": {
+            "moduleId": "intro-care"
+          }
+        },
+        {
+          "id": "audit-1783456471153-732",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.document.uploaded",
+          "target": "doc-1783456471153",
+          "occurredAt": "2026-07-07T20:34:31.153Z"
+        },
+        {
+          "id": "audit-1783455815670-367",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.availability.updated",
+          "target": "availability",
+          "occurredAt": "2026-07-07T20:23:35.670Z",
+          "details": {
+            "monday": "08:00 - 04:00",
+            "tuesday": "08:00 - 04:00",
+            "wednesday": "09:00 - 12:00",
+            "thursday": "10:00 - 06:00",
+            "friday": "08:00 - 02:00",
+            "weekend": "Reserved for make-up sessions and approvals only.",
+            "allowAutoPlacement": true,
+            "travelBuffer": true
+          }
+        },
+        {
+          "id": "audit-1783455814786-721",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.availability.updated",
+          "target": "availability",
+          "occurredAt": "2026-07-07T20:23:34.786Z",
+          "details": {
+            "monday": "08:00 - 04:00",
+            "tuesday": "08:00 - 04:00",
+            "wednesday": "09:00 - 12:00",
+            "thursday": "10:00 - 06:00",
+            "friday": "08:00 - 02:00",
+            "weekend": "Reserved for make-up sessions and approvals only.",
+            "allowAutoPlacement": true,
+            "travelBuffer": true
+          }
+        },
+        {
+          "id": "audit-1783455805321-387",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.availability.updated",
+          "target": "availability",
+          "occurredAt": "2026-07-07T20:23:25.321Z",
+          "details": {
+            "monday": "08:00 - 04:00",
+            "tuesday": "08:00 - 04:00",
+            "wednesday": "09:00 - 12:00",
+            "thursday": "10:00 - 06:00",
+            "friday": "08:00 - 02:00",
+            "weekend": "Reserved for make-up sessions and approvals only.",
+            "allowAutoPlacement": true,
+            "travelBuffer": true
+          }
+        },
+        {
+          "id": "audit-1783455398667-677",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.clinical-log.reviewed",
+          "target": "log-1783455385412",
+          "occurredAt": "2026-07-07T20:16:38.667Z",
+          "details": {
+            "studentId": "student-amara-singh",
+            "status": "Verified"
+          }
+        },
+        {
+          "id": "audit-1783455385417-841",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.clinical-timer.stopped",
+          "target": "student-amara-singh",
+          "occurredAt": "2026-07-07T20:16:25.417Z",
+          "details": {
+            "moduleId": "intro-care",
+            "hours": 0.05
+          }
+        },
+        {
+          "id": "audit-1783455191164-353",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.clinical-timer.started",
+          "target": "student-amara-singh",
+          "occurredAt": "2026-07-07T20:13:11.164Z",
+          "details": {
+            "moduleId": "intro-care"
+          }
+        },
+        {
+          "id": "audit-1783455081824-417",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.clinical-timer.stopped",
+          "target": "student-amara-singh",
+          "occurredAt": "2026-07-07T20:11:21.824Z",
+          "details": {
+            "moduleId": "intro-care",
+            "hours": 0.01
+          }
+        },
+        {
+          "id": "audit-1783455059637-291",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.clinical-timer.started",
+          "target": "student-amara-singh",
+          "occurredAt": "2026-07-07T20:10:59.637Z",
+          "details": {
+            "moduleId": "intro-care"
+          }
+        },
+        {
+          "id": "audit-1783451131670-725",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.schedule.student.assigned",
+          "target": "slot-1783451131649",
+          "occurredAt": "2026-07-07T19:05:31.670Z",
+          "details": {
+            "studentId": "student-amara-singh"
+          }
+        },
+        {
+          "id": "audit-1783451131649-900",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.schedule.slot.created",
+          "target": "slot-1783451131649",
+          "occurredAt": "2026-07-07T19:05:31.649Z"
+        },
+        {
+          "id": "audit-1783450895008-96",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.schedule.student.removed",
+          "target": "slot-1783450763083",
+          "occurredAt": "2026-07-07T19:01:35.008Z",
+          "details": {
+            "studentId": "student-amara-singh"
+          }
+        },
+        {
+          "id": "audit-1783450763588-623",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.schedule.student.assigned",
+          "target": "slot-1783450763083",
+          "occurredAt": "2026-07-07T18:59:23.588Z",
+          "details": {
+            "studentId": "student-amara-singh"
+          }
+        },
+        {
+          "id": "audit-1783450763083-658",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.schedule.slot.created",
+          "target": "slot-1783450763083",
+          "occurredAt": "2026-07-07T18:59:23.083Z"
+        },
+        {
+          "id": "audit-1783445915407-139",
+          "actor": "9d7dcc20-c507-4882-9877-6d2c2aae7ddc",
+          "action": "instructor.onboarding.agreement.updated",
+          "target": "terms",
+          "occurredAt": "2026-07-07T17:38:35.407Z",
+          "details": {
+            "agreedToTerms": true
+          }
+        }
+      ]
+    }
+  ]
+}

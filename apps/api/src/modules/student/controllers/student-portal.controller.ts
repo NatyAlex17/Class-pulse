@@ -2,17 +2,20 @@ import {
   BadRequestException,
   Body,
   Controller,
+  forwardRef,
   Get,
+  Inject,
   Param,
   Patch,
   Post,
   Req,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import * as fs from 'fs';
 import { diskStorage } from 'multer';
 import * as path from 'path';
@@ -20,6 +23,7 @@ import * as path from 'path';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { SupabaseAuthGuard } from '../../../common/auth/supabase-auth.guard';
 import { createApiResponse } from '../../../common/utils/create-api-response';
+import { sendPdfResponse } from '../../../common/utils/send-pdf-response';
 import { READINESS_DOCUMENTS_UPLOADS_DIR, UPLOADS_URL_PREFIX } from '../../../common/utils/upload-paths';
 import type {
   AdvanceLearningDto,
@@ -52,6 +56,7 @@ import type {
   UpdateWizardStepDto,
   UploadStudentDocumentDto,
 } from '../types/student-portal.types';
+import { InstructorPortalService } from '../../instructor/services/instructor-portal.service';
 import { StudentPortalService } from '../services/student-portal.service';
 import { IntakeSubmissionService } from '../services/intake-submission.service';
 
@@ -62,6 +67,8 @@ export class StudentPortalController {
   constructor(
     private readonly studentPortalService: StudentPortalService,
     private readonly intakeSubmissionService: IntakeSubmissionService,
+    @Inject(forwardRef(() => InstructorPortalService))
+    private readonly instructorPortalService: InstructorPortalService,
   ) {}
 
   @Get('portal')
@@ -545,6 +552,14 @@ export class StudentPortalController {
     );
   }
 
+  @Get('clinical-schedule')
+  getClinicalSchedule(@Param('studentId') studentId: string) {
+    return createApiResponse(
+      this.instructorPortalService.getStudentClinicalSchedule(studentId),
+      'Student clinical schedule retrieved successfully.',
+    );
+  }
+
   @Post('clinical-hours/logs')
   logClinicalHours(@Param('studentId') studentId: string, @Body() body: LogClinicalHoursDto) {
     return createApiResponse(
@@ -683,6 +698,12 @@ export class StudentPortalController {
       this.studentPortalService.signCdphForm(studentId),
       'CDPH form signed successfully.',
     );
+  }
+
+  @Get('forms/cdph-283b/pdf')
+  generateCdph283BPdf(@Param('studentId') studentId: string, @Res() res: Response) {
+    const buffer = this.studentPortalService.generateCdph283BPdf(studentId);
+    sendPdfResponse(res, buffer, `cdph-283b-${studentId}.pdf`);
   }
 
   @Get('settings')
